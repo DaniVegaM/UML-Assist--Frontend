@@ -1,4 +1,4 @@
-# UML Assist (Frontend)
+# UML Assist Frontend
 
 Una aplicación web moderna para crear diagramas UML impulsados por inteligencia artificial, construida con React, TypeScript y Vite.
 
