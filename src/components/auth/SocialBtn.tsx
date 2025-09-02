@@ -1,6 +1,7 @@
 
 type SocialBtnProps = {
-  provider: 'google' | 'github';
+  provider: 'google' | 'github',
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 export default function SocialBtn({ provider }: SocialBtnProps) {

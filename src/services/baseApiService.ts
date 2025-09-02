@@ -1,10 +1,11 @@
 import type { AxiosInstance } from "axios";
 import axios from "axios";
+import { logout } from "./authService";
 
 
-// Crear instancia base de axios
+// Instancia base de axios
 const api: AxiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/',
+  baseURL: process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -33,6 +34,38 @@ api.interceptors.response.use(
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// Interceptor para manejar refresh automático cuando se realiza un request y el token ya expiró
+api.interceptors.response.use(
+  (response) => response, async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      try {
+        const refreshToken = localStorage.getItem('refresh_token');
+        if (refreshToken) {
+          const response = await axios.post(`${process.env.REACT_APP_API_BASE_URL}/user/auth/refresh/`, {
+            refresh_token: refreshToken
+          });
+
+          const { access_token } = response.data;
+          localStorage.setItem('access_token', access_token);
+
+          originalRequest.headers.Authorization = `Bearer ${access_token}`; // Reintentamos realizar el request original
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        // Refresh falló, logout
+        logout();
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
     }
     return Promise.reject(error);
   }
