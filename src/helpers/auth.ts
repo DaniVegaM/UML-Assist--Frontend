@@ -1,11 +1,5 @@
 
-type UserData = {
-    id: number,
-    email: string,
-    first_name: string,
-    last_name: string,
-    username: string
-}
+import type { UserData } from '../types/auth';
 
 export const setTokens = (accessToken: string, refreshToken: string) => {
     localStorage.setItem('access_token', accessToken);

@@ -1,9 +1,10 @@
-import { clearStorage, setTokens, setUserData } from "../helpers/auth";
+import { clearStorage, setTokens, setUserData, getAccessToken } from "../helpers/auth";
+import type { GoogleAuthUrlResponse, AuthResponse } from "../types/auth";
 import api from "./baseApiService";
 
 
 export const isAuthenticated = (): boolean => {
-  const token = localStorage.getItem('token');
+  const token = getAccessToken();
   if (!token) return false;
 
   try { // Verificamos si el token ha expirado
@@ -14,9 +15,11 @@ export const isAuthenticated = (): boolean => {
   }
 };
 
-export const getGoogleAuthUrl = async () => {
+/* Despues de otorgar permisos, Google redirige a la URL de callback con un "code" en los query params para poder obtener los tokens
+ y datos del usuario */
+export const getGoogleAuthUrl = async (): Promise<GoogleAuthUrlResponse> => {
   try {
-    const response = await api.get('user/auth/google/url/');
+    const response = await api.get('api/user/auth/google/url/');
     return response.data;
   } catch (error) {
     console.error('Error getting Google auth URL:', error);
@@ -26,7 +29,7 @@ export const getGoogleAuthUrl = async () => {
 
 export const handleGoogleCallback = async (code: string) => {
   try {
-    const response = await api.post('user/auth/google/callback/', {
+    const response = await api.post<AuthResponse>('api/user/auth/google/callback/', {
       code: code
     });
 
@@ -35,11 +38,9 @@ export const handleGoogleCallback = async (code: string) => {
     // Guardamos tokens y datos del usuario
     setTokens(access_token, refresh_token);
     setUserData({
-      id: user.id,
       email: user.email,
       first_name: user.first_name,
-      last_name: user.last_name,
-      username: user.username
+      last_name: user.last_name
     });
 
     return { user, created, success: true };
@@ -58,7 +59,7 @@ export const refreshAccessToken = async () => {
       throw new Error('No refresh token available');
     }
 
-    const response = await api.post('user/auth/refresh/', {
+    const response = await api.post('api/user/auth/refresh/', {
       refresh_token: refreshToken
     });
 
@@ -76,7 +77,7 @@ export const refreshAccessToken = async () => {
 
 export const getCurrentUser = async () => {
   try {
-    const response = await api.get('user/users/me/');
+    const response = await api.get('api/user/users/me/');
     return response.data.user;
   } catch (error) {
     console.error('Error getting current user:', error);
@@ -89,7 +90,7 @@ export const logout = async () => {
     const refreshToken = localStorage.getItem('refresh_token');
 
     if (refreshToken) {
-      await api.post('user/auth/logout/', {
+      await api.post('api/user/auth/logout/', {
         refresh_token: refreshToken
       });
     }

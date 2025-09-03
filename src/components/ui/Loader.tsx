@@ -1,7 +1,8 @@
-import "./Loader.scss"
+import '../../styles/components/Loader.scss'
 
 export default function Loader() {
+
   return (
-    <div className="loader"></div>
+      <div className="loader"></div>
   )
 }
