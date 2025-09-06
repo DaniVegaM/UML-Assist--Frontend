@@ -1,21 +1,54 @@
-import { BrowserRouter, Routes, Route } from 'react-router';
+import { createBrowserRouter, RouterProvider, redirect } from 'react-router';
+import Login from '../pages/Auth/login/Login';
+import { handleCallback } from '../services/authService';
 
-// Placeholder components - estos los crearemos después
+import type { LoaderFunctionArgs } from 'react-router';
+
 const HomePage = () => <div>Home Page</div>;
-const LoginPage = () => <div>Login Page</div>;
 const RegisterPage = () => <div>Register Page</div>;
-const DiagramEditorPage = () => <div>Diagram Editor</div>;
+
+const createAuthCallbackLoader = (provider: 'google' | 'github') => {
+  return async ({ request }: LoaderFunctionArgs) => {
+    const url = new URL(request.url);
+    const code = url.searchParams.get("code");
+    
+    if (!code) {
+      return redirect("/iniciar-sesion?error=no_code");
+    }
+    
+    try {
+      await handleCallback(provider, code);
+      return redirect("/");
+    } catch (error) {
+      console.error(`Error en callback de ${provider}:`, error);
+      return redirect("/iniciar-sesion?error=callback_failed");
+    }
+  };
+};
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <HomePage />,
+  },
+  {
+    path: "/iniciar-sesion",
+    element: <Login />,
+  },
+  {
+    path: "/registro",
+    element: <RegisterPage />,
+  },
+  {
+    path: '/auth/google/callback',
+    loader: createAuthCallbackLoader('google')
+  },
+  {
+    path: '/auth/github/callback',
+    loader: createAuthCallbackLoader('github')
+  }
+]);
 
 export const AppRouter = () => {
-  return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route path="/editor" element={<DiagramEditorPage />} />
-        <Route path="/editor/:diagramId" element={<DiagramEditorPage />} />
-      </Routes>
-    </BrowserRouter>
-  );
+  return <RouterProvider router={router} />;
 };
