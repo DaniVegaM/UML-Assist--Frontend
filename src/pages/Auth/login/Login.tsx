@@ -2,8 +2,9 @@ import { useState } from "react";
 import SocialBtn from "../../../components/auth/SocialBtn";
 import "./Login.scss";
 import Loader from "../../../components/ui/Loader";
-import { getGoogleAuthUrl } from "../../../services/authService";
-import { useSearchParams } from "react-router";
+import { getAuthUrl } from "../../../services/authService";
+import { Navigate, useSearchParams } from "react-router";
+import { isAuthenticated } from "../../../helpers/auth";
 
 export default function Login() {
     const [loading, setLoading] = useState(false);
@@ -11,16 +12,27 @@ export default function Login() {
 
     const error = searchParams.get('error');
 
-    const handleGoogleLogin = async () => {
+    if(isAuthenticated()){
+        return <Navigate to={'/'} replace />;
+    }
+
+    const handleLogin = async (authProvider: string) => {
         try {
             setLoading(true)
 
-            const { auth_url, success } = await getGoogleAuthUrl()
+            let auth_url = ''
+            let success = false
+
+            if (authProvider === 'google') {
+                ({ auth_url, success } = await getAuthUrl(authProvider))
+            } else if (authProvider === 'github') {
+                ({ auth_url, success } = await getAuthUrl(authProvider))
+            }
             
             if ( success ) {
                 window.location.href = auth_url
             } else {
-                console.error('No se pudo obtener la URL de autenticación de Google')
+                console.error(`No se pudo obtener la URL de autenticación de ${authProvider}`)
             }
         } catch (error) {
             console.error('Login error:', error)
@@ -45,8 +57,8 @@ export default function Login() {
 
                     {loading ? <Loader /> :
                         <>
-                        <SocialBtn provider="google" authHandler={handleGoogleLogin}/>
-                        {/* <SocialBtn provider="github" authHandler={}/> */}
+                        <SocialBtn provider="google" authHandler={handleLogin}/>
+                        <SocialBtn provider="github" authHandler={handleLogin}/>
                         </>
                     }
 

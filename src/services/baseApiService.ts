@@ -15,9 +15,13 @@ const api: AxiosInstance = axios.create({
 // Interceptor para agregar el token a todas las peticiones
 api.interceptors.request.use(
   (config) => {
-    const token = getAccessToken();
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const isAuthRoute = config.url?.includes('/auth/'); //No incluimos las rutas de auth
+    
+    if (!isAuthRoute) {
+      const token = getAccessToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
@@ -32,7 +36,9 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthRoute = originalRequest.url?.includes('/auth/'); //No incluimos las rutas de auth
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthRoute) {
       originalRequest._retry = true;
 
       try {

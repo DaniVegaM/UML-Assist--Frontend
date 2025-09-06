@@ -1,5 +1,5 @@
 import { clearStorage, setTokens, setUserData, getAccessToken } from "../helpers/auth";
-import type { GoogleAuthUrlResponse, AuthResponse } from "../types/auth";
+import type { AuthResponse, AuthUrlResponse } from "../types/auth";
 import api from "./baseApiService";
 
 
@@ -15,21 +15,26 @@ export const isAuthenticated = (): boolean => {
   }
 };
 
-/* Despues de otorgar permisos, Google redirige a la URL de callback con un "code" en los query params para poder obtener los tokens
- y datos del usuario */
-export const getGoogleAuthUrl = async (): Promise<GoogleAuthUrlResponse> => {
+/* Despues de otorgar permisos, Google/Github redirige a la URL de callback con un "code" en los query params 
+para poder obtener los tokens y datos del usuario */
+export const getAuthUrl = async (authProvider: string): Promise<AuthUrlResponse> => {
   try {
-    const response = await api.get('api/user/auth/google/url/');
+    if (!['google', 'github'].includes(authProvider)) {
+      throw new Error(`Proveedor de autenticación no soportado: ${authProvider}`);
+    }
+
+    const response = await api.get(`api/user/auth/${authProvider}/url/`);
     return response.data;
   } catch (error) {
-    console.error('Error getting Google auth URL:', error);
+    console.error('Error getting auth URL:', error);
     throw error;
   }
 }
 
-export const handleGoogleCallback = async (code: string) => {
+export const handleCallback = async (provider: string, code: string) => {
   try {
-    const response = await api.post<AuthResponse>('api/user/auth/google/callback/', {
+    console.log('Handling callback for provider:', provider, 'with code:', code);
+    const response = await api.post<AuthResponse>(`api/user/auth/${provider}/callback/`, {
       code: code
     });
 
@@ -46,7 +51,7 @@ export const handleGoogleCallback = async (code: string) => {
     return { user, created, success: true };
 
   } catch (error) {
-    console.error('Error in Google callback:', error);
+    console.error('Error en callback:', error);
     throw error;
   }
 }

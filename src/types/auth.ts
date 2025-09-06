@@ -11,7 +11,7 @@ export type AuthResponse = {
   created: boolean;
 };
 
-export type GoogleAuthUrlResponse = {
+export type AuthUrlResponse = {
   auth_url: string;
   success: boolean;
 };

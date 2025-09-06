@@ -3,8 +3,8 @@ import { Navigate } from 'react-router';
 import { isAuthenticated } from '../../helpers/auth';
 
 type ProtectedRouteProps = {
-  children: ReactNode;
-  redirectTo?: string;
+  children: ReactNode,
+  redirectTo?: string,
 };
 
 export default function ProtectedRoute({ 
