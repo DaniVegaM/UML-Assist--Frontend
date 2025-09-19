@@ -43,9 +43,7 @@ export const handleCallback = async (provider: string, code: string) => {
     // Guardamos tokens y datos del usuario
     setTokens(access_token, refresh_token);
     setUserData({
-      email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name
+      email: user.email
     });
 
     return { user, created, success: true };
