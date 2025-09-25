@@ -44,8 +44,7 @@ export const handleCallback = async (provider: string, code: string) => {
     setTokens(access_token, refresh_token);
     setUserData({
       email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name
+      username: user.username
     });
 
     return { user, created, success: true };
@@ -103,5 +102,26 @@ export const logout = async () => {
     console.error('Error during logout:', error);
   } finally {
     clearStorage();
+  }
+}
+
+export const loginWithCredentials = async (email: string, password: string) => {
+  try {
+    const response = await api.post<AuthResponse>('api/user/auth/login/', {
+      email, password
+    });
+
+    const { access_token, refresh_token, user } = response.data;
+    console.log('Login successful for user:', user);
+
+    // Guardamos tokens y datos del usuario
+    setTokens( access_token, refresh_token );
+    setUserData({ email: user.email, username: user.username });
+
+    return { user, success: true };
+
+  } catch (error: any) {
+    console.error('Error en login: ', error);
+    throw error;
   }
 }
