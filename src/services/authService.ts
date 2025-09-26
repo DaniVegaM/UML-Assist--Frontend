@@ -89,17 +89,5 @@ export const getCurrentUser = async () => {
 }
 
 export const logout = async () => {
-  try {
-    const refreshToken = localStorage.getItem('refresh_token');
-
-    if (refreshToken) {
-      await api.post('api/user/auth/logout/', {
-        refresh_token: refreshToken
-      });
-    }
-  } catch (error) {
-    console.error('Error during logout:', error);
-  } finally {
-    clearStorage();
-  }
+  clearStorage(); // Limpiamos tokens y datos del usuario
 }
