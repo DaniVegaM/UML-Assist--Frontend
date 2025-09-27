@@ -172,10 +172,10 @@ export default function Login() {
                     </button>
 
                     <div className="flex justify-between items-center w-full text-sm">
-                        <a href="/auth/registro" className="text-blue-600 hover:text-blue-800 hover:underline">
+                        <a href="/registro" className="text-blue-600 hover:text-blue-800 hover:underline">
                             ¿No tienes cuenta? Regístrate
                         </a>
-                        <a href="/auth/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
+                        <a href="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
                             ¿Olvidaste tu contraseña?
                         </a>
                     </div>
