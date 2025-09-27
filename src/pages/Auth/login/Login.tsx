@@ -114,7 +114,7 @@ export default function Login() {
 
     return (
         <div className="bg-pattern h-screen py-32">
-            <section className="flex flex-col gap-3 items-center w-96 md:w-2/5 mx-auto bg-white p-12 rounded-lg shadow-md">
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
                 <h1 className="text-2xl uppercase font-black">Iniciar Sesión</h1>
                 <p>Comienza a elaborar diagramas mientras aprendes</p>
                 
@@ -130,7 +130,7 @@ export default function Login() {
                             onChange={handleInputChange}
                             onBlur={handleInputBlur}
                             placeholder="ejemplo@correo.com"
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 ${
                                 errors.email ? 'border-red-500' : 'border-gray-300'
                             }`}
                         />
@@ -150,7 +150,7 @@ export default function Login() {
                             onChange={handleInputChange}
                             onBlur={handleInputBlur}
                             placeholder="********"
-                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-sky-500 ${
                                 errors.password ? 'border-red-500' : 'border-gray-300'
                             }`}
                         />
@@ -166,13 +166,13 @@ export default function Login() {
                     <button 
                         type="submit" 
                         disabled={loading}
-                        className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        className="w-full bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer font-bold"
                     >
                         {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
                     </button>
 
                     <div className="flex justify-between items-center w-full text-sm">
-                        <a href="/registro" className="text-blue-600 hover:text-blue-800 hover:underline">
+                        <a href="/registro" className="text-sky-600 hover:text-sky-800 hover:underline">
                             ¿No tienes cuenta? Regístrate
                         </a>
                         <a href="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">

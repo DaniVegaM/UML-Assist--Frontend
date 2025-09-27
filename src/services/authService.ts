@@ -120,7 +120,7 @@ export const loginWithCredentials = async (email: string, password: string) => {
 
     return { user, success: true };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en login: ', error);
     throw error;
   }
@@ -143,7 +143,7 @@ export const registerWithCredentials = async (email: string, password: string, p
 
     return { user, success: true };
 
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error en registro:', error);
     throw error;
   }

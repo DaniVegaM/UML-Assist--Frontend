@@ -150,9 +150,9 @@ export default function SignupForm() {
                 <button 
                     type="submit" 
                     disabled={ loading }
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+                    className="w-full bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-bold cursor-pointer"
                 >
-                    {loading ? 'Creando...' : 'Crear cuenta'}
+                    {loading ? 'Creando...' : 'Crear Cuenta'}
                 </button>
 
                 <div className="h-4 mt-1">
