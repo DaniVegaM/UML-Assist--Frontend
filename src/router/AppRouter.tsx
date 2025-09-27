@@ -3,9 +3,9 @@ import Login from '../pages/Auth/login/Login';
 import { handleCallback } from '../services/authService';
 
 import type { LoaderFunctionArgs } from 'react-router';
+import SignupPage from '../pages/Auth/signup/SignupPage';
 
 const HomePage = () => <div>Home Page</div>;
-const RegisterPage = () => <div>Register Page</div>;
 
 const createAuthCallbackLoader = (provider: 'google' | 'github') => {
   return async ({ request }: LoaderFunctionArgs) => {
@@ -37,7 +37,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/registro",
-    element: <RegisterPage />,
+    element: <SignupPage />,
   },
   {
     path: '/auth/google/callback',

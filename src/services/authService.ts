@@ -125,3 +125,26 @@ export const loginWithCredentials = async (email: string, password: string) => {
     throw error;
   }
 }
+
+export const registerWithCredentials = async (email: string, password: string, password_confirm: string) => {
+  try {
+    const response = await api.post<AuthResponse>('api/user/auth/signup/', {
+      email,
+      password,
+      password_confirm
+    });
+
+    const { access_token, refresh_token, user } = response.data;
+    console.log('Registration successful for user:', user);
+
+    // Guardamos tokens y datos del usuario
+    setTokens(access_token, refresh_token);
+    setUserData({ email: user.email, username: user.username });
+
+    return { user, success: true };
+
+  } catch (error: any) {
+    console.error('Error en registro:', error);
+    throw error;
+  }
+}
