@@ -3,14 +3,9 @@ import { isAuthenticated } from "../../../helpers/auth";
 import { REGISTER_VALIDATION_RULES } from "../../../helpers/validation";
 import { registerWithCredentials } from "../../../services/authService";
 import FormField from "../../../components/auth/shared/FormField";
-import Loader from "../../../components/ui/Loader";
 import { useForm } from "../hooks/useForm";
 
 export default function SignupPage() {
-    if (isAuthenticated()) {
-        return <Navigate to={'/'} replace />;
-    }
-
     const navigate = useNavigate();
 
     const {
@@ -20,7 +15,6 @@ export default function SignupPage() {
         handleFieldChange,
         handleInputBlur,
         handleSubmit,
-        setGeneralError
     } = useForm({
         initialValues: {
             email: '',
@@ -45,14 +39,11 @@ export default function SignupPage() {
         }
     });
 
-    // Override para manejar errores específicos de registro
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        try {
-            await handleSubmit(e);
-        } catch (error) {
-            setGeneralError('Error al crear la cuenta. Por favor, intenta de nuevo.');
-        }
-    };
+    if (isAuthenticated()) {
+        return <Navigate to={'/dashboard'} replace />;
+    }
+
+
 
     return (
         <div className="bg-pattern h-screen py-32">
@@ -60,7 +51,7 @@ export default function SignupPage() {
                 <h1 className="text-2xl uppercase font-black">Crear una cuenta</h1>
 
                 <form
-                    onSubmit={ handleFormSubmit } 
+                    onSubmit={handleSubmit}
                     className="w-full space-y-4"
                 >
                     <FormField
@@ -68,10 +59,10 @@ export default function SignupPage() {
                         type="email"
                         name="email"
                         placeholder="ejemplo@correo.com"
-                        value={ formData.email.value }
-                        onChange={ handleFieldChange }
-                        onBlur={ handleInputBlur }
-                        error={ formData.email.error }
+                        value={formData.email.value}
+                        onChange={handleFieldChange}
+                        onBlur={handleInputBlur}
+                        error={formData.email.error}
                     />
 
                     <FormField
@@ -79,10 +70,10 @@ export default function SignupPage() {
                         type="password"
                         name="password"
                         placeholder="********"
-                        value={ formData.password.value }
-                        onChange={ handleFieldChange }
-                        onBlur={ handleInputBlur }
-                        error={ formData.password.error }
+                        value={formData.password.value}
+                        onChange={handleFieldChange}
+                        onBlur={handleInputBlur}
+                        error={formData.password.error}
                     />
 
                     <FormField
@@ -90,15 +81,15 @@ export default function SignupPage() {
                         type="password"
                         name="password_confirm"
                         placeholder="********"
-                        value={ formData.password_confirm.value }
-                        onChange={ handleFieldChange }
-                        onBlur={ handleInputBlur }
-                        error={ formData.password_confirm.error }
+                        value={formData.password_confirm.value}
+                        onChange={handleFieldChange}
+                        onBlur={handleInputBlur}
+                        error={formData.password_confirm.error}
                     />
 
-                    <button 
-                        type="submit" 
-                        disabled={ loading }
+                    <button
+                        type="submit"
+                        disabled={loading}
                         className="w-full bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed font-bold cursor-pointer"
                     >
                         {loading ? 'Creando...' : 'Crear Cuenta'}
@@ -106,13 +97,11 @@ export default function SignupPage() {
 
                     <div className="h-2/12 mt-1">
                         {generalError && (
-                            <p className="text-red-500 text-sm">{ generalError }</p>
+                            <p className="text-red-500 text-sm">{generalError}</p>
                         )}
                     </div>
-                    
-                    <div className="flex flex-col space-y-4 items-center mb-3">
-                        {loading && <Loader />}
-                    </div>
+
+                    {/* Loader visual solo en el botón, no duplicado aquí */}
                 </form>
 
                 <div className="flex justify-between items-center w-full text-sm">

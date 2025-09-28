@@ -103,8 +103,25 @@ export const useForm = ({ initialValues, validationRules, onSubmit, customValida
             });
             
             await onSubmit(values);
-        } catch (error) {
-            setGeneralError('Ocurrió un error. Por favor, intenta de nuevo.');
+        } catch (error: unknown) {
+            // Manejar diferentes tipos de errores
+            if (error && typeof error === 'object' && 'response' in error) {
+                const apiError = error as { response: { status: number } };
+                if (apiError.response.status === 401) {
+                    setGeneralError('Credenciales incorrectas. Por favor, verifica tu email y contraseña.');
+                } else if (apiError.response.status === 400) {
+                    setGeneralError('Datos inválidos. Por favor, revisa la información ingresada.');
+                } else if (apiError.response.status >= 500) {
+                    setGeneralError('Error del servidor. Por favor, intenta más tarde.');
+                } else {
+                    setGeneralError('Ocurrió un error inesperado. Por favor, intenta de nuevo.');
+                }
+            } else if (error && typeof error === 'object' && 'message' in error) {
+                const messageError = error as { message: string };
+                setGeneralError(messageError.message);
+            } else {
+                setGeneralError('Ocurrió un error inesperado. Por favor, intenta de nuevo.');
+            }
         } finally {
             setLoading(false);
         }
@@ -128,6 +145,7 @@ export const useForm = ({ initialValues, validationRules, onSubmit, customValida
         handleInputBlur,
         handleSubmit,
         setGeneralError,
-        setFieldError
+        setFieldError,
+        setLoading
     };
 };

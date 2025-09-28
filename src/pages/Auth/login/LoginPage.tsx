@@ -1,4 +1,3 @@
-import { useState } from "react";
 import SocialBtn from "../../../components/auth/SocialBtn";
 import './LoginPage.scss'
 import Loader from "../../../components/ui/Loader";
@@ -10,7 +9,6 @@ import FormField from "../../../components/auth/shared/FormField";
 import { useForm } from "../hooks/useForm";
 
 export default function LoginPage() {
-    const [socialLoading, setSocialLoading] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const error = searchParams.get('error');
@@ -21,7 +19,7 @@ export default function LoginPage() {
         handleFieldChange,
         handleInputBlur,
         handleSubmit,
-        setGeneralError
+        setLoading
     } = useForm({
         initialValues: {
             email: '',
@@ -29,28 +27,21 @@ export default function LoginPage() {
         },
         validationRules: LOGIN_VALIDATION_RULES,
         onSubmit: async (values) => {
-            await loginWithCredentials(values.email, values.password);
-            navigate('/dashboard', { replace: true });
+            const result = await loginWithCredentials(values.email, values.password);
+            if (result.success) {
+                navigate('/dashboard', { replace: true });
+            }
         }
     });
 
     // Si el usuario ya está autenticado, redirigir
     if(isAuthenticated()){
-        return <Navigate to={'/'} replace />;
+        return <Navigate to={'/dashboard'} replace />;
     }
-
-    // Override para manejar errores específicos de login
-    const handleFormSubmit = async (e: React.FormEvent) => {
-        try {
-            await handleSubmit(e);
-        } catch {
-            setGeneralError('Error al iniciar sesión. Por favor, verifica tus credenciales e intenta de nuevo.');
-        }
-    };
 
     const handleLogin = async (authProvider: string) => {
         try {
-            setSocialLoading(true)
+            setLoading(true)
 
             let auth_url = ''
             let success = false
@@ -69,11 +60,9 @@ export default function LoginPage() {
         } catch (error) {
             console.error('Login error:', error)
         } finally {
-            setSocialLoading(false)
+            setLoading(false)
         }
     }
-
-    const isLoading = loading || socialLoading;
 
     return (
         <div className="bg-pattern h-screen py-32">
@@ -81,7 +70,7 @@ export default function LoginPage() {
                 <h1 className="text-2xl uppercase font-black">Iniciar Sesión</h1>
                 <p>Comienza a elaborar diagramas mientras aprendes</p>
                 
-                <form onSubmit={ handleFormSubmit } className="w-full space-y-4">
+                <form onSubmit={ handleSubmit } className="w-full space-y-4">
                     <FormField 
                         name="email"
                         type="email"
@@ -106,10 +95,10 @@ export default function LoginPage() {
 
                     <button 
                         type="submit" 
-                        disabled={ isLoading }
+                        disabled={ loading }
                         className="w-full bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer font-bold"
                     >
-                        {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+                        {loading ? 'Autenticando...' : 'Iniciar Sesión'}
                     </button>
 
                     <div className="h-2/12 mt-1">
@@ -136,7 +125,7 @@ export default function LoginPage() {
                 
                 <div className="flex flex-col space-y-4 items-center">
 
-                    {isLoading ? <Loader /> :
+                    {loading ? <Loader /> :
                         <>
                         <SocialBtn provider="google" authHandler={handleLogin}/>
                         <SocialBtn provider="github" authHandler={handleLogin}/>
