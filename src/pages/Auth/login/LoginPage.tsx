@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SocialBtn from "../../../components/auth/SocialBtn";
-import "./Login.scss";
+import './LoginPage.scss'
 import Loader from "../../../components/ui/Loader";
 import { getAuthUrl, loginWithCredentials } from "../../../services/authService";
 import { Navigate, useNavigate, useSearchParams } from "react-router";
@@ -10,10 +10,6 @@ import FormField from "../../../components/auth/shared/FormField";
 import { useForm } from "../hooks/useForm";
 
 export default function LoginPage() {
-    if(isAuthenticated()){
-        return <Navigate to={'/'} replace />;
-    }
-
     const [socialLoading, setSocialLoading] = useState(false);
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
@@ -38,11 +34,16 @@ export default function LoginPage() {
         }
     });
 
+    // Si el usuario ya está autenticado, redirigir
+    if(isAuthenticated()){
+        return <Navigate to={'/'} replace />;
+    }
+
     // Override para manejar errores específicos de login
     const handleFormSubmit = async (e: React.FormEvent) => {
         try {
             await handleSubmit(e);
-        } catch (error) {
+        } catch {
             setGeneralError('Error al iniciar sesión. Por favor, verifica tus credenciales e intenta de nuevo.');
         }
     };
