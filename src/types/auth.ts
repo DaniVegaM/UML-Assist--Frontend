@@ -7,7 +7,7 @@ export type AuthResponse = {
   access_token: string;
   refresh_token: string;
   user: UserData;
-  created: boolean;
+  success: boolean;
 };
 
 export type AuthUrlResponse = {

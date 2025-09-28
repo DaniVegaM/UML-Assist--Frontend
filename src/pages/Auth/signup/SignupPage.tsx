@@ -96,7 +96,7 @@ export default function SignupPage() {
         try {
             setLoading(true);
             setGeneralError(''); 
-            await registerWithCredentials(formData.email.value, formData.password.value, formData.password_confirm.value);
+            await registerWithCredentials(formData.email.value, formData.password.value);
 
             navigate('/dashboard', { replace: true });
         } catch (error) {
