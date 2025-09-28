@@ -38,15 +38,16 @@ export const handleCallback = async (provider: string, code: string) => {
       code: code
     });
 
-    const { access_token, refresh_token, user, created } = response.data;
+    const { access_token, refresh_token, user, success } = response.data;
 
     // Guardamos tokens y datos del usuario
     setTokens(access_token, refresh_token);
     setUserData({
-      email: user.email
+      email: user.email,
+      username: user.username
     });
 
-    return { user, created, success: true };
+    return { user, success };
 
   } catch (error) {
     console.error('Error en callback:', error);
@@ -89,5 +90,60 @@ export const getCurrentUser = async () => {
 }
 
 export const logout = async () => {
-  clearStorage(); // Limpiamos tokens y datos del usuario
+  try {
+    const refreshToken = localStorage.getItem('refresh_token');
+
+    if (refreshToken) {
+      await api.post('api/user/auth/logout/', {
+        refresh_token: refreshToken
+      });
+    }
+  } catch (error) {
+    console.error('Error during logout:', error);
+  } finally {
+    clearStorage();
+  }
+}
+
+export const loginWithCredentials = async (email: string, password: string) => {
+  try {
+    const response = await api.post<AuthResponse>('api/user/auth/login/', {
+      email, password
+    });
+
+    const { access_token, refresh_token, user } = response.data;
+    console.log('Login successful for user:', user);
+
+    // Guardamos tokens y datos del usuario
+    setTokens( access_token, refresh_token );
+    setUserData({ email: user.email, username: user.username });
+
+    return { user, success: true };
+
+  } catch (error) {
+    console.error('Error en login: ', error);
+    throw error;
+  }
+}
+
+export const registerWithCredentials = async (email: string, password: string) => {
+  try {
+    const response = await api.post<AuthResponse>('api/user/auth/signup/', {
+      email,
+      password
+    });
+
+    const { access_token, refresh_token, user } = response.data;
+    console.log('Registration successful for user:', user);
+
+    // Guardamos tokens y datos del usuario
+    setTokens(access_token, refresh_token);
+    setUserData({ email: user.email, username: user.username });
+
+    return { user, success: true };
+
+  } catch (error) {
+    console.error('Error en registro:', error);
+    throw error;
+  }
 }

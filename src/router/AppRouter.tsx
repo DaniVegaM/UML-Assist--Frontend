@@ -1,11 +1,11 @@
 import { createBrowserRouter, RouterProvider, redirect } from 'react-router';
-import Login from '../pages/Auth/login/Login';
+import LoginPage from '../pages/Auth/login/LoginPage';
 import { handleCallback } from '../services/authService';
 
 import type { LoaderFunctionArgs } from 'react-router';
+import SignupPage from '../pages/Auth/signup/SignupPage';
 
 const HomePage = () => <div>Home Page</div>;
-const RegisterPage = () => <div>Register Page</div>;
 
 const createAuthCallbackLoader = (provider: 'google' | 'github') => {
   return async ({ request }: LoaderFunctionArgs) => {
@@ -33,11 +33,11 @@ const router = createBrowserRouter([
   },
   {
     path: "/iniciar-sesion",
-    element: <Login />,
+    element: <LoginPage />,
   },
   {
-    path: "/registro",
-    element: <RegisterPage />,
+    path: "/crear-cuenta",
+    element: <SignupPage />,
   },
   {
     path: '/auth/google/callback',

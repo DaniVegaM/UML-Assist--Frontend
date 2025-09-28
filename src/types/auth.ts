@@ -1,12 +1,13 @@
 export type UserData = {
   email: string;
+  username: string;
 };
 
 export type AuthResponse = {
   access_token: string;
   refresh_token: string;
   user: UserData;
-  created: boolean;
+  success: boolean;
 };
 
 export type AuthUrlResponse = {
