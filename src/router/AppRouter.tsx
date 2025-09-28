@@ -1,5 +1,5 @@
 import { createBrowserRouter, RouterProvider, redirect } from 'react-router';
-import Login from '../pages/Auth/login/Login';
+import LoginPage from '../pages/Auth/login/LoginPage';
 import { handleCallback } from '../services/authService';
 
 import type { LoaderFunctionArgs } from 'react-router';
@@ -33,7 +33,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/iniciar-sesion",
-    element: <Login />,
+    element: <LoginPage />,
   },
   {
     path: "/crear-cuenta",

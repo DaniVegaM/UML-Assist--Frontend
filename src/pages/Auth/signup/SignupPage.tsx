@@ -1,10 +1,10 @@
 import { Navigate, useNavigate } from "react-router";
 import { isAuthenticated } from "../../../helpers/auth";
-import { useState } from "react";
-import { REGISTER_VALIDATION_RULES, validateField } from "../../../helpers/validation";
+import { REGISTER_VALIDATION_RULES } from "../../../helpers/validation";
 import { registerWithCredentials } from "../../../services/authService";
 import FormField from "../../../components/auth/shared/FormField";
 import Loader from "../../../components/ui/Loader";
+import { useForm } from "../hooks/useForm";
 
 export default function SignupPage() {
     if (isAuthenticated()) {
@@ -12,97 +12,45 @@ export default function SignupPage() {
     }
 
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [ formData, setFormData ] = useState({
-        email: {
-            value: '',
-            error: ''
-        },
-        password: {
-            value: '',
-            error: ''
-        },
-        password_confirm: {
-            value: '',
-            error: ''
-        },
-    });
-    const [ generalError, setGeneralError ] = useState('');
 
-    const handleFieldChange = (name: string, value: string) => {
-        setFormData(prev => {
-            const fieldKey = name as keyof typeof prev;
-            return {
-                ...prev,
-                [fieldKey]: {
-                    ...prev[fieldKey],
-                    value: value
+    const {
+        formData,
+        loading,
+        generalError,
+        handleFieldChange,
+        handleInputBlur,
+        handleSubmit,
+        setGeneralError
+    } = useForm({
+        initialValues: {
+            email: '',
+            password: '',
+            password_confirm: ''
+        },
+        validationRules: REGISTER_VALIDATION_RULES,
+        customValidations: {
+            password_confirm: (value, formData) => {
+                if (!value) {
+                    return 'Por favor confirma tu contraseña';
                 }
-            };
-        });
-        setGeneralError('');
-    };
-
-    const handleInputBlur = (name: string, value: string, type: string) => {
-        if (REGISTER_VALIDATION_RULES[type]) {
-            const fieldError = validateField(value, REGISTER_VALIDATION_RULES[type]);
-            setFormData(prev => {
-                const fieldKey = name as keyof typeof prev;
-                return {
-                    ...prev,
-                    [fieldKey]: {
-                        ...prev[fieldKey],
-                        error: fieldError
-                    }
-                };
-            });
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        const emailError = validateField(formData.email.value, REGISTER_VALIDATION_RULES.email || {});
-        const passwordError = validateField(formData.password.value, REGISTER_VALIDATION_RULES.password || {});
-        
-        let passwordConfirmError = '';
-        if (!formData.password_confirm.value) {
-            passwordConfirmError = 'Por favor confirma tu contraseña';
-        } else if (formData.password.value !== formData.password_confirm.value) {
-            passwordConfirmError = 'Las contraseñas no coinciden';
-        }
-        
-        setFormData(prev => ({
-            email: {
-                ...prev.email,
-                error: emailError
-            },
-            password: {
-                ...prev.password,
-                error: passwordError
-            },
-            password_confirm: {
-                ...prev.password_confirm,
-                error: passwordConfirmError
+                if (formData.password.value !== value) {
+                    return 'Las contraseñas no coinciden';
+                }
+                return '';
             }
-        }));
-        
-        const hasErrors = emailError || passwordError || passwordConfirmError;
-        
-        if (hasErrors) {
-            return;
-        }
-        
-        try {
-            setLoading(true);
-            setGeneralError(''); 
-            await registerWithCredentials(formData.email.value, formData.password.value);
-
+        },
+        onSubmit: async (values) => {
+            await registerWithCredentials(values.email, values.password);
             navigate('/dashboard', { replace: true });
+        }
+    });
+
+    // Override para manejar errores específicos de registro
+    const handleFormSubmit = async (e: React.FormEvent) => {
+        try {
+            await handleSubmit(e);
         } catch (error) {
             setGeneralError('Error al crear la cuenta. Por favor, intenta de nuevo.');
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -112,7 +60,7 @@ export default function SignupPage() {
                 <h1 className="text-2xl uppercase font-black">Crear una cuenta</h1>
 
                 <form
-                    onSubmit={ handleSubmit } 
+                    onSubmit={ handleFormSubmit } 
                     className="w-full space-y-4"
                 >
                     <FormField
@@ -156,7 +104,7 @@ export default function SignupPage() {
                         {loading ? 'Creando...' : 'Crear Cuenta'}
                     </button>
 
-                    <div className="h-4 mt-1">
+                    <div className="h-2/12 mt-1">
                         {generalError && (
                             <p className="text-red-500 text-sm">{ generalError }</p>
                         )}
