@@ -65,7 +65,7 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="bg-pattern h-screen py-32">
+        <div className="bg-pattern py-32">
             <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
                 <h1 className="text-2xl uppercase font-black">Iniciar Sesión</h1>
                 <p>Comienza a elaborar diagramas mientras aprendes</p>

@@ -46,7 +46,7 @@ export default function SignupPage() {
 
 
     return (
-        <div className="bg-pattern h-screen py-32">
+        <div className="bg-pattern py-32">
             <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
                 <h1 className="text-2xl uppercase font-black">Crear una cuenta</h1>
 
