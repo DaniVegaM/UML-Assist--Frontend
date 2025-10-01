@@ -1,8 +1,7 @@
 import SocialBtn from "../../../components/auth/SocialBtn";
-import './LoginPage.scss'
 import Loader from "../../../components/ui/Loader";
 import { getAuthUrl, loginWithCredentials } from "../../../services/authService";
-import { Navigate, useNavigate, useSearchParams } from "react-router";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { isAuthenticated } from "../../../helpers/auth";
 import { LOGIN_VALIDATION_RULES } from "../../../helpers/validation";
 import FormField from "../../../components/auth/shared/FormField";
@@ -65,10 +64,9 @@ export default function LoginPage() {
     }
 
     return (
-        <div className="bg-pattern py-32">
+        <>
             <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
                 <h1 className="text-2xl uppercase font-black">Iniciar Sesión</h1>
-                <p>Comienza a elaborar diagramas mientras aprendes</p>
                 
                 <form onSubmit={ handleSubmit } className="w-full space-y-4">
                     <FormField 
@@ -108,12 +106,12 @@ export default function LoginPage() {
                     </div>
 
                     <div className="flex justify-between items-center w-full text-sm">
-                        <a href="/crear-cuenta" className="text-sky-600 hover:text-sky-800 hover:underline">
+                        <Link to="/crear-cuenta" className="text-sky-600 hover:text-sky-800 hover:underline">
                             ¿No tienes cuenta? Crea una
-                        </a>
-                        <a href="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
+                        </Link>
+                        <Link to="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
                             ¿Olvidaste tu contraseña?
-                        </a>
+                        </Link>
                     </div>
 
                 </form>
@@ -135,6 +133,6 @@ export default function LoginPage() {
                     {error && <p className="text-red-500">Error de autenticación. Por favor, intenta de nuevo.</p>}
                 </div>
             </section>
-        </div>
+        </>
     )
 }
