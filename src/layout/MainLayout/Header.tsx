@@ -1,13 +1,16 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
-import { Link } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 import { useTheme } from '../../hooks/useTheme';
 import './Header.css';
+import { isAuthenticated, clearStorage } from '../../helpers/auth';
 
 export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
+  const navigate = useNavigate();
+  const logedIn = isAuthenticated();
 
   return (
-    <header className="bg-white dark:bg-zinc-900 shadow-md shadow-zinc-400 dark:shadow-zinc-800 md:rounded-4xl mb-4 md:my-4 md:max-w-11/12 md:mx-auto" >
+    <header className="bg-white dark:bg-zinc-800 shadow-md shadow-zinc-700 dark:shadow-zinc-700 md:rounded-4xl mb-4 md:my-4 md:max-w-11/12 md:mx-auto" >
       <Disclosure as="nav">
         {({ open }) => (
           <>
@@ -41,10 +44,10 @@ export default function Header() {
 
                 <div className="hidden sm:flex sm:items-center gap-2">
                   <label htmlFor="switch" className="toggle">
-                    <input 
-                      type="checkbox" 
-                      className="input" 
-                      id="switch" 
+                    <input
+                      type="checkbox"
+                      className="input"
+                      id="switch"
                       checked={!isDarkMode}
                       onChange={toggleTheme}
                     />
@@ -79,18 +82,27 @@ export default function Header() {
                     </div>
                   </label>
 
-                  <Link
-                    to="/iniciar-sesion"
-                    className="text-gray-700 hover:text-sky-600 font-bold dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                  >
-                    Iniciar Sesión
-                  </Link>
+                  {logedIn ?
+                    <button 
+                    className="cursor-pointer text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    onClick={() => { clearStorage(); navigate('/', { replace: true }); }}
+                    >
+                      Cerrar Sesión
+                    </button>
+                    :
+                    <Link
+                      to="/iniciar-sesion"
+                      className="text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    >
+                      Iniciar Sesión
+                    </Link>
+                  }
 
                   <Link
                     to="/crear-cuenta"
                     className="uppercase bg-sky-600 text-white hover:bg-sky-700 px-4 py-2 rounded-4xl text-sm font-bold transition-colors shadow-sm"
                   >
-                    Crear Cuenta
+                    {logedIn ? 'Mis diagramas' : 'Crear Cuenta'}
                   </Link>
                 </div>
 
@@ -145,16 +157,16 @@ export default function Header() {
                 aria-hidden="true"
               />
 
-              <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-zinc-900 shadow-2xl transform translate-x-0 transition-all duration-300 ease-out data-[closed]:translate-x-full data-[enter]:translate-x-0 data-[leave]:translate-x-full">
+              <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-zinc-800 shadow-2xl transform translate-x-0 transition-all duration-300 ease-out data-[closed]:translate-x-full data-[enter]:translate-x-0 data-[leave]:translate-x-full">
                 <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
-                  <span className="text-lg font-semibold text-gray-900">Menú</span>
+                  <span className="text-lg font-semibold text-gray-900 dark:text-white">Menú</span>
 
                   <div className="flex items-center gap-3">
                     <label htmlFor="switch-mobile" className="toggle">
-                      <input 
-                        type="checkbox" 
-                        className="input" 
-                        id="switch-mobile" 
+                      <input
+                        type="checkbox"
+                        className="input"
+                        id="switch-mobile"
                         checked={!isDarkMode}
                         onChange={toggleTheme}
                       />

@@ -65,7 +65,7 @@ export default function LoginPage() {
 
     return (
         <>
-            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-900 bg-white p-12 rounded-lg shadow-md">
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md">
                 <h1 className="text-2xl uppercase font-black dark:text-white">Iniciar Sesión</h1>
                 
                 <form onSubmit={ handleSubmit } className="w-full space-y-4">
@@ -118,7 +118,7 @@ export default function LoginPage() {
 
                 <div className="w-full text-center relative my-6">
                     <hr className="dark:text-white"/>
-                    <p className="bg-white dark:bg-zinc-900 dark:text-white px-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">O</p>
+                    <p className="bg-white dark:bg-zinc-800 dark:text-white px-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">O</p>
                 </div>
                 
                 <div className="flex flex-col space-y-4 items-center">

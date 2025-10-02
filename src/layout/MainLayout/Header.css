@@ -59,10 +59,10 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
+  border: 1px solid #0084D1;
   display: grid;
   place-items: center;
   cursor: pointer;
-  box-shadow: 0 0 50px 20px rgba(0, 0, 0, 0.1);
   line-height: 1;
   transition: background-color 500ms;
 }
@@ -85,7 +85,7 @@
 
 .icon--sun {
   transform: scale(0);
-  color: #fbbf24;
+  color: #0084D1;
 }
 
 #switch:checked + .icon--moon,
