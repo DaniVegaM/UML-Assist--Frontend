@@ -47,9 +47,9 @@ export default function SignupPage() {
 
     return (
         <>
-            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
-                <h1 className="text-2xl uppercase font-black">Crear cuenta</h1>
-                <p className="text-center">Comienza a elaborar diagramas mientras aprendes</p>
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white dark:bg-zinc-900 p-12 rounded-lg shadow-md">
+                <h1 className="text-2xl uppercase font-black dark:text-white">Crear cuenta</h1>
+                <p className="text-center dark:text-white">Comienza a elaborar diagramas mientras aprendes</p>
 
                 <form
                     onSubmit={handleSubmit}
@@ -107,7 +107,7 @@ export default function SignupPage() {
                     <Link to="/iniciar-sesion" className="text-sky-600 hover:text-sky-800 hover:underline">
                         ¿Ya tienes cuenta? Inicia sesión
                     </Link>
-                    <Link to="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
+                    <Link to="/recuperar-contrasena" className="text-gray-600 dark:text-white dark:hover:text-sky-600 hover:text-gray-800 hover:underline">
                         ¿Olvidaste tu contraseña?
                     </Link>
                 </div>

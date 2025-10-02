@@ -65,8 +65,8 @@ export default function LoginPage() {
 
     return (
         <>
-            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
-                <h1 className="text-2xl uppercase font-black">Iniciar Sesión</h1>
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-900 bg-white p-12 rounded-lg shadow-md">
+                <h1 className="text-2xl uppercase font-black dark:text-white">Iniciar Sesión</h1>
                 
                 <form onSubmit={ handleSubmit } className="w-full space-y-4">
                     <FormField 
@@ -101,7 +101,7 @@ export default function LoginPage() {
 
                     <div className="h-2/12 mt-1">
                         {generalError && (
-                            <p className="text-red-500 text-sm">{ generalError }</p>
+                            <p className="text-red-400 text-sm">{ generalError }</p>
                         )}
                     </div>
 
@@ -109,7 +109,7 @@ export default function LoginPage() {
                         <Link to="/crear-cuenta" className="text-sky-600 hover:text-sky-800 hover:underline">
                             ¿No tienes cuenta? Crea una
                         </Link>
-                        <Link to="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
+                        <Link to="/recuperar-contrasena" className="text-gray-600 dark:text-white hover:text-gray-800 dark:hover:text-sky-600 hover:underline">
                             ¿Olvidaste tu contraseña?
                         </Link>
                     </div>
@@ -117,8 +117,8 @@ export default function LoginPage() {
                 </form>
 
                 <div className="w-full text-center relative my-6">
-                    <hr />
-                    <p className="bg-white px-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">O</p>
+                    <hr className="dark:text-white"/>
+                    <p className="bg-white dark:bg-zinc-900 dark:text-white px-2 absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">O</p>
                 </div>
                 
                 <div className="flex flex-col space-y-4 items-center">

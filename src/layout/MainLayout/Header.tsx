@@ -1,10 +1,13 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { Link } from 'react-router';
+import { useTheme } from '../../hooks/useTheme';
 import './Header.css';
 
 export default function Header() {
+  const { isDarkMode, toggleTheme } = useTheme();
+
   return (
-    <header className="bg-white shadow-md shadow-zinc-400 md:rounded-4xl mb-4 md:my-4 md:max-w-11/12 md:mx-auto" >
+    <header className="bg-white dark:bg-zinc-900 shadow-md shadow-zinc-400 dark:shadow-zinc-800 md:rounded-4xl mb-4 md:my-4 md:max-w-11/12 md:mx-auto" >
       <Disclosure as="nav">
         {({ open }) => (
           <>
@@ -30,7 +33,7 @@ export default function Header() {
                       <line x1="6.5" y1="10" x2="6.5" y2="14" />
                       <line x1="17.5" y1="10" x2="17.5" y2="14" />
                     </svg>
-                    <span className="text-xl font-bold text-gray-900">
+                    <span className="text-xl font-bold text-gray-900 dark:text-white">
                       UML Assist
                     </span>
                   </Link>
@@ -38,7 +41,13 @@ export default function Header() {
 
                 <div className="hidden sm:flex sm:items-center gap-2">
                   <label htmlFor="switch" className="toggle">
-                    <input type="checkbox" className="input" id="switch" defaultChecked />
+                    <input 
+                      type="checkbox" 
+                      className="input" 
+                      id="switch" 
+                      checked={!isDarkMode}
+                      onChange={toggleTheme}
+                    />
                     <div className="icon icon--moon">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
@@ -72,7 +81,7 @@ export default function Header() {
 
                   <Link
                     to="/iniciar-sesion"
-                    className="text-gray-700 hover:text-sky-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="text-gray-700 hover:text-sky-600 font-bold dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Iniciar Sesión
                   </Link>
@@ -86,7 +95,7 @@ export default function Header() {
                 </div>
 
                 <div className="flex items-center sm:hidden">
-                  <DisclosureButton className="cursor-pointer inline-flex items-center justify-center rounded-md p-2 text-gray-700 hover:bg-gray-100 hover:text-sky-600 transition-colors">
+                  <DisclosureButton className="cursor-pointer inline-flex items-center justify-center rounded-md p-2 text-gray-700 dark:text-white hover:bg-gray-100 hover:text-sky-600 transition-colors">
                     <span className="sr-only">Abrir menú principal</span>
                     {open ? (
                       <svg
@@ -136,13 +145,19 @@ export default function Header() {
                 aria-hidden="true"
               />
 
-              <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white shadow-2xl transform translate-x-0 transition-all duration-300 ease-out data-[closed]:translate-x-full data-[enter]:translate-x-0 data-[leave]:translate-x-full">
+              <div className="fixed inset-y-0 right-0 w-full max-w-xs bg-white dark:bg-zinc-900 shadow-2xl transform translate-x-0 transition-all duration-300 ease-out data-[closed]:translate-x-full data-[enter]:translate-x-0 data-[leave]:translate-x-full">
                 <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200">
                   <span className="text-lg font-semibold text-gray-900">Menú</span>
 
                   <div className="flex items-center gap-3">
                     <label htmlFor="switch-mobile" className="toggle">
-                      <input type="checkbox" className="input" id="switch-mobile" defaultChecked />
+                      <input 
+                        type="checkbox" 
+                        className="input" 
+                        id="switch-mobile" 
+                        checked={!isDarkMode}
+                        onChange={toggleTheme}
+                      />
                       <div className="icon icon--moon">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
@@ -198,7 +213,7 @@ export default function Header() {
                   <DisclosureButton
                     as={Link}
                     to="/iniciar-sesion"
-                    className="block w-full text-left px-4 py-3 rounded-lg text-base font-medium text-gray-700 hover:bg-gray-100 hover:text-sky-600 transition-colors"
+                    className="block w-full text-left px-4 py-3 rounded-lg text-base font-medium text-gray-700 dark:text-white dark:hover:text-sky-600 hover:bg-gray-100 hover:text-sky-600 transition-colors"
                   >
                     Iniciar Sesión
                   </DisclosureButton>
@@ -212,7 +227,7 @@ export default function Header() {
                 </div>
 
                 <div className="absolute bottom-0 left-0 right-0 px-4 py-4 border-t border-gray-200">
-                  <p className="text-sm text-gray-500 text-center">
+                  <p className="text-sm text-gray-500 dark:text-white text-center">
                     UML Assist © 2025
                   </p>
                 </div>
