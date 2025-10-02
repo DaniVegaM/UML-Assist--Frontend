@@ -1,4 +1,4 @@
-import { Navigate, useNavigate } from "react-router";
+import { Link, Navigate, useNavigate } from "react-router";
 import { isAuthenticated } from "../../../helpers/auth";
 import { REGISTER_VALIDATION_RULES } from "../../../helpers/validation";
 import { registerWithCredentials } from "../../../services/authService";
@@ -46,9 +46,10 @@ export default function SignupPage() {
 
 
     return (
-        <div className="bg-pattern py-32">
-            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white p-12 rounded-lg shadow-md">
-                <h1 className="text-2xl uppercase font-black">Crear una cuenta</h1>
+        <>
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white dark:bg-zinc-800 p-12 rounded-lg shadow-md">
+                <h1 className="text-2xl uppercase font-black dark:text-white">Crear cuenta</h1>
+                <p className="text-center dark:text-white">Comienza a elaborar diagramas mientras aprendes</p>
 
                 <form
                     onSubmit={handleSubmit}
@@ -100,20 +101,18 @@ export default function SignupPage() {
                             <p className="text-red-500 text-sm">{generalError}</p>
                         )}
                     </div>
-
-                    {/* Loader visual solo en el botón, no duplicado aquí */}
                 </form>
 
                 <div className="flex justify-between items-center w-full text-sm">
-                    <a href="/iniciar-sesion" className="text-sky-600 hover:text-sky-800 hover:underline">
+                    <Link to="/iniciar-sesion" className="text-sky-600 hover:text-sky-800 hover:underline">
                         ¿Ya tienes cuenta? Inicia sesión
-                    </a>
-                    <a href="/recuperar-contrasena" className="text-gray-600 hover:text-gray-800 hover:underline">
+                    </Link>
+                    <Link to="/recuperar-contrasena" className="text-gray-600 dark:text-white dark:hover:text-sky-600 hover:text-gray-800 hover:underline">
                         ¿Olvidaste tu contraseña?
-                    </a>
+                    </Link>
                 </div>
 
             </section>
-        </div>
+        </>
     );
 }

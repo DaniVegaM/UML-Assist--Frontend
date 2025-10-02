@@ -4,6 +4,7 @@ import { handleCallback } from '../services/authService';
 
 import type { LoaderFunctionArgs } from 'react-router';
 import SignupPage from '../pages/Auth/signup/SignupPage';
+import MainLayout from '../layout/MainLayout/MainLayout';
 
 const HomePage = () => <div>Home Page</div>;
 
@@ -11,11 +12,11 @@ const createAuthCallbackLoader = (provider: 'google' | 'github') => {
   return async ({ request }: LoaderFunctionArgs) => {
     const url = new URL(request.url);
     const code = url.searchParams.get("code");
-    
+
     if (!code) {
       return redirect("/iniciar-sesion?error=no_code");
     }
-    
+
     try {
       await handleCallback(provider, code);
       return redirect("/");
@@ -28,16 +29,21 @@ const createAuthCallbackLoader = (provider: 'google' | 'github') => {
 
 const router = createBrowserRouter([
   {
-    path: "/",
-    element: <HomePage />,
-  },
-  {
-    path: "/iniciar-sesion",
-    element: <LoginPage />,
-  },
-  {
-    path: "/crear-cuenta",
-    element: <SignupPage />,
+    element: <MainLayout />,
+    children: [
+      {
+        path: "/",
+        element: <HomePage />,
+      },
+      {
+        path: "/iniciar-sesion",
+        element: <LoginPage />,
+      },
+      {
+        path: "/crear-cuenta",
+        element: <SignupPage />,
+      },
+    ]
   },
   {
     path: '/auth/google/callback',

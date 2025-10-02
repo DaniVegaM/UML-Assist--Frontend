@@ -1,0 +1,11 @@
+html {
+    background-color: #F3F3F3;
+    background-image: radial-gradient(#919191 1.25px, #F3F3F3 1.25px);
+    background-size: 25px 25px;
+    transition: background-color 0.3s ease;
+}
+
+html.dark {
+    background-color: #18181B;
+    background-image: radial-gradient(#26262c 1.25px, #18181B 1.25px);
+}
