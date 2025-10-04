@@ -34,16 +34,16 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <HomePage />,
-      },
-      {
-        path: "/iniciar-sesion",
-        element: <LoginPage />,
-      },
-      {
-        path: "/crear-cuenta",
-        element: <SignupPage />,
-      },
+      }
     ]
+  },
+  {
+    path: "/iniciar-sesion",
+    element: <LoginPage />,
+  },
+  {
+    path: "/crear-cuenta",
+    element: <SignupPage />,
   },
   {
     path: '/auth/google/callback',
