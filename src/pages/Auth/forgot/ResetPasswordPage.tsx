@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams, Link, Navigate } from "react-router";
+import { useSearchParams, Link, Navigate } from "react-router-dom";
 import FormField from "../../../components/auth/shared/FormField";
 import { confirmPasswordReset } from "../../../services/passwordService";
 
@@ -46,12 +46,8 @@ export default function ResetPasswordPage() {
       setGeneralError(null);
       await confirmPasswordReset(uid, token, p1, p2);
       setOk(true);
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message :
-        typeof err === "string" ? err :
-        "No se pudo cambiar la contraseña.";
-      setGeneralError(message);
+    } catch (error: any) {
+      setGeneralError(error?.message || "No se pudo cambiar la contraseña.");
     } finally {
       setLoading(false);
     }
@@ -59,15 +55,11 @@ export default function ResetPasswordPage() {
 
   return (
     <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md">
-      <h1 className="text-2xl uppercase font-black dark:text-white">
-        Crear nueva contraseña
-      </h1>
+      <h1 className="text-2xl uppercase font-black dark:text-white">Crear nueva contraseña</h1>
 
       {ok ? (
         <div className="w-full mt-2">
-          <p className="text-sm dark:text-white">
-            ¡Listo! Tu contraseña se cambió correctamente.
-          </p>
+          <p className="text-sm dark:text-white">¡Listo! Tu contraseña se cambió correctamente.</p>
           <Link
             to="/iniciar-sesion"
             className="inline-block mt-4 text-sky-600 hover:text-sky-800 hover:underline dark:text-sky-400"
@@ -83,8 +75,8 @@ export default function ResetPasswordPage() {
             name="password"
             placeholder="********"
             value={p1}
-            onChange={(e) => setP1(e.target.value)}
-            onBlur={() => setP1Err(validateP1(p1))}
+            onChange={(_, v) => setP1(v)}
+            onBlur={(_, v) => setP1Err(validateP1(v))}
             error={p1Err ?? undefined}
           />
 
@@ -94,8 +86,8 @@ export default function ResetPasswordPage() {
             name="passwordConfirm"
             placeholder="********"
             value={p2}
-            onChange={(e) => setP2(e.target.value)}
-            onBlur={() => setP2Err(validateP2(p2))}
+            onChange={(_, v) => setP2(v)}
+            onBlur={(_, v) => setP2Err(validateP2(v))}
             error={p2Err ?? undefined}
           />
 
@@ -107,9 +99,7 @@ export default function ResetPasswordPage() {
             {loading ? "Guardando…" : "Cambiar contraseña"}
           </button>
 
-          {generalError && (
-            <p className="text-red-400 text-sm">{generalError}</p>
-          )}
+          {generalError && <p className="text-red-400 text-sm">{generalError}</p>}
         </form>
       )}
     </section>

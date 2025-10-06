@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { requestPasswordReset } from "../../../services/passwordService";
 import FormField from "../../../components/auth/shared/FormField";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [emailError, setEmailError] = useState<string | null>(null); //para mostrar error en el FormField
+  const [emailError, setEmailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState<string | null>(null); // error general (server)
+  const [error, setError] = useState<string | null>(null);
 
   const validateEmail = (v: string) => {
     if (!v.trim()) return "El correo es obligatorio";
@@ -21,7 +21,6 @@ export default function ForgotPasswordPage() {
     setLoading(true);
     setError(null);
 
-    // valida como en LoginPage (para que se vea igual el error bajo el input)
     const eErr = validateEmail(email);
     setEmailError(eErr);
     if (eErr) { setLoading(false); return; }
@@ -32,7 +31,7 @@ export default function ForgotPasswordPage() {
     } catch (err: unknown) {
       const message =
         err instanceof Error ? err.message : typeof err === "string" ? err : "No se pudo enviar el correo.";
-      setError(message); // error general
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -56,15 +55,14 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <form onSubmit={onSubmit} className="w-full space-y-4">
-        
           <FormField
             name="email"
             type="email"
             label="Correo electrónico"
             placeholder="ejemplo@correo.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            onBlur={() => setEmailError(validateEmail(email))}
+            onChange={(_, v) => setEmail(v)}
+            onBlur={(_, v) => setEmailError(validateEmail(v))}
             error={emailError ?? undefined}
           />
 
