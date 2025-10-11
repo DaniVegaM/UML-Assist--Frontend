@@ -1,5 +1,5 @@
 import { Toaster, toast } from "react-hot-toast";
-import Icon from "../Icons";
+import Icon from "./Icons";
 
 export type NotificationType = "success" | "error" | "info" | "warning";
 
@@ -24,15 +24,15 @@ export const notify = (
   toast(
     (t) => (
       <div
-        className={`flex flex-col gap-1 p-3 border-l-4 rounded shadow-md ${colorClasses}`}
+        className={`flex flex-col gap-1 p-3 border-l-8 rounded shadow-md ${colorClasses} `}
       >
         <div className="flex justify-between items-center">
           <strong>{title}</strong>
           <button
-            className="text-red-500 hover:text-red-800 p-1"
+            className="text-red-500 hover:text-red-800 p-1 hover:bg-red-100 hover:shadow-lg transition rounded-xl"
             onClick={() => toast.dismiss(t.id)}
           >
-            <Icon name="trash" className="w-4 h-4 text-sky-950" />
+            <Icon name="trash" className="w-4 h-4 text-red-800" />
           </button>
         </div>
         {description && (
@@ -56,46 +56,41 @@ export async function notifyPromise<T>(
   },
   type: NotificationType = "info"
 ): Promise<T> {
-  const colorClasses =
-    type === "success"
-      ? "border-sky-500 text-sky-700"
-      : type === "error"
-      ? "border-zinc-500 text-zinc-700"
-      : type === "info"
-      ? "border-zinc-500 text-zinc-700"
-      : "border-yellow-400 text-yellow-800";
+  // Loading siempre amarillo
+  const loadingColorClasses = "border-yellow-400 text-yellow-800";
 
   // Mostrar toast de loading
   const toastId = toast(
     (t) => (
       <div
-        className={`flex flex-col gap-1 p-3 border-l-4 rounded shadow-md ${colorClasses}`}
+        className={`flex flex-col gap-1 p-3 border-l-8 rounded shadow-md ${loadingColorClasses}`}
       >
         <div className="flex justify-between items-center">
           <strong>{messages.loading}</strong>
           <button
-            className="text-red-500 hover:text-red-800 p-1"
+            className="text-red-500 hover:text-red-800 p-1 hover:bg-red-100 hover:shadow-lg transition rounded-xl"
             onClick={() => toast.dismiss(t.id)}
           >
-            <Icon name="trash" className="w-4 h-4 text-sky-950" />
+            <Icon name="trash" className="w-4 h-4 text-red-800" />
           </button>
         </div>
-        <span className="text-black text-sm">&nbsp;</span>{" "}
-        {/* Para mantener la altura */}
+        <span className="text-black text-sm">&nbsp;</span>
       </div>
     ),
-    { duration: Infinity } // sigue siendo infinito mientras dure la promesa
+    { duration: Infinity }
   );
 
   try {
     const result = await promise;
 
     toast.dismiss(toastId);
-    notify(type === "error" ? "success" : type, messages.success);
+    // Success azul como en notify
+    notify("success", messages.success);
 
     return result;
   } catch (error: any) {
     toast.dismiss(toastId);
+    // Error gris como en notify
     notify("error", messages.error, error?.message);
     throw error;
   }
