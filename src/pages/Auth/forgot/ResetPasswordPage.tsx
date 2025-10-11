@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams, Link, Navigate } from "react-router-dom";
+import { useSearchParams, Link, Navigate } from "react-router";
 import FormField from "../../../components/auth/shared/FormField";
 import { confirmPasswordReset } from "../../../services/passwordService";
 

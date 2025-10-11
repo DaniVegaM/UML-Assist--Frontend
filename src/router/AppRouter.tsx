@@ -7,6 +7,8 @@ import SignupPage from '../pages/Auth/signup/SignupPage';
 import MainLayout from '../layout/MainLayout/MainLayout';
 import ForgotPasswordPage from '../pages/Auth/forgot/ForgotPasswordPage';
 import ResetPasswordPage  from '../pages/Auth/forgot/ResetPasswordPage';
+import BareLayout from "../layout/BareLayout";
+
 
 const HomePage = () => <div>Home Page</div>;
 
@@ -45,15 +47,20 @@ const router = createBrowserRouter([
         path: "/crear-cuenta",
         element: <SignupPage />,
       },
+    ]
+  },
+  {
+    element: <BareLayout />,
+    children: [
       { 
         path: "/recuperar-contrasena", 
         element: <ForgotPasswordPage /> 
       },
       { 
-        path: "/restablecer-contrasena", 
+        path: "/restablecer-contrasena",
         element: <ResetPasswordPage /> 
       },
-    ]
+    ],
   },
   {
     path: '/auth/google/callback',

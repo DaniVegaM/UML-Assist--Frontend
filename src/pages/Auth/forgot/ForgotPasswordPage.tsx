@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { requestPasswordReset } from "../../../services/passwordService";
 import FormField from "../../../components/auth/shared/FormField";
 
@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       {sent ? (
         <div className="w-full mt-2">
           <p className="text-sm dark:text-white">
-            Si el correo existe, se envió un enlace de restablecimiento. Revisa tu bandeja.
+            Si el correo existe, se envió un correo para recuperar la contraseña. Revisa tu bandeja.
           </p>
           <Link
             to="/iniciar-sesion"
@@ -71,7 +71,7 @@ export default function ForgotPasswordPage() {
             disabled={loading}
             className="w-full bg-sky-600 text-white py-2 px-4 rounded-lg hover:bg-sky-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed cursor-pointer font-bold"
           >
-            {loading ? "Enviando…" : "Enviar enlace"}
+            {loading ? "Procesando…" : "Recuperar contraseña"}
           </button>
 
           {error && <p className="text-red-400 text-sm">{error}</p>}
