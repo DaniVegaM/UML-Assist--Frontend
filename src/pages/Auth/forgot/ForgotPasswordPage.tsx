@@ -44,7 +44,7 @@ export default function ForgotPasswordPage() {
       {sent ? (
         <div className="w-full mt-2">
           <p className="text-sm dark:text-white">
-            Si el correo existe, se envió un correo para recuperar la contraseña. Revisa tu bandeja.
+            Si el correo existe, se envió un correo para recuperar la contraseña.
           </p>
           <Link
             to="/iniciar-sesion"
