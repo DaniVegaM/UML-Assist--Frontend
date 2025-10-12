@@ -17,6 +17,8 @@ export default function ChangePasswordPage() {
     handleInputBlur,
     handleSubmit,
     setLoading,
+    setFieldError,
+    setGeneralError,
   } = useForm({
     initialValues: {
       currentPassword: "",
@@ -26,13 +28,13 @@ export default function ChangePasswordPage() {
     validationRules: CHANGE_PASSWORD_VALIDATION,
     onSubmit: async (values) => {
       if (values.newPassword !== values.confirmPassword) {
-        alert("Las contraseñas no coinciden");
+        setFieldError("confirmPassword", "Las contraseñas no coinciden");
         return;
       }
 
       const token = getAccessToken();
       if (!token) {
-        alert("No estás autenticado");
+        setGeneralError("No estás autenticado");
         navigate("/login");
         return;
       }
@@ -44,16 +46,22 @@ export default function ChangePasswordPage() {
           confirm_password: values.confirmPassword,
         });
 
-        alert(
+        setGeneralError(
           "Contraseña cambiada exitosamente. Debes iniciar sesión de nuevo."
         );
         clearStorage();
         navigate("/");
       } catch (error: any) {
         console.error(error);
-        alert(
-          error.message || "Ocurrió un error al intentar cambiar la contraseña"
-        );
+        // Puedes mostrar errores específicos de la API debajo del campo correspondiente
+        if (error?.current_password) {
+          setFieldError("currentPassword", error.current_password);
+        } else {
+          setGeneralError(
+            error.message ||
+              "Ocurrió un error al intentar cambiar la contraseña"
+          );
+        }
       } finally {
         setLoading(false);
       }
