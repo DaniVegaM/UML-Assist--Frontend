@@ -1,16 +1,22 @@
 import FormField from "../../../components/auth/shared/FormField";
 import Loader from "../../../components/ui/Loader";
 import { useForm } from "../hooks/useForm";
-import { CHANGE_PASSWORD_VALIDATION } from "../../../helpers/validation"; // usar validaciones existentes
-import { Link } from "react-router";
+import { CHANGE_PASSWORD_VALIDATION } from "../../../helpers/validation";
+import { Link, useNavigate } from "react-router";
+import { getAccessToken, clearStorage } from "../../../helpers/auth";
+import { changePassword } from "../../../services/authService";
 
 export default function ChangePasswordPage() {
+  const navigate = useNavigate();
+
   const {
     formData,
     loading,
+    generalError,
     handleFieldChange,
     handleInputBlur,
     handleSubmit,
+    setLoading,
   } = useForm({
     initialValues: {
       currentPassword: "",
@@ -24,17 +30,39 @@ export default function ChangePasswordPage() {
         return;
       }
 
-      // Aquí iría la lógica para enviar los datos al backend
-      console.log("Cambiar contraseña con datos:", values);
+      const token = getAccessToken();
+      if (!token) {
+        alert("No estás autenticado");
+        navigate("/login");
+        return;
+      }
+
+      try {
+        await changePassword({
+          current_password: values.currentPassword,
+          new_password: values.newPassword,
+          confirm_password: values.confirmPassword,
+        });
+
+        alert(
+          "Contraseña cambiada exitosamente. Debes iniciar sesión de nuevo."
+        );
+        clearStorage();
+        navigate("/");
+      } catch (error: any) {
+        console.error(error);
+        alert(
+          error.message || "Ocurrió un error al intentar cambiar la contraseña"
+        );
+      } finally {
+        setLoading(false);
+      }
     },
   });
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dots dark:bg-dots-dark">
-      <section className="flex flex-col gap-6 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-8 rounded-lg shadow-md my-8">
-        <div className=""></div>
-
-        {/* Logo */}
+      <section className="flex flex-col gap-6 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-8 rounded-lg shadow-md">
         <Link to="/" className="flex items-center space-x-2 mb-4">
           <svg
             className="h-8 w-8 text-sky-600"
@@ -104,6 +132,10 @@ export default function ChangePasswordPage() {
           >
             {loading ? "Procesando..." : "Cambiar Contraseña"}
           </button>
+
+          {generalError && (
+            <p className="text-red-500 text-sm">{generalError}</p>
+          )}
         </form>
 
         {loading && <Loader />}
