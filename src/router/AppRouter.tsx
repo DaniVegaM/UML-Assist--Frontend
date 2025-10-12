@@ -1,16 +1,17 @@
-import { createBrowserRouter, RouterProvider, redirect } from 'react-router';
-import LoginPage from '../pages/Auth/login/LoginPage';
-import { handleCallback } from '../services/authService';
+import { createBrowserRouter, RouterProvider, redirect } from "react-router";
+import LoginPage from "../pages/Auth/login/LoginPage";
+import { handleCallback } from "../services/authService";
+import ChangePage from "../pages/Auth/changepassword/changePage";
 
-import type { LoaderFunctionArgs } from 'react-router';
-import SignupPage from '../pages/Auth/signup/SignupPage';
-import MainLayout from '../layout/MainLayout/MainLayout';
-import ResetPasswordPage from '../pages/Auth/forgot/ResetPasswordPage';
-import ForgotPasswordPage from '../pages/Auth/forgot/ForgotPasswordPage';
+import type { LoaderFunctionArgs } from "react-router";
+import SignupPage from "../pages/Auth/signup/SignupPage";
+import MainLayout from "../layout/MainLayout/MainLayout";
+import ResetPasswordPage from "../pages/Auth/forgot/ResetPasswordPage";
+import ForgotPasswordPage from "../pages/Auth/forgot/ForgotPasswordPage";
 
 const HomePage = () => <div>Home Page</div>;
 
-const createAuthCallbackLoader = (provider: 'google' | 'github') => {
+const createAuthCallbackLoader = (provider: "google" | "github") => {
   return async ({ request }: LoaderFunctionArgs) => {
     const url = new URL(request.url);
     const code = url.searchParams.get("code");
@@ -36,8 +37,8 @@ const router = createBrowserRouter([
       {
         path: "/",
         element: <HomePage />,
-      }
-    ]
+      },
+    ],
   },
   {
     path: "/iniciar-sesion",
@@ -48,21 +49,25 @@ const router = createBrowserRouter([
     element: <SignupPage />,
   },
   {
-    path: '/auth/google/callback',
-    loader: createAuthCallbackLoader('google')
+    path: "/auth/google/callback",
+    loader: createAuthCallbackLoader("google"),
   },
   {
-    path: '/auth/github/callback',
-    loader: createAuthCallbackLoader('github')
+    path: "/auth/github/callback",
+    loader: createAuthCallbackLoader("github"),
   },
   {
     path: "/recuperar-contrasena",
-    element: <ForgotPasswordPage />
+    element: <ForgotPasswordPage />,
   },
   {
     path: "/restablecer-contrasena",
-    element: <ResetPasswordPage />
-  }
+    element: <ResetPasswordPage />,
+  },
+  {
+    path: "/cambiar-contrasena",
+    element: <ChangePage />,
+  },
 ]);
 
 export const AppRouter = () => {
