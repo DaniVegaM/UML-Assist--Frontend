@@ -54,7 +54,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md">
+    <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md my-8">
       <h1 className="text-2xl uppercase font-black dark:text-white">Crear nueva contraseña</h1>
 
       {ok ? (
