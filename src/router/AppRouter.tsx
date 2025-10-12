@@ -5,6 +5,8 @@ import { handleCallback } from '../services/authService';
 import type { LoaderFunctionArgs } from 'react-router';
 import SignupPage from '../pages/Auth/signup/SignupPage';
 import MainLayout from '../layout/MainLayout/MainLayout';
+import ResetPasswordPage from '../pages/Auth/forgot/ResetPasswordPage';
+import ForgotPasswordPage from '../pages/Auth/forgot/ForgotPasswordPage';
 
 const HomePage = () => <div>Home Page</div>;
 
@@ -52,6 +54,14 @@ const router = createBrowserRouter([
   {
     path: '/auth/github/callback',
     loader: createAuthCallbackLoader('github')
+  },
+  {
+    path: "/recuperar-contrasena",
+    element: <ForgotPasswordPage />
+  },
+  {
+    path: "/restablecer-contrasena",
+    element: <ResetPasswordPage />
   }
 ]);
 
