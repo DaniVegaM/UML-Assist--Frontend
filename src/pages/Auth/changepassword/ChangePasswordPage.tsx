@@ -70,8 +70,8 @@ export default function ChangePasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dots dark:bg-dots-dark">
-      <section className="flex flex-col gap-6 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-8 rounded-lg shadow-md">
-        <Link to="/" className="flex items-center space-x-2 mb-4">
+      <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-8 rounded-lg shadow-md">
+        <Link to="/" className="flex items-center space-x-2">
           <svg
             className="h-8 w-8 text-sky-600"
             viewBox="0 0 24 24"
