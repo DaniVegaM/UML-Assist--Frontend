@@ -6,6 +6,8 @@ import { isAuthenticated } from "../../../helpers/auth";
 import { LOGIN_VALIDATION_RULES } from "../../../helpers/validation";
 import FormField from "../../../components/auth/shared/FormField";
 import { useForm } from "../hooks/useForm";
+import { notifyPromise } from "../../../components/ui/NotificationComponent";
+import { Toaster } from "react-hot-toast";
 
 export default function LoginPage() {
     const [searchParams] = useSearchParams();
@@ -26,9 +28,24 @@ export default function LoginPage() {
         },
         validationRules: LOGIN_VALIDATION_RULES,
         onSubmit: async (values) => {
-            const result = await loginWithCredentials(values.email, values.password);
-            if (result.success) {
-                navigate('/dashboard', { replace: true });
+            try {
+                const result = await notifyPromise(
+                    loginWithCredentials(values.email, values.password),
+                    {
+                        loading: "Iniciando sesión...",
+                        success: "¡Bienvenido de nuevo!",
+                        error: "No se pudo iniciar sesión",
+                        errorDescription: "Verifica tu email y contraseña"
+                    }
+                );
+
+                // Si llegamos aquí, el login fue exitoso
+                if (result.success) {
+                    navigate('/dashboard', { replace: true });
+                }
+            } catch (error) {
+                // El error ya se mostró en la notificación
+                console.error('Error en login:', error);
             }
         }
     });
@@ -64,8 +81,18 @@ export default function LoginPage() {
     }
 
     return (
-        <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md my-8">
-            <Link to="/" className="flex items-center space-x-2">
+        <>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 5000,
+                    style: { padding: "0px", margin: "0px" },
+                }}
+                containerStyle={{ top: 20, right: 20 }}
+            />
+            
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md my-8">
+                <Link to="/" className="flex items-center space-x-2">
                 <svg
                     className="h-8 w-8 text-sky-600"
                     viewBox="0 0 24 24"
@@ -156,5 +183,6 @@ export default function LoginPage() {
                 {error && <p className="text-red-500">Error de autenticación. Por favor, intenta de nuevo.</p>}
             </div>
         </section>
+        </>
     )
 }

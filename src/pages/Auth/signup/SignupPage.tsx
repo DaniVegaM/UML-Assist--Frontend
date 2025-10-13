@@ -4,6 +4,8 @@ import { REGISTER_VALIDATION_RULES } from "../../../helpers/validation";
 import { registerWithCredentials } from "../../../services/authService";
 import FormField from "../../../components/auth/shared/FormField";
 import { useForm } from "../hooks/useForm";
+import { notifyPromise } from "../../../components/ui/NotificationComponent";
+import { Toaster } from "react-hot-toast";
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -34,8 +36,20 @@ export default function SignupPage() {
             }
         },
         onSubmit: async (values) => {
-            await registerWithCredentials(values.email, values.password);
-            navigate('/dashboard', { replace: true });
+            try {
+                await notifyPromise(
+                    registerWithCredentials(values.email, values.password),
+                    {
+                        loading: "Creando tu cuenta...",
+                        success: "¡Cuenta creada exitosamente!",
+                        error: "No se pudo crear la cuenta",
+                        errorDescription: "Verifica que el email no esté registrado"
+                    }
+                );
+                navigate('/dashboard', { replace: true });
+            } catch (error) {
+                console.error('Error en registro:', error);
+            }
         }
     });
 
@@ -43,11 +57,19 @@ export default function SignupPage() {
         return <Navigate to={'/dashboard'} replace />;
     }
 
-
-
     return (
-        <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white dark:bg-zinc-800 p-12 rounded-lg shadow-md my-11">
-            <Link to="/" className="flex items-center space-x-2">
+        <>
+            <Toaster
+                position="top-right"
+                toastOptions={{
+                    duration: 5000,
+                    style: { padding: "0px", margin: "0px" },
+                }}
+                containerStyle={{ top: 20, right: 20 }}
+            />
+            
+            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white dark:bg-zinc-800 p-12 rounded-lg shadow-md my-11">
+                <Link to="/" className="flex items-center space-x-2">
                 <svg
                     className="h-8 w-8 text-sky-600"
                     viewBox="0 0 24 24"
@@ -135,5 +157,6 @@ export default function SignupPage() {
             </div>
 
         </section>
+        </>
     );
 }

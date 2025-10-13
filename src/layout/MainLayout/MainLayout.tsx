@@ -14,7 +14,7 @@ export default function MainLayout() {
           duration: 5000,
           style: { padding: "0px", margin: "0px" },
         }}
-        containerStyle={{ top: 20, left: 20, bottom: 20, right: 20 }}
+        containerStyle={{ top: 20, right: 20 }}
       />
 
       <main className="mx-auto my-auto">
