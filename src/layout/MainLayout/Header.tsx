@@ -83,12 +83,21 @@ export default function Header() {
                   </label>
 
                   {logedIn ?
-                    <button 
-                    className="cursor-pointer text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                    onClick={() => { clearStorage(); navigate('/', { replace: true }); }}
-                    >
-                      Cerrar Sesión
-                    </button>
+                    <div>
+                      <button
+                        className="cursor-pointer text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                        onClick={() => { clearStorage(); navigate('/', { replace: true }); }}
+                      >
+                        Cerrar Sesión
+                      </button>
+
+                      <Link
+                        to="/cambiar-contrasena"
+                        className="cursor-pointer text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      >
+                        Mi perfil
+                      </Link>
+                    </div>
                     :
                     <Link
                       to="/iniciar-sesion"
