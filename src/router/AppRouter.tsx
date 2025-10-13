@@ -1,13 +1,13 @@
 import { createBrowserRouter, RouterProvider, redirect } from "react-router";
 import LoginPage from "../pages/Auth/login/LoginPage";
 import { handleCallback } from "../services/authService";
-import ChangePage from "../pages/Auth/changepassword/changePage";
+import ChangePage from "../pages/Auth/changepassword/changePasswordPage";
 
 import type { LoaderFunctionArgs } from "react-router";
 import SignupPage from "../pages/Auth/signup/SignupPage";
 import MainLayout from "../layout/MainLayout/MainLayout";
-import ResetPasswordPage from "../pages/Auth/forgot/ResetPasswordPage";
-import ForgotPasswordPage from "../pages/Auth/forgot/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/Auth/forgottenpassword/ResetPasswordPage";
+import ForgotPasswordPage from "../pages/Auth/forgottenpassword/ForgotPasswordPage";
 
 const HomePage = () => <div>Home Page</div>;
 
