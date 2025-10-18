@@ -33,10 +33,11 @@ export const ACTIVITY_NODES = [
             </svg>
         ),
         nodeType: 'default',
-        label: 'Flecha'
+        label: 'Flecha',
+        className: 'cols-span-2 col-start-1 col-end-3'
     },
     {
-        separator: 'Acciones basadas en eventos',
+        separator: 'Eventos',
         svg: '',
         nodeType: '',
         label: ''
@@ -77,7 +78,7 @@ export const ACTIVITY_NODES = [
         grouped: true,
     },
     {
-        separator: 'Acciones que llaman comportamientos',
+        separator: 'Comportamientos',
         svg: '',
         nodeType: '',
         label: ''
@@ -110,7 +111,7 @@ export const ACTIVITY_NODES = [
         className: 'text-[12px]'
     },
     {
-        separator: 'Nodos de control de flujo',
+        separator: 'Control de flujo',
         svg: '',
         nodeType: '',
         label: ''
