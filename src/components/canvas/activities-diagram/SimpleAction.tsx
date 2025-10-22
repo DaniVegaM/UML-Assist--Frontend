@@ -17,7 +17,7 @@ export default function SimpleAction() {
   const adjustHeight = (element: HTMLTextAreaElement) => {
     element.style.height = 'auto';
     const scrollHeight = element.scrollHeight;
-    const newHeight = Math.min(scrollHeight, 104); //Calculamos la nueva altura del div padre
+    const newHeight = Math.min(scrollHeight, 144); //Calculamos la nueva altura del div padre
     element.style.height = `${newHeight}px`;
     setTextareaHeight(newHeight);
   };
@@ -55,7 +55,7 @@ export default function SimpleAction() {
       className="border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 w-[200px] flex items-center justify-center select-none transition-all duration-150"
       style={{ 
         height: `${containerHeight}px`,
-        maxHeight: '120px'
+        maxHeight: '160px'
       }}
     >
       {isEditing ? (
@@ -69,11 +69,11 @@ export default function SimpleAction() {
           className="nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-y-auto"
           style={{ 
             height: `${textareaHeight}px`,
-            maxHeight: '104px'
+            maxHeight: '144px'
           }}
         />
       ) : (
-        <div className={`w-full px-2 py-1 text-center text-sm overflow-hidden text-ellipsis line-clamp-4 ${value == '' ? 'text-gray-400 dark:text-gray-500' : 'text-black dark:text-white'}`}>
+        <div className={`w-full h-full px-2 py-1 text-center text-sm overflow-hidden text-ellipsis line-clamp-4 ${value == '' ? 'text-gray-400 dark:text-gray-500' : 'text-black dark:text-white'}`}>
           {value || "Acción"}
         </div>
       )}
