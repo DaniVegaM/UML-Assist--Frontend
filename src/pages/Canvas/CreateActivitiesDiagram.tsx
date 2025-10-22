@@ -22,13 +22,16 @@ function DiagramContent() {
             <Header />
 
             <section className="h-full w-full relative">
-                <ReactFlow fitView={true}
+                <ReactFlow
+                    fitView={false}
+                    preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
-                    attributionPosition="top-right"
+                    attributionPosition="bottom-right"
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}>
+                    onEdgesChange={onEdgesChange}
+                >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
                         showFitView={true}
