@@ -3,7 +3,7 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="74" height="47" viewBox="0 0 74 47" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="10" y="2" width="55" height="43" rx="3" fill="#D9D9D9" stroke="black" stroke-width="4" />
+                <rect x="10" y="2" width="55" height="43" rx="3" fill="#D9D9D9" stroke="black" strokeWidth="4" />
                 <rect y="11" width="16" height="11" fill="white" />
                 <rect y="11" width="16" height="11" fill="black" />
                 <rect y="28" width="16" height="9" fill="white" />
@@ -23,7 +23,7 @@ export const ACTIVITY_NODES = [
                 <rect x="2" y="2" width="48" height="37" rx="8" stroke="black" strokeWidth="4" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'simpleAction',
         label: 'Acción simple'
     },
     {
@@ -45,7 +45,7 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="49" height="49" viewBox="0 0 49 49" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M6.57013 38.6266L16.3587 24.478L6.14951 10.6298L38.1459 10.1491C39.2066 10.1331 40.2303 10.5392 40.9916 11.278C41.7529 12.0168 42.1896 13.0278 42.2055 14.0885L42.506 34.0863C42.5219 35.147 42.1158 36.1707 41.377 36.932C40.6382 37.6933 39.6273 38.13 38.5665 38.1459L6.57013 38.6266Z" stroke="#1E1E1E" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M6.57013 38.6266L16.3587 24.478L6.14951 10.6298L38.1459 10.1491C39.2066 10.1331 40.2303 10.5392 40.9916 11.278C41.7529 12.0168 42.1896 13.0278 42.2055 14.0885L42.506 34.0863C42.5219 35.147 42.1158 36.1707 41.377 36.932C40.6382 37.6933 39.6273 38.13 38.5665 38.1459L6.57013 38.6266Z" stroke="#1E1E1E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
         ),
         nodeType: 'default',
@@ -55,8 +55,8 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="28" height="51" viewBox="0 0 28 51" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M22.6602 42H5.33984L14 27L22.6602 42Z" fill="#D9D9D9" stroke="black" stroke-width="4" />
-                <path d="M5.33984 9H22.6602L14 24L5.33984 9Z" fill="#D9D9D9" stroke="black" stroke-width="4" />
+                <path d="M22.6602 42H5.33984L14 27L22.6602 42Z" fill="#D9D9D9" stroke="black" strokeWidth="4" />
+                <path d="M5.33984 9H22.6602L14 24L5.33984 9Z" fill="#D9D9D9" stroke="black" strokeWidth="4" />
             </svg>
         ),
         nodeType: 'default',
@@ -67,10 +67,10 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="50" height="27" viewBox="0 0 50 27" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M0.5 2.5H37" stroke="black" stroke-width="4" />
-                <path d="M1 25H37.5" stroke="black" stroke-width="4" />
-                <path d="M2.5 27L2.5 1" stroke="black" stroke-width="4" />
-                <path d="M35 1.99998L46.5 14L35.5 25.5" stroke="black" stroke-width="4" />
+                <path d="M0.5 2.5H37" stroke="black" strokeWidth="4" />
+                <path d="M1 25H37.5" stroke="black" strokeWidth="4" />
+                <path d="M2.5 27L2.5 1" stroke="black" strokeWidth="4" />
+                <path d="M35 1.99998L46.5 14L35.5 25.5" stroke="black" strokeWidth="4" />
             </svg>
         ),
         nodeType: 'default',
@@ -86,11 +86,11 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="52" height="41" viewBox="0 0 52 41" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="2" y="2" width="48" height="37" rx="8" stroke="black" stroke-width="4" />
-                <line x1="26.5" y1="8" x2="26.5" y2="34" stroke="black" stroke-width="3" />
-                <path d="M11 20.5H40" stroke="black" stroke-width="3" />
-                <path d="M38.5 19.5V34" stroke="black" stroke-width="3" />
-                <line x1="12.5" y1="20" x2="12.5" y2="34" stroke="black" stroke-width="3" />
+                <rect x="2" y="2" width="48" height="37" rx="8" stroke="black" strokeWidth="4" />
+                <line x1="26.5" y1="8" x2="26.5" y2="34" stroke="black" strokeWidth="3" />
+                <path d="M11 20.5H40" stroke="black" strokeWidth="3" />
+                <path d="M38.5 19.5V34" stroke="black" strokeWidth="3" />
+                <line x1="12.5" y1="20" x2="12.5" y2="34" stroke="black" strokeWidth="3" />
             </svg>
         ),
         nodeType: 'default',
@@ -140,9 +140,9 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="43" height="43" viewBox="0 0 43 43" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="21.5" cy="21.5" r="19.5" stroke="black" stroke-width="4" />
-                <path d="M7.64648 37.6465L37.6465 7.64648" stroke="black" stroke-width="4" />
-                <line y1="-2" x2="42.4264" y2="-2" transform="matrix(0.707107 0.707107 0.707107 -0.707107 7 6)" stroke="black" stroke-width="4" />
+                <circle cx="21.5" cy="21.5" r="19.5" stroke="black" strokeWidth="4" />
+                <path d="M7.64648 37.6465L37.6465 7.64648" stroke="black" strokeWidth="4" />
+                <line y1="-2" x2="42.4264" y2="-2" transform="matrix(0.707107 0.707107 0.707107 -0.707107 7 6)" stroke="black" strokeWidth="4" />
             </svg>
         ),
         nodeType: 'default',
@@ -152,7 +152,7 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="88" height="42" viewBox="0 0 88 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M66.5508 21L46 40.6172L25.4482 21L46 1.38184L66.5508 21Z" fill="white" stroke="black" stroke-width="2" />
+                <path d="M66.5508 21L46 40.6172L25.4482 21L46 1.38184L66.5508 21Z" fill="white" stroke="black" strokeWidth="2" />
                 <path d="M24.7071 21.7071C25.0976 21.3166 25.0976 20.6834 24.7071 20.2929L18.3431 13.9289C17.9526 13.5384 17.3195 13.5384 16.9289 13.9289C16.5384 14.3195 16.5384 14.9526 16.9289 15.3431L22.5858 21L16.9289 26.6569C16.5384 27.0474 16.5384 27.6805 16.9289 28.0711C17.3195 28.4616 17.9526 28.4616 18.3431 28.0711L24.7071 21.7071ZM0 21L7.1312e-10 22L24 22L24 21L24 20L-7.1312e-10 20L0 21Z" fill="black" />
                 <path d="M87.9967 5.08082C88.0414 4.53034 87.6313 4.0479 87.0808 4.00327L78.1103 3.27593C77.5598 3.23129 77.0773 3.64136 77.0327 4.19184C76.9881 4.74232 77.3981 5.22475 77.9486 5.26939L85.9225 5.91591L85.2759 13.8897C85.2313 14.4402 85.6414 14.9227 86.1918 14.9673C86.7423 15.0119 87.2248 14.6019 87.2694 14.0514L87.9967 5.08082ZM67 22L67.6476 22.7619L87.6476 5.76194L87 5L86.3524 4.23806L66.3524 21.2381L67 22Z" fill="black" />
                 <path d="M87.0555 39.9985C87.6069 39.9678 88.0291 39.496 87.9985 38.9445L87.4992 29.9584C87.4686 29.407 86.9967 28.9848 86.4453 29.0154C85.8939 29.046 85.4717 29.5179 85.5023 30.0693L85.9461 38.057L77.9584 38.5008C77.407 38.5314 76.9848 39.0033 77.0154 39.5547C77.046 40.1061 77.5179 40.5283 78.0693 40.4977L87.0555 39.9985ZM68 22L67.3332 22.7452L86.3332 39.7452L87 39L87.6668 38.2548L68.6668 21.2548L68 22Z" fill="black" />
@@ -166,7 +166,7 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="88" height="42" viewBox="0 0 88 42" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M66.5508 21L46 40.6172L25.4482 21L46 1.38184L66.5508 21Z" fill="white" stroke="black" stroke-width="2" />
+                <path d="M66.5508 21L46 40.6172L25.4482 21L46 1.38184L66.5508 21Z" fill="white" stroke="black" strokeWidth="2" />
                 <path d="M24.7071 21.7071C25.0976 21.3166 25.0976 20.6834 24.7071 20.2929L18.3431 13.9289C17.9526 13.5384 17.3195 13.5384 16.9289 13.9289C16.5384 14.3195 16.5384 14.9526 16.9289 15.3431L22.5858 21L16.9289 26.6569C16.5384 27.0474 16.5384 27.6805 16.9289 28.0711C17.3195 28.4616 17.9526 28.4616 18.3431 28.0711L24.7071 21.7071ZM0 21L7.1312e-10 22L24 22L24 21L24 20L-7.1312e-10 20L0 21Z" fill="black" />
                 <path d="M87.9967 5.08082C88.0414 4.53034 87.6313 4.0479 87.0808 4.00327L78.1103 3.27593C77.5598 3.23129 77.0773 3.64136 77.0327 4.19184C76.9881 4.74232 77.3981 5.22475 77.9486 5.26939L85.9225 5.91591L85.2759 13.8897C85.2313 14.4402 85.6414 14.9227 86.1918 14.9673C86.7423 15.0119 87.2248 14.6019 87.2694 14.0514L87.9967 5.08082ZM67 22L67.6476 22.7619L87.6476 5.76194L87 5L86.3524 4.23806L66.3524 21.2381L67 22Z" fill="black" />
                 <path d="M87.0555 39.9985C87.6069 39.9678 88.0291 39.496 87.9985 38.9445L87.4992 29.9584C87.4686 29.407 86.9967 28.9848 86.4453 29.0154C85.8939 29.046 85.4717 29.5179 85.5023 30.0693L85.9461 38.057L77.9584 38.5008C77.407 38.5314 76.9848 39.0033 77.0154 39.5547C77.046 40.1061 77.5179 40.5283 78.0693 40.4977L87.0555 39.9985ZM68 22L67.3332 22.7452L86.3332 39.7452L87 39L87.6668 38.2548L68.6668 21.2548L68 22Z" fill="black" />
@@ -180,7 +180,7 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="56" height="52" viewBox="0 0 56 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <line x1="28" y1="1.65807e-07" x2="28" y2="52" stroke="black" stroke-width="8" />
+                <line x1="28" y1="1.65807e-07" x2="28" y2="52" stroke="black" strokeWidth="8" />
                 <path d="M25.1595 26.6958C25.5432 26.2991 25.5322 25.666 25.135 25.2818L18.6615 19.0196C18.2643 18.6354 17.6312 18.6454 17.2475 19.0421C16.8638 19.4387 16.8748 20.0718 17.272 20.4561L23.0262 26.0224L17.468 31.7681C17.0843 32.1647 17.0953 32.7978 17.4925 33.1821C17.8898 33.5663 18.5229 33.5563 18.9066 33.1597L25.1595 26.6958ZM1 26.3716L1.01733 27.3714L24.4575 26.9998L24.4402 26L24.4229 25.0001L0.982674 25.3717L1 26.3716Z" fill="black" />
                 <path d="M55.1595 26.6958C55.5432 26.2991 55.5322 25.666 55.135 25.2818L48.6615 19.0196C48.2643 18.6354 47.6312 18.6454 47.2475 19.0421C46.8638 19.4387 46.8748 20.0718 47.272 20.4561L53.0262 26.0224L47.468 31.7681C47.0843 32.1647 47.0953 32.7978 47.4925 33.1821C47.8898 33.5663 48.5229 33.5563 48.9066 33.1597L55.1595 26.6958ZM31 26.3716L31.0173 27.3714L54.4575 26.9998L54.4402 26L54.4229 25.0001L30.9827 25.3717L31 26.3716Z" fill="black" />
             </svg>
@@ -192,7 +192,7 @@ export const ACTIVITY_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M29 53.1667C42.3469 53.1667 53.1666 42.3469 53.1666 29C53.1666 15.6532 42.3469 4.83337 29 4.83337C15.6531 4.83337 4.83331 15.6532 4.83331 29C4.83331 42.3469 15.6531 53.1667 29 53.1667Z" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="M29 53.1667C42.3469 53.1667 53.1666 42.3469 53.1666 29C53.1666 15.6532 42.3469 4.83337 29 4.83337C15.6531 4.83337 4.83331 15.6532 4.83331 29C4.83331 42.3469 15.6531 53.1667 29 53.1667Z" stroke="black" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                 <path d="M21.4602 41H18.5057L27.0511 17.7273H29.9602L38.5057 41H35.5511L28.5966 21.4091H28.4148L21.4602 41ZM22.5511 31.9091H34.4602V34.4091H22.5511V31.9091Z" fill="black" />
             </svg>
         ),

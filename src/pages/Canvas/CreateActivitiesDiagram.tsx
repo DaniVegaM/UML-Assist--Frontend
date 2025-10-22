@@ -11,9 +11,12 @@ import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
 import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
+import { activitiesNodeTypes } from "../../types/nodeTypes";
+import { CanvasProvider, useCanvas } from "../../contexts/CanvasContext";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
+    const { isZoomOnScrollEnabled } = useCanvas();
     const [nodes, , onNodesChange] = useNodesState([]);
     const [edges, , onEdgesChange] = useEdgesState([]);
 
@@ -31,6 +34,8 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    nodeTypes={activitiesNodeTypes}
+                    zoomOnScroll={isZoomOnScrollEnabled}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
@@ -40,7 +45,7 @@ function DiagramContent() {
                         position="bottom-right"
                     />
                 </ReactFlow>
-                <ElementsBar nodes={ACTIVITY_NODES}/>
+                <ElementsBar nodes={ACTIVITY_NODES} />
             </section>
         </div>
     )
@@ -49,7 +54,9 @@ function DiagramContent() {
 export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
-            <DiagramContent />
+            <CanvasProvider>
+                <DiagramContent />
+            </CanvasProvider>
         </ReactFlowProvider>
     );
 }
