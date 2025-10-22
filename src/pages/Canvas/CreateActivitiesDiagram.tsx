@@ -1,18 +1,12 @@
 import { useTheme } from "../../hooks/useTheme";
-import {
-    Background,
-    Controls,
-    ReactFlow,
-    ReactFlowProvider,
-    useEdgesState,
-    useNodesState,
-} from '@xyflow/react';
+import { Background, Controls, ReactFlow, ReactFlowProvider, useEdgesState, useNodesState } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
 import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
-import { CanvasProvider, useCanvas } from "../../contexts/CanvasContext";
+import { CanvasProvider } from "../../contexts/CanvasContext";
+import { useCanvas } from "../../hooks/useCanvas";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();

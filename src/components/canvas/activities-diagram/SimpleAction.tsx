@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, useEffect } from "react";
-import { useCanvas } from "../../../contexts/CanvasContext";
+import { useCanvas } from "../../../hooks/useCanvas";
 
 
 export default function SimpleAction() {
