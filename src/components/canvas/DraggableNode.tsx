@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import type { DraggableNodeProps } from "../../types/canvas";
 
 let id = 0;
-const getId = () => `dndnode_${id++}`;
+const getId = () => `node_${id++}`;
 
 export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
     const draggableRef = useRef<HTMLDivElement>(null);
@@ -45,6 +45,9 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     type: nodeType,
                     position: flowPosition,
                     data: { label: `${nodeType} node` },
+                    draggable: true,
+                    selectable: true,
+                    connectable: true,
                 };
                 //Agregamos el nodo
                 setNodes((nds) => nds.concat(newNode));

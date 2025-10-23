@@ -1,5 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
+import { Handle, Position, useNodeId } from "@xyflow/react";
 
 
 export default function SimpleAction() {
@@ -7,7 +8,10 @@ export default function SimpleAction() {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState("");
   const [textareaHeight, setTextareaHeight] = useState(24); //Altura inicial
-  const { setIsZoomOnScrollEnabled } = useCanvas();
+  const [showSourceHandleOptions, setShowSourceHandleOptions] = useState(false);
+  const [showTargetHandleOptions, setShowTargetHandleOptions] = useState(false);
+  const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
+  const nodeId = useNodeId();
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     setValue(evt.target.value);
@@ -49,15 +53,116 @@ export default function SimpleAction() {
 
   const containerHeight = textareaHeight + 16;
 
+  const onMouseEnter = () => {
+    if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
+      setShowSourceHandleOptions(false);
+      setShowTargetHandleOptions(true);
+    } else {
+      setShowTargetHandleOptions(false);
+      setShowSourceHandleOptions(true);
+    }
+  }
+
+  const onMouseLeave = () => {
+    setShowSourceHandleOptions(false);
+    setShowTargetHandleOptions(false);
+  }
+
   return (
     <div
       onDoubleClick={handleDoubleClick}
-      className="border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 w-[200px] flex items-center justify-center select-none transition-all duration-150"
-      style={{ 
+      className="relative border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 w-[200px] flex items-center justify-center transition-all duration-150"
+      style={{
         height: `${containerHeight}px`,
         maxHeight: '160px'
       }}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
     >
+      {/* SOURCE HANDLES */}
+      <Handle 
+        id={`${nodeId}_sourceHandle-1`} 
+        type="source" 
+        position={Position.Top}
+        style={{ 
+          opacity: showSourceHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      <Handle 
+        id={`${nodeId}_sourceHandle-2`} 
+        type="source" 
+        position={Position.Right}
+        style={{ 
+          opacity: showSourceHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      <Handle 
+        id={`${nodeId}_sourceHandle-3`} 
+        type="source" 
+        position={Position.Left}
+        style={{ 
+          opacity: showSourceHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      <Handle 
+        id={`${nodeId}_sourceHandle-4`} 
+        type="source" 
+        position={Position.Bottom}
+        style={{ 
+          opacity: showSourceHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+
+      {/* TARGET HANDLES */}
+      <Handle 
+        id={`${nodeId}_targetHandle-1`} 
+        type="target" 
+        position={Position.Top}
+        style={{ 
+          opacity: showTargetHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      <Handle 
+        id={`${nodeId}_targetHandle-2`} 
+        type="target" 
+        position={Position.Right}
+        style={{ 
+          opacity: showTargetHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      <Handle 
+        id={`${nodeId}_targetHandle-3`} 
+        type="target" 
+        position={Position.Left}
+        style={{ 
+          opacity: showTargetHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      <Handle 
+        id={`${nodeId}_targetHandle-4`} 
+        type="target" 
+        position={Position.Bottom}
+        style={{ 
+          opacity: showTargetHandleOptions ? 1 : 0,
+          pointerEvents: 'all',
+          transition: 'opacity 0.2s'
+        }}
+      />
+      
       {isEditing ? (
         <textarea
           ref={textareaRef}
@@ -67,7 +172,7 @@ export default function SimpleAction() {
           onWheel={(e) => e.stopPropagation()}
           placeholder="Acción"
           className="nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-y-auto"
-          style={{ 
+          style={{
             height: `${textareaHeight}px`,
             maxHeight: '144px'
           }}
