@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
@@ -56,7 +56,9 @@ function DiagramContent() {
                             strokeWidth: 2  ,
                             stroke: isDarkMode ? '#A1A1AA' : '#171717',
                         },
+                        type: 'smoothstep',
                     }}
+                    connectionLineType={ConnectionLineType.SmoothStep}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
