@@ -1,19 +1,21 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Handle, Position, useNodeConnections, useNodeId, type Connection, type Edge } from "@xyflow/react";
+import { Position, useNodeId } from "@xyflow/react";
+import { useNode } from "../useNode";
+import BaseHandle from "../BaseHandle";
 
 
 export default function SimpleAction() {
+  const { showSourceHandleOptions, setShowSourceHandleOptions, showTargetHandleOptions, setShowTargetHandleOptions } = useNode();
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState("");
-  const [showSourceHandleOptions, setShowSourceHandleOptions] = useState(false);
-  const [showTargetHandleOptions, setShowTargetHandleOptions] = useState(false);
   const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
   const nodeId = useNodeId();
 
-  const maxSourceConnections = 2; //Máximo número de edges que pueden ENTRAR
-  const maxTargetConnections = 1; //Máximo número de edges que pueden SALIR
+  // const maxSourceConnections = 2; //Máximo número de edges que pueden ENTRAR
+  // const maxTargetConnections = 1; //Máximo número de edges que pueden SALIR
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (evt.target.value.length >= 100) {
@@ -63,26 +65,6 @@ export default function SimpleAction() {
     setShowTargetHandleOptions(false);
   }
 
-  const allConnections = useNodeConnections();
-
-  const sourceConnections = allConnections.filter(conn => conn.source === nodeId);
-  const targetConnections = allConnections.filter(conn => conn.target === nodeId);
-
-  const canConnectSource = sourceConnections.length < maxSourceConnections;
-  const canConnectTarget = targetConnections.length < maxTargetConnections;
-
-  const isValidSourceConnection = useCallback((connection: Connection | Edge) => {
-    //Verificamos si este nodo ya tiene una conexión source
-    const currentSourceConnections = allConnections.filter(conn => conn.source === nodeId);
-    return currentSourceConnections.length < maxSourceConnections && connection.source !== connection.target;
-  }, [allConnections, nodeId]);
-
-  const isValidTargetConnection = useCallback((connection: Connection | Edge) => {
-    //Verificamos si este nodo ya tiene una conexión target
-    const currentTargetConnections = allConnections.filter(conn => conn.target === nodeId);
-    return currentTargetConnections.length < maxTargetConnections && connection.source !== connection.target;
-  }, [allConnections, nodeId]);
-
   return (
     <div
       onDoubleClick={handleDoubleClick}
@@ -91,104 +73,17 @@ export default function SimpleAction() {
       onMouseLeave={onMouseLeave}
     >
       {/* SOURCE HANDLES */}
-      <Handle
-        id={`${nodeId}_sourceHandle-1`}
-        type="source"
-        position={Position.Top}
-        style={{
-          opacity: showSourceHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectSource}
-        isValidConnection={isValidSourceConnection}
-      />
-      <Handle
-        id={`${nodeId}_sourceHandle-2`}
-        type="source"
-        position={Position.Right}
-        style={{
-          opacity: showSourceHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectSource}
-        isValidConnection={isValidSourceConnection}
-      />
-      <Handle
-        id={`${nodeId}_sourceHandle-3`}
-        type="source"
-        position={Position.Left}
-        style={{
-          opacity: showSourceHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectSource}
-        isValidConnection={isValidSourceConnection}
-      />
-      <Handle
-        id={`${nodeId}_sourceHandle-4`}
-        type="source"
-        position={Position.Bottom}
-        style={{
-          opacity: showSourceHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectSource}
-        isValidConnection={isValidSourceConnection}
-      />
+      <BaseHandle id={0} type="source" position={Position.Top} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+      <BaseHandle id={1} type="source" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+      <BaseHandle id={2} type="source" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+      <BaseHandle id={3} type="source" position={Position.Bottom} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
 
       {/* TARGET HANDLES */}
-      <Handle
-        id={`${nodeId}_targetHandle-1`}
-        type="target"
-        position={Position.Top}
-        style={{
-          opacity: showTargetHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectTarget}
-        isValidConnection={isValidTargetConnection}
-      />
-      <Handle
-        id={`${nodeId}_targetHandle-2`}
-        type="target"
-        position={Position.Right}
-        style={{
-          opacity: showTargetHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectTarget}
-        isValidConnection={isValidTargetConnection}
-      />
-      <Handle
-        id={`${nodeId}_targetHandle-3`}
-        type="target"
-        position={Position.Left}
-        style={{
-          opacity: showTargetHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectTarget}
-        isValidConnection={isValidTargetConnection}
-      />
-      <Handle
-        id={`${nodeId}_targetHandle-4`}
-        type="target"
-        position={Position.Bottom}
-        style={{
-          opacity: showTargetHandleOptions ? 1 : 0,
-          pointerEvents: 'all',
-          transition: 'opacity 0.2s'
-        }}
-        isConnectable={canConnectTarget}
-        isValidConnection={isValidTargetConnection}
-      />
+      <BaseHandle id={4} type="target" position={Position.Top} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+      <BaseHandle id={5} type="target" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+      <BaseHandle id={6} type="target" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+      <BaseHandle id={7} type="target" position={Position.Bottom} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions}/>
+
       <textarea
         ref={textareaRef}
         value={value}

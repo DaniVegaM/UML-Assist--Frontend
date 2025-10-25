@@ -1,3 +1,5 @@
+import type { Position } from "@xyflow/react";
+
 export interface DraggableNodeProps {
     className?: string;
     children: React.ReactNode;
@@ -18,4 +20,15 @@ export interface ElementsBarProps {
         separator?: string;
         grouped?: boolean;
     }[];
+}
+
+export interface BaseHandleProps {
+    id: number;
+    type: 'source' | 'target';
+    showSourceHandleOptions: boolean;
+    showTargetHandleOptions: boolean;
+    position?: Position;
+    maxSourceConnections?: number;
+    maxTargetConnections?: number;
+    className?: string;
 }
