@@ -12,8 +12,8 @@ export default function SimpleAction() {
   const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
   const nodeId = useNodeId();
 
-  const maxSourceConnections = 2; // Máximo de edges que pueden ENTRAR
-  const maxTargetConnections = 1; // Máximo de edges que pueden SALIR
+  const maxSourceConnections = 2; //Máximo número de edges que pueden ENTRAR
+  const maxTargetConnections = 1; //Máximo número de edges que pueden SALIR
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (evt.target.value.length >= 100) {
