@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Handle, Position, useNodeId } from "@xyflow/react";
+import { Handle, Position, useNodeConnections, useNodeId } from "@xyflow/react";
 
 
 export default function SimpleAction() {
@@ -13,9 +13,9 @@ export default function SimpleAction() {
   const nodeId = useNodeId();
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if(evt.target.value.length >= 100){
-      setValue(evt.target.value.trim().slice(0,100));
-    } else{
+    if (evt.target.value.length >= 100) {
+      setValue(evt.target.value.trim().slice(0, 100));
+    } else {
       setValue(evt.target.value);
     }
   }, []);
@@ -60,6 +60,20 @@ export default function SimpleAction() {
     setShowTargetHandleOptions(false);
   }
 
+  const sourceHandleconnections = useNodeConnections({
+    handleType: 'source',
+  });
+
+  const targetHandleconnections = useNodeConnections({
+    handleType: 'target',
+  });
+
+  const canConnectSource = sourceHandleconnections.length < 1;
+
+  // Permitir nueva conexión de ENTRADA solo si hay 0 conexiones de entrada actuales
+  const canConnectTarget = targetHandleconnections.length < 1;
+
+
   return (
     <div
       onDoubleClick={handleDoubleClick}
@@ -77,6 +91,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectSource}
       />
       <Handle
         id={`${nodeId}_sourceHandle-2`}
@@ -87,6 +102,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectSource}
       />
       <Handle
         id={`${nodeId}_sourceHandle-3`}
@@ -97,6 +113,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectSource}
       />
       <Handle
         id={`${nodeId}_sourceHandle-4`}
@@ -107,6 +124,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectSource}
       />
 
       {/* TARGET HANDLES */}
@@ -119,6 +137,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectTarget}
       />
       <Handle
         id={`${nodeId}_targetHandle-2`}
@@ -129,6 +148,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectTarget}
       />
       <Handle
         id={`${nodeId}_targetHandle-3`}
@@ -139,6 +159,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectTarget}
       />
       <Handle
         id={`${nodeId}_targetHandle-4`}
@@ -149,6 +170,7 @@ export default function SimpleAction() {
           pointerEvents: 'all',
           transition: 'opacity 0.2s'
         }}
+        isConnectable={canConnectTarget}
       />
       <textarea
         ref={textareaRef}
@@ -162,7 +184,7 @@ export default function SimpleAction() {
         rows={1}
       />
       {isEditing &&
-      <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/100`}</p>
+        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/100`}</p>
       }
     </div>
   )
