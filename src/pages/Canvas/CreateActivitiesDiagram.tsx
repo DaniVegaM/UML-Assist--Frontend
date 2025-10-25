@@ -54,7 +54,7 @@ function DiagramContent() {
                         reconnectable: true,
                         style: {
                             strokeWidth: 2  ,
-                            stroke: isDarkMode ? '#A1A1AA' : '#171717',
+                            stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
                         type: 'smoothstep',
                     }}
