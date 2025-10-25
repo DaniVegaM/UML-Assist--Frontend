@@ -27,7 +27,8 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
-            setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))},
+            setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
+        },
         [],
     );
 
@@ -41,6 +42,21 @@ function DiagramContent() {
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
                     attributionPosition="bottom-right"
+                    defaultEdgeOptions={{
+                        animated: false,
+                        markerStart: {
+                            type: 'arrow',
+                            width: 15,
+                            height: 15,
+                            color: isDarkMode ? '#A1A1AA' : '#52525B'
+                        },
+                        focusable: true,
+                        reconnectable: true,
+                        style: {
+                            strokeWidth: 2  ,
+                            stroke: isDarkMode ? '#A1A1AA' : '#171717',
+                        },
+                    }}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
