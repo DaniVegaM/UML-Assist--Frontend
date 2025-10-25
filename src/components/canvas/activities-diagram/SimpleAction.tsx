@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Handle, Position, useNodeConnections, useNodeId } from "@xyflow/react";
+import { Handle, Position, useNodeConnections, useNodeId, type Connection, type Edge } from "@xyflow/react";
 
 
 export default function SimpleAction() {
@@ -11,6 +11,9 @@ export default function SimpleAction() {
   const [showTargetHandleOptions, setShowTargetHandleOptions] = useState(false);
   const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
   const nodeId = useNodeId();
+
+  const maxSourceConnections = 2; // Máximo de edges que pueden ENTRAR
+  const maxTargetConnections = 1; // Máximo de edges que pueden SALIR
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (evt.target.value.length >= 100) {
@@ -60,19 +63,25 @@ export default function SimpleAction() {
     setShowTargetHandleOptions(false);
   }
 
-  const sourceHandleconnections = useNodeConnections({
-    handleType: 'source',
-  });
+  const allConnections = useNodeConnections();
 
-  const targetHandleconnections = useNodeConnections({
-    handleType: 'target',
-  });
+  const sourceConnections = allConnections.filter(conn => conn.source === nodeId);
+  const targetConnections = allConnections.filter(conn => conn.target === nodeId);
 
-  const canConnectSource = sourceHandleconnections.length < 1;
+  const canConnectSource = sourceConnections.length < maxSourceConnections;
+  const canConnectTarget = targetConnections.length < maxTargetConnections;
 
-  // Permitir nueva conexión de ENTRADA solo si hay 0 conexiones de entrada actuales
-  const canConnectTarget = targetHandleconnections.length < 1;
+  const isValidSourceConnection = useCallback((connection: Connection | Edge) => {
+    //Verificamos si este nodo ya tiene una conexión source
+    const currentSourceConnections = allConnections.filter(conn => conn.source === nodeId);
+    return currentSourceConnections.length < maxSourceConnections && connection.source !== connection.target;
+  }, [allConnections, nodeId]);
 
+  const isValidTargetConnection = useCallback((connection: Connection | Edge) => {
+    //Verificamos si este nodo ya tiene una conexión target
+    const currentTargetConnections = allConnections.filter(conn => conn.target === nodeId);
+    return currentTargetConnections.length < maxTargetConnections && connection.source !== connection.target;
+  }, [allConnections, nodeId]);
 
   return (
     <div
@@ -92,6 +101,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectSource}
+        isValidConnection={isValidSourceConnection}
       />
       <Handle
         id={`${nodeId}_sourceHandle-2`}
@@ -103,6 +113,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectSource}
+        isValidConnection={isValidSourceConnection}
       />
       <Handle
         id={`${nodeId}_sourceHandle-3`}
@@ -114,6 +125,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectSource}
+        isValidConnection={isValidSourceConnection}
       />
       <Handle
         id={`${nodeId}_sourceHandle-4`}
@@ -125,6 +137,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectSource}
+        isValidConnection={isValidSourceConnection}
       />
 
       {/* TARGET HANDLES */}
@@ -138,6 +151,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectTarget}
+        isValidConnection={isValidTargetConnection}
       />
       <Handle
         id={`${nodeId}_targetHandle-2`}
@@ -149,6 +163,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectTarget}
+        isValidConnection={isValidTargetConnection}
       />
       <Handle
         id={`${nodeId}_targetHandle-3`}
@@ -160,6 +175,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectTarget}
+        isValidConnection={isValidTargetConnection}
       />
       <Handle
         id={`${nodeId}_targetHandle-4`}
@@ -171,6 +187,7 @@ export default function SimpleAction() {
           transition: 'opacity 0.2s'
         }}
         isConnectable={canConnectTarget}
+        isValidConnection={isValidTargetConnection}
       />
       <textarea
         ref={textareaRef}
