@@ -38,7 +38,7 @@ export const ACTIVITY_NODES = [
                 <path d="M6.57013 38.6266L16.3587 24.478L6.14951 10.6298L38.1459 10.1491C39.2066 10.1331 40.2303 10.5392 40.9916 11.278C41.7529 12.0168 42.1896 13.0278 42.2055 14.0885L42.506 34.0863C42.5219 35.147 42.1158 36.1707 41.377 36.932C40.6382 37.6933 39.6273 38.13 38.5665 38.1459L6.57013 38.6266Z" stroke="#1E1E1E" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'acceptEvent',
         label: 'Aceptación de evento',
         grouped: true
     },
