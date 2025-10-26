@@ -123,7 +123,7 @@ export const ACTIVITY_NODES = [
                 <circle cx="25" cy="25" r="24.5" stroke="black" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'finalNode',
         label: 'Nodo final',
         grouped: true,
     },
