@@ -135,7 +135,7 @@ export const ACTIVITY_NODES = [
                 <line y1="-2" x2="42.4264" y2="-2" transform="matrix(0.707107 0.707107 0.707107 -0.707107 7 6)" stroke="black" strokeWidth="4" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'finalFlowNode',
         label: 'Nodo de final de flujo',
         grouped: true,
     },
