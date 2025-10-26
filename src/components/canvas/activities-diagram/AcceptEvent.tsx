@@ -69,7 +69,8 @@ export default function AcceptEvent() {
             style={{
                 clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 20% 50%)',
                 padding: '10px',
-                margin: '-2px'
+                marginRight: '-2px',
+                marginLeft: '-20px',
             }}
         >
             <BaseHandle id={0} type="target" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
