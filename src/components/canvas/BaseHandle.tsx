@@ -36,7 +36,7 @@ export default function BaseHandle({id, type, position, maxSourceConnections = 1
             }}
             isConnectable={type === 'source' ? canConnectSource : canConnectTarget}
             isValidConnection={type === 'source' ? isValidSourceConnection : isValidTargetConnection}
-            className={className}
+            className={className || ''}
         />
     )
 }

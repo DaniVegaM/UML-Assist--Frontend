@@ -112,7 +112,7 @@ export const ACTIVITY_NODES = [
                 <circle cx="21.5" cy="21.5" r="21.5" fill="#050202" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'initialNode',
         label: 'Nodo inicial',
         grouped: true,
     },

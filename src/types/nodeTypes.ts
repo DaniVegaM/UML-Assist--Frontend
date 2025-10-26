@@ -1,6 +1,7 @@
 import AcceptEvent from "../components/canvas/activities-diagram/AcceptEvent";
 import AcceptTimeEvent from "../components/canvas/activities-diagram/AcceptTimeEvent";
 import CallOperation from "../components/canvas/activities-diagram/CallOperation";
+import InitialNode from "../components/canvas/activities-diagram/InitialNode";
 import SendSignal from "../components/canvas/activities-diagram/SendSignal";
 import SimpleAction from "../components/canvas/activities-diagram/SimpleAction";
 
@@ -10,4 +11,5 @@ export const activitiesNodeTypes = {
   acceptTimeEvent: AcceptTimeEvent,
   sendSignal: SendSignal,
   callOperation : CallOperation,
+  initialNode: InitialNode,
 };
