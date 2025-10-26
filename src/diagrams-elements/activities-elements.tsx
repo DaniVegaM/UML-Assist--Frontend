@@ -63,7 +63,7 @@ export const ACTIVITY_NODES = [
                 <path d="M35 1.99998L46.5 14L35.5 25.5" stroke="black" strokeWidth="4" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'sendSignal',
         label: 'Envio de señal',
         grouped: true,
     },

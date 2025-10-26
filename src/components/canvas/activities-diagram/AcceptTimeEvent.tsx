@@ -101,7 +101,7 @@ export default function AcceptTimeEvent() {
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
                     placeholder="Evento de tiempo"
-                    className={`nodrag placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm py-1 overflow-hidden max-w-[120px] ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
+                    className={`nodrag placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm py-1 overflow-hidden max-w-[120px] w-4/5 ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
                         }`}
                 />
             </div>

@@ -7,7 +7,7 @@ import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -32,6 +32,24 @@ function DiagramContent() {
         [],
     );
 
+    useEffect(() => {
+        setEdges((currentEdges) =>
+            currentEdges.map((edge) => ({
+                ...edge,
+                style: {
+                    ...edge.style,
+                    stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                },
+                markerStart: {
+                    type: 'arrow',
+                    width: 15,
+                    height: 15,
+                    color: isDarkMode ? '#A1A1AA' : '#52525B'
+                }
+            }))
+        );
+    }, [isDarkMode]);
+
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header />
@@ -53,7 +71,7 @@ function DiagramContent() {
                         focusable: true,
                         reconnectable: true,
                         style: {
-                            strokeWidth: 2  ,
+                            strokeWidth: 2,
                             stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
                         type: 'smoothstep',
