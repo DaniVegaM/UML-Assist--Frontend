@@ -49,7 +49,7 @@ export const ACTIVITY_NODES = [
                 <path d="M5.33984 9H22.6602L14 24L5.33984 9Z" fill="#D9D9D9" stroke="black" strokeWidth="4" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'acceptTimeEvent',
         label: 'Aceptación de evento de tiempo',
         grouped: true,
         className: 'text-[12px]'

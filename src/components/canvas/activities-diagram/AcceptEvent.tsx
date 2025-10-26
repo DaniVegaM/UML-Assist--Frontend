@@ -81,7 +81,7 @@ export default function AcceptEvent() {
                 onChange={onChange}
                 onBlur={handleBlur}
                 onWheel={(e) => e.stopPropagation()}
-                placeholder="Evento de aceptación"
+                placeholder="Evento general"
                 className={`nodrag w-4/5 placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm pl-4 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
                     }`}
                 rows={1}
