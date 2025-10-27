@@ -16,18 +16,26 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
 
     const onNodesChange = useCallback(
-        (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+        (changes: NodeChange[]) => {
+            setNodes((nodesSnapshot) => (applyNodeChanges(changes, nodesSnapshot)));
+        },
         [],
     );
 
     const onEdgesChange = useCallback(
-        (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+        (changes: EdgeChange[]) => {
+            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
+        },
         [],
     );
 
     const onConnect = useCallback(
         (params: Connection) => {
-            setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
+            setEdges((edgesSnapshot) => {
+                const newEdges = addEdge(params, edgesSnapshot);
+                console.log('Conexiones actuales:', newEdges);
+                return newEdges;
+            });
         },
         [],
     );
@@ -40,7 +48,7 @@ function DiagramContent() {
                     ...edge.style,
                     stroke: isDarkMode ? '#FFFFFF' : '#171717',
                 },
-                markerStart: {
+                markerEnd: {
                     type: 'arrow',
                     width: 15,
                     height: 15,
@@ -62,7 +70,7 @@ function DiagramContent() {
                     attributionPosition="bottom-right"
                     defaultEdgeOptions={{
                         animated: false,
-                        markerStart: {
+                        markerEnd: {
                             type: 'arrow',
                             width: 15,
                             height: 15,
