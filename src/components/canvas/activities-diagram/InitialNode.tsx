@@ -11,11 +11,11 @@ export default function InitialNode() {
 
     const onMouseEnter = () => {
         if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(true);
+            setShowSourceHandleOptions(false);
             setShowTargetHandleOptions(false);
         } else {
-            setShowTargetHandleOptions(true);
-            setShowSourceHandleOptions(false);
+            setShowTargetHandleOptions(false);
+            setShowSourceHandleOptions(true);
         }
     }
 
@@ -33,10 +33,10 @@ export default function InitialNode() {
                 clipPath: 'circle(50.0% at 50% 50%)',
             }}
         >
-            <BaseHandle id={4} type="target" position={Position.Top} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={5} type="target" position={Position.Right} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={6} type="target" position={Position.Left} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={7} type="target" position={Position.Bottom} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={4} type="source" position={Position.Top} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={5} type="source" position={Position.Right} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={6} type="source" position={Position.Left} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={7} type="source" position={Position.Bottom} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
         </div>
     )
 }

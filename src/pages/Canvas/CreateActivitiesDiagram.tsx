@@ -17,7 +17,11 @@ function DiagramContent() {
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
-            setNodes((nodesSnapshot) => (applyNodeChanges(changes, nodesSnapshot)));
+            setNodes((nodesSnapshot) => {
+                const nodes = applyNodeChanges(changes, nodesSnapshot)
+                console.log('Nodos actuales:', nodes);
+                return nodes;
+        });
         },
         [],
     );
