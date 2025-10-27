@@ -1,5 +1,7 @@
-import SimpleAction from "../components/canvas/activities-diagram/SimpleAction";
+import { SimpleAction, ObjectNode, DataNode } from "../components/canvas/activities-diagram/activitiesNodes";
 
 export const activitiesNodeTypes = {
   simpleAction: SimpleAction,
+  data: DataNode,
+  object: ObjectNode,
 };
