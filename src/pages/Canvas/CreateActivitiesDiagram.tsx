@@ -8,6 +8,7 @@ import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useState } from "react";
+import { edgeTypes } from "../../components/canvas/activities-diagram/activitiesEdges";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -24,12 +25,21 @@ function DiagramContent() {
         (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
         [],
     );
-
+    
     const onConnect = useCallback(
         (params: Connection) => {
-            setEdges((edgesSnapshot) => addEdge(params, edgesSnapshot))
-        },
-        [],
+            const sourceNode: Node | undefined = nodes.find(node => node.id === params.source);
+            const edgeType = sourceNode?.data?.edgeType || 'smoothstep';
+            
+            const newEdge = {
+                ...params,
+                type: edgeType, 
+                id: `edge-${params.source}-${params.target}`,
+            };
+            
+            setEdges((edgesSnapshot) => addEdge(newEdge, edgesSnapshot));
+        }, 
+        [nodes] 
     );
 
     return (
@@ -54,7 +64,7 @@ function DiagramContent() {
                         reconnectable: true,
                         style: {
                             strokeWidth: 2  ,
-                            stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                            stroke: isDarkMode ? '#A1A1AA' : '#52525B',
                         },
                         type: 'smoothstep',
                     }}
@@ -64,6 +74,7 @@ function DiagramContent() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     nodeTypes={activitiesNodeTypes}
+                    edgeTypes={edgeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnectStart={() => setIsTryingToConnect({ isTrying: true })}
                     onConnectEnd={() => setIsTryingToConnect({ isTrying: false })}
