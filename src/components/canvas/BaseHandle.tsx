@@ -31,12 +31,12 @@ export default function BaseHandle({id, type, position, maxSourceConnections = 1
             position={position ? position : Position.Top}
             style={{
                 opacity: (type == 'source' ? showSourceHandleOptions : showTargetHandleOptions) ? 1 : 0,
-                pointerEvents: 'all',
+                pointerEvents: (type == 'source' ? showSourceHandleOptions : showTargetHandleOptions) ? 'all' : 'none',
                 transition: 'opacity 0.2s'
             }}
             isConnectable={type === 'source' ? canConnectSource : canConnectTarget}
             isValidConnection={type === 'source' ? isValidSourceConnection : isValidTargetConnection}
-            className={className}
+            className={className || ''}
         />
     )
 }

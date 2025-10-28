@@ -7,8 +7,8 @@ import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useState } from "react";
 import { activityEdgeTypes } from "../../types/activitiesEdges";
+import { useCallback, useEffect, useState } from "react";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -17,12 +17,20 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
 
     const onNodesChange = useCallback(
-        (changes: NodeChange[]) => setNodes((nodesSnapshot) => applyNodeChanges(changes, nodesSnapshot)),
+        (changes: NodeChange[]) => {
+            setNodes((nodesSnapshot) => {
+                const nodes = applyNodeChanges(changes, nodesSnapshot)
+                console.log('Nodos actuales:', nodes);
+                return nodes;
+        });
+        },
         [],
     );
 
     const onEdgesChange = useCallback(
-        (changes: EdgeChange[]) => setEdges((edgesSnapshot) => applyEdgeChanges(changes, edgesSnapshot)),
+        (changes: EdgeChange[]) => {
+            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
+        },
         [],
     );
     
@@ -37,10 +45,32 @@ function DiagramContent() {
                 id: `edge-${params.source}-${params.target}`,
             };
             
-            setEdges((edgesSnapshot) => addEdge(newEdge, edgesSnapshot));
-        }, 
-        [nodes] 
+            setEdges((edgesSnapshot) => {
+                const newEdges = addEdge(newEdge, edgesSnapshot);
+                console.log('Conexiones actuales:', newEdges);
+                return newEdges;
+            });
+        },
+        [],
     );
+
+    useEffect(() => {
+        setEdges((currentEdges) =>
+            currentEdges.map((edge) => ({
+                ...edge,
+                style: {
+                    ...edge.style,
+                    stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                },
+                markerEnd: {
+                    type: 'arrow',
+                    width: 15,
+                    height: 15,
+                    color: isDarkMode ? '#A1A1AA' : '#52525B'
+                }
+            }))
+        );
+    }, [isDarkMode]);
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
@@ -54,7 +84,7 @@ function DiagramContent() {
                     attributionPosition="bottom-right"
                     defaultEdgeOptions={{
                         animated: false,
-                        markerStart: {
+                        markerEnd: {
                             type: 'arrow',
                             width: 15,
                             height: 15,
@@ -63,8 +93,8 @@ function DiagramContent() {
                         focusable: true,
                         reconnectable: true,
                         style: {
-                            strokeWidth: 2  ,
-                            stroke: isDarkMode ? '#A1A1AA' : '#52525B',
+                            strokeWidth: 2,
+                            stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
                         type: 'smoothstep',
                     }}
