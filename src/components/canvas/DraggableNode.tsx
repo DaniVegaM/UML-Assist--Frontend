@@ -40,17 +40,30 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
             if (isInFlow) {
                 const flowPosition = screenToFlowPosition(screenPosition);
 
-                //Creamos el nodo
+                // Define el tipo de edge según el tipo de nodo
+                let incomingEdge = 'smoothstep'; // tipo por defecto
+                let outgoingEdge = 'smoothstep'; // tipo por defecto
+                
+                // TODO: en caso de edges personalizados, asignar aquí
+                if (nodeType === 'dataNode') {
+                    incomingEdge = 'dataIncomingEdge';
+                    outgoingEdge = 'dataOutgoingEdge';
+                }
+
                 const newNode = {
                     id: getId(),
                     type: nodeType,
                     position: flowPosition,
-                    data: { label: `${nodeType} node` },
+                    data: { 
+                        label: `${nodeType} node`,
+                        incomingEdge: incomingEdge,
+                        outgoingEdge: outgoingEdge
+                    },
                     draggable: true,
                     selectable: true,
                     connectable: true,
                 };
-                //Agregamos el nodo
+                
                 setNodes((nds) => nds.concat(newNode));
             }
         },
