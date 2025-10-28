@@ -9,6 +9,7 @@ import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
 import { activityEdgeTypes } from "../../types/activitiesEdges";
 import { useCallback, useEffect, useState } from "react";
+import { edgeTypes } from "../../types/edgeTypes";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -22,7 +23,7 @@ function DiagramContent() {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
                 console.log('Nodos actuales:', nodes);
                 return nodes;
-        });
+            });
         },
         [],
     );
@@ -36,10 +37,11 @@ function DiagramContent() {
     
     const onConnect = useCallback(
         (params: Connection) => {
-            const sourceNode: Node | undefined = nodes.find(node => node.id === params.source);
-            const targetNode: Node | undefined = nodes.find(node => node.id === params.target);
-
-            let edgeType = {};
+          const sourceNode = nodes.find((node) => node.id === params.source);
+          const targetNode = nodes.find((node) => node.id === params.target);
+          
+          let edgeType = {};
+          let defaultLabel = '';
 
             if ( targetNode?.type === 'dataNode' ) {
                 edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
@@ -48,22 +50,32 @@ function DiagramContent() {
                 edgeType = sourceNode?.data?.outgoingEdge || 'dataOutgoingEdge';
             }
             else {
-                edgeType = 'smoothstep'; // tipo por defecto
+                edgeType = 'labeledEdge'; // tipo por defecto
             }
-            
-            const newEdge = {
+          
+          if (targetNode?.type === 'decisionControl') {
+                    defaultLabel = '[Condición]';
+                }
+
+                if (sourceNode?.type === 'decisionControl') {
+                    defaultLabel = '[Clausula]';
+                }
+          
+          const newEdge = {
                 ...params,
-                type: edgeType, 
                 id: `edge-${params.source}-${params.target}`,
+                type: edgeType, 
+                 label: defaultLabel,
             };
-            
-            setEdges((edgesSnapshot) => {
+          
+          setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
                 console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
-        },
-        [nodes],
+          
+          },
+        [nodes, setEdges],
     );
 
     useEffect(() => {
@@ -79,7 +91,17 @@ function DiagramContent() {
                     width: 15,
                     height: 15,
                     color: isDarkMode ? '#A1A1AA' : '#52525B'
-                }
+                },
+                labelStyle: {
+                    fill: isDarkMode ? '#FFFFFF' : '#171717', // Color del texto
+                    fontWeight: 600,
+                },
+                labelBgStyle: {
+                    fill: isDarkMode ? '#18181B' : '#F3F4F6', // Color del fondo
+                    fillOpacity: 0.8,
+                },
+                labelBgPadding: [4, 4],
+                labelBgBorderRadius: 4,
             }))
         );
     }, [isDarkMode]);
@@ -94,6 +116,7 @@ function DiagramContent() {
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
                     attributionPosition="bottom-right"
+                    edgeTypes={edgeTypes}
                     defaultEdgeOptions={{
                         animated: false,
                         markerEnd: {
@@ -108,7 +131,7 @@ function DiagramContent() {
                             strokeWidth: 2,
                             stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
-                        type: 'smoothstep',
+                        type: 'labeledEdge',
                     }}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     nodes={nodes}
