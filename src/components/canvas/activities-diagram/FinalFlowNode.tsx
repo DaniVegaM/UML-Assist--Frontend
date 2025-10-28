@@ -11,10 +11,10 @@ export default function FinalFlowNode() {
 
     const onMouseEnter = () => {
         if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(true);
-            setShowTargetHandleOptions(false);
-        } else {
+            setShowSourceHandleOptions(false);
             setShowTargetHandleOptions(true);
+        } else {
+            setShowTargetHandleOptions(false);
             setShowSourceHandleOptions(false);
         }
     }
@@ -30,10 +30,10 @@ export default function FinalFlowNode() {
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <BaseHandle id={0} type="source" position={Position.Top} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={1} type="source" position={Position.Right} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={2} type="source" position={Position.Left} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={3} type="source" position={Position.Bottom} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={0} type="target" position={Position.Top} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={1} type="target" position={Position.Right} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={2} type="target" position={Position.Left} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={3} type="target" position={Position.Bottom} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
             
             <div
                 className="absolute inset-0 border-4 border-neutral-900 bg-transparent z-0 rounded-full"

@@ -15,7 +15,7 @@ export default function FinalNode() {
             setShowTargetHandleOptions(true);
         } else {
             setShowTargetHandleOptions(false);
-            setShowSourceHandleOptions(true);
+            setShowSourceHandleOptions(false);
         }
     }
 
@@ -34,10 +34,10 @@ export default function FinalNode() {
                 zIndex: 1,
             }}
         >
-            <BaseHandle id={0} type="source" position={Position.Top} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={1} type="source" position={Position.Right} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={2} type="source" position={Position.Left} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={3} type="source" position={Position.Bottom} maxSourceConnections={1} maxTargetConnections={0} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={0} type="target" position={Position.Top} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={1} type="target" position={Position.Right} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={2} type="target" position={Position.Left} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={3} type="target" position={Position.Bottom} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
             <div
                 className="absolute w-14 h-14 bg-white flex flex-col items-center justify-center transition-all duration-150"
                 style={{

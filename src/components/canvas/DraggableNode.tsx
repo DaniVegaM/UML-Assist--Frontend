@@ -3,13 +3,14 @@ import { useReactFlow, type XYPosition } from "@xyflow/react";
 import { useRef, useState } from "react";
 import type { DraggableNodeProps } from "../../types/canvas";
 
-let id = 0;
-const getId = () => `node_${id++}`;
 
 export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
     const draggableRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const { setNodes, screenToFlowPosition } = useReactFlow();
+    
+    let id = 0;
+    const getId = () => `${nodeType}_${id++}`;
 
     useDraggable(draggableRef as React.RefObject<HTMLElement>, {
         position: position,
