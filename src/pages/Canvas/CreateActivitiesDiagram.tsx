@@ -41,10 +41,10 @@ function DiagramContent() {
 
             let edgeType = {};
 
-            if ( targetNode?.type === 'data' ) {
+            if ( targetNode?.type === 'dataNode' ) {
                 edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
             }
-            else if ( sourceNode?.type === 'data' ) {
+            else if ( sourceNode?.type === 'dataNode' ) {
                 edgeType = sourceNode?.data?.outgoingEdge || 'dataOutgoingEdge';
             }
             else {

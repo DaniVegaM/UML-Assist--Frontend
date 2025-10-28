@@ -45,7 +45,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 let outgoingEdge = 'smoothstep'; // tipo por defecto
                 
                 // TODO: en caso de edges personalizados, asignar aquí
-                if (nodeType === 'data') {
+                if (nodeType === 'dataNode') {
                     incomingEdge = 'dataIncomingEdge';
                     outgoingEdge = 'dataOutgoingEdge';
                 }

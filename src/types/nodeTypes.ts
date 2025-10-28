@@ -11,8 +11,8 @@ import ObjectNode from "../components/canvas/activities-diagram/ObjectNode";
 
 export const activitiesNodeTypes = {
   simpleAction: SimpleAction,
-  data: DataNode,
-  object: ObjectNode,
+  dataNode: DataNode,
+  objectNode: ObjectNode,
   acceptEvent: AcceptEvent,
   acceptTimeEvent: AcceptTimeEvent,
   sendSignal: SendSignal,

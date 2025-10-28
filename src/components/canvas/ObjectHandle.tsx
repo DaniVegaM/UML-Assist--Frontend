@@ -34,7 +34,7 @@ export default function ObjectHandle({
         
         // Validación específica: object/data solo puede conectarse a simpleAction
         let isValidNodeType = true;
-        if (currentNode?.type === 'object' || currentNode?.type === 'data') {
+        if (currentNode?.type === 'objectNode' || currentNode?.type === 'dataNode') {
             isValidNodeType = targetNode?.type === 'simpleAction';
         }
         
@@ -56,7 +56,7 @@ export default function ObjectHandle({
         
         // Validación específica: object/data solo puede recibir de simpleAction
         let isValidNodeType = true;
-        if (currentNode?.type === 'object' || currentNode?.type === 'data') {
+        if (currentNode?.type === 'objectNode' || currentNode?.type === 'dataNode') {
             isValidNodeType = sourceNode?.type === 'simpleAction';
         }
         
