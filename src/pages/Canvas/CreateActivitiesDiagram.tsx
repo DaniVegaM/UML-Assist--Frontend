@@ -8,7 +8,7 @@ import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useState } from "react";
-import { edgeTypes } from "../../components/canvas/activities-diagram/activitiesEdges";
+import { activityEdgeTypes } from "../../types/activitiesEdges";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -74,7 +74,7 @@ function DiagramContent() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     nodeTypes={activitiesNodeTypes}
-                    edgeTypes={edgeTypes}
+                    edgeTypes={activityEdgeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnectStart={() => setIsTryingToConnect({ isTrying: true })}
                     onConnectEnd={() => setIsTryingToConnect({ isTrying: false })}
