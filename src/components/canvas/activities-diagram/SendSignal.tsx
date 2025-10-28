@@ -47,11 +47,11 @@ export default function SendSignal() {
 
     const onMouseEnter = () => {
         if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(true);
-            setShowTargetHandleOptions(false);
-        } else {
-            setShowTargetHandleOptions(true);
             setShowSourceHandleOptions(false);
+            setShowTargetHandleOptions(true);
+        } else {
+            setShowTargetHandleOptions(false);
+            setShowSourceHandleOptions(true);
         }
     }
 
@@ -73,8 +73,8 @@ export default function SendSignal() {
                 marginLeft: '-2px',
             }}
         >
-            <BaseHandle id={0} type="target" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={1} type="source" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={0} type="source" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+            <BaseHandle id={1} type="target" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
             <textarea
                 ref={textareaRef}
                 value={value}

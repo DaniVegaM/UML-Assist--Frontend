@@ -48,11 +48,11 @@ export default function AcceptTimeEvent() {
 
     const onMouseEnter = () => {
         if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(true);
-            setShowTargetHandleOptions(false);
-        } else {
-            setShowTargetHandleOptions(true);
             setShowSourceHandleOptions(false);
+            setShowTargetHandleOptions(true);
+        } else {
+            setShowTargetHandleOptions(false);
+            setShowSourceHandleOptions(true);
         }
     }
 
