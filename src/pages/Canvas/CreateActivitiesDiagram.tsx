@@ -7,7 +7,6 @@ import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { activityEdgeTypes } from "../../types/activitiesEdges";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 
@@ -34,47 +33,47 @@ function DiagramContent() {
         },
         [],
     );
-    
+
     const onConnect = useCallback(
         (params: Connection) => {
-          const sourceNode = nodes.find((node) => node.id === params.source);
-          const targetNode = nodes.find((node) => node.id === params.target);
-          
-          let edgeType = {};
-          let defaultLabel = '';
+            const sourceNode = nodes.find((node) => node.id === params.source);
+            const targetNode = nodes.find((node) => node.id === params.target);
 
-            if ( targetNode?.type === 'dataNode' ) {
+            let edgeType = {};
+            let defaultLabel = '';
+
+            if (targetNode?.type === 'dataNode') {
                 edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
             }
-            else if ( sourceNode?.type === 'dataNode' ) {
+            else if (sourceNode?.type === 'dataNode') {
                 edgeType = sourceNode?.data?.outgoingEdge || 'dataOutgoingEdge';
             }
             else {
                 edgeType = 'labeledEdge'; // tipo por defecto
             }
-          
-          if (targetNode?.type === 'decisionControl') {
-                    defaultLabel = '[Condición]';
-                }
 
-                if (sourceNode?.type === 'decisionControl') {
-                    defaultLabel = '[Clausula]';
-                }
-          
-          const newEdge = {
+            if (targetNode?.type === 'decisionControl') {
+                defaultLabel = '[Condición]';
+            }
+
+            if (sourceNode?.type === 'decisionControl') {
+                defaultLabel = '[Clausula]';
+            }
+
+            const newEdge = {
                 ...params,
                 id: `edge-${params.source}-${params.target}`,
-                type: edgeType, 
-                 label: defaultLabel,
+                type: edgeType,
+                label: defaultLabel,
             };
-          
-          setEdges((edgesSnapshot) => {
+
+            setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
                 console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
-          
-          },
+
+        },
         [nodes, setEdges],
     );
 
@@ -139,7 +138,6 @@ function DiagramContent() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     nodeTypes={activitiesNodeTypes}
-                    edgeTypes={activityEdgeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnectStart={() => setIsTryingToConnect({ isTrying: true })}
                     onConnectEnd={() => setIsTryingToConnect({ isTrying: false })}
