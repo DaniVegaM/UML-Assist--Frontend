@@ -8,6 +8,7 @@ import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
+import { edgeTypes } from "../../types/edgeTypes";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -21,7 +22,7 @@ function DiagramContent() {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
                 console.log('Nodos actuales:', nodes);
                 return nodes;
-        });
+            });
         },
         [],
     );
@@ -35,13 +36,29 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
-            setEdges((edgesSnapshot) => {
-                const newEdges = addEdge(params, edgesSnapshot);
-                console.log('Conexiones actuales:', newEdges);
-                return newEdges;
-            });
+                const sourceNode = nodes.find((node) => node.id === params.source);
+                const targetNode = nodes.find((node) => node.id === params.target);
+
+                let defaultLabel = '';
+
+                if (targetNode?.type === 'decisionControl') {
+                    defaultLabel = '[Condición]';
+                }
+
+                if (sourceNode?.type === 'decisionControl') {
+                    defaultLabel = '[Clausula]';
+                }
+
+                const newEdge = {
+                    ...params,
+                    label: defaultLabel,
+                    type: 'labeledEdge',
+                };
+
+                setEdges((edgesSnapshot) => addEdge(newEdge, edgesSnapshot));
+                console.log('Conexion actual:', newEdge);
         },
-        [],
+        [nodes, setEdges],
     );
 
     useEffect(() => {
@@ -57,7 +74,17 @@ function DiagramContent() {
                     width: 15,
                     height: 15,
                     color: isDarkMode ? '#A1A1AA' : '#52525B'
-                }
+                },
+                labelStyle: {
+                    fill: isDarkMode ? '#FFFFFF' : '#171717', // Color del texto
+                    fontWeight: 600,
+                },
+                labelBgStyle: {
+                    fill: isDarkMode ? '#18181B' : '#F3F4F6', // Color del fondo
+                    fillOpacity: 0.8,
+                },
+                labelBgPadding: [4, 4],
+                labelBgBorderRadius: 4,
             }))
         );
     }, [isDarkMode]);
@@ -72,6 +99,7 @@ function DiagramContent() {
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
                     attributionPosition="bottom-right"
+                    edgeTypes={edgeTypes}
                     defaultEdgeOptions={{
                         animated: false,
                         markerEnd: {
@@ -86,7 +114,7 @@ function DiagramContent() {
                             strokeWidth: 2,
                             stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
-                        type: 'smoothstep',
+                        type: 'labeledEdge',
                     }}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     nodes={nodes}
