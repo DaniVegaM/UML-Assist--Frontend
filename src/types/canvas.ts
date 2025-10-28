@@ -23,6 +23,7 @@ export interface ElementsBarProps {
         separator?: string;
         grouped?: boolean;
     }[];
+    oneColumn?: boolean;
 }
 
 export interface BaseHandleProps {
@@ -34,4 +35,8 @@ export interface BaseHandleProps {
     maxSourceConnections?: number;
     maxTargetConnections?: number;
     className?: string;
+}
+
+export interface HeaderProps {
+    diagramTitle?: string;
 }

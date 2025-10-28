@@ -1,8 +1,9 @@
 
 import { Link } from 'react-router'
 import { useTheme } from '../../hooks/useTheme';
+import type { HeaderProps } from '../../types/canvas';
 
-export default function Header() {
+export default function Header({ diagramTitle }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     return (
         <section className="h-full bg-sky-600 md:grid grid-cols-3 gap-4 p-1 items-center">
@@ -27,7 +28,7 @@ export default function Header() {
                         <line x1="17.5" y1="10" x2="17.5" y2="14" />
                     </svg>
                 </Link>
-                <p className="text-center text-white font-bold uppercase">Diagrama de actividades</p>
+                <p className="text-center text-white font-bold uppercase">{diagramTitle ? diagramTitle : 'Diagrama de actividades'}</p>
             </div>
             <input
                 className="text-xl min-w-64 text-white focus-visible: outline-none hover:border-b border-white bg-sky-600 text-center col-span-1 placeholder-white"

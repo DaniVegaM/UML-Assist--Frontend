@@ -9,6 +9,7 @@ import ResetPasswordPage from "../pages/Auth/forgottenpassword/ResetPasswordPage
 import ForgotPasswordPage from "../pages/Auth/forgottenpassword/ForgotPasswordPage";
 import ChangePasswordPage from "../pages/Auth/changepassword/ChangePasswordPage";
 import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
+import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
 
 const HomePage = () => <div>Home Page</div>;
 
@@ -72,6 +73,10 @@ const router = createBrowserRouter([
   {
     path: "/crear-diagrama-de-actividades",
     element: <CreateActivitiesDiagram />,
+  },
+  {
+    path: "/crear-diagrama-de-secuencia",
+    element: <CreateSequenceDiagram />,
   },
 ]);
 

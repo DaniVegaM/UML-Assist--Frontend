@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ElementsBarProps } from '../../types/canvas';
 import { DraggableNode } from './DraggableNode';
 
-export function ElementsBar({ nodes }: ElementsBarProps) {
+export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
@@ -40,7 +40,7 @@ export function ElementsBar({ nodes }: ElementsBarProps) {
             </button>
 
             <aside className={`[&::-webkit-scrollbar]:hidden absolute inset-y-3 left-3 z-10 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg py-4 px-2 transition-all duration-300 ease-in-out ${isVisible ? 'w-32 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
-                <div className='grid grid-cols-2 gap-2'>
+                <div className={oneColumn ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
                     {nodes.map((node, index) => {
                         if (node.separator) {
                             const groupedNodes = [];
@@ -70,7 +70,7 @@ export function ElementsBar({ nodes }: ElementsBarProps) {
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                         </svg>
                                     </button>
-                                    <div className={`grid grid-cols-2 gap-2 transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
+                                    <div className={`${oneColumn ? 'flex flex-col' : 'grid grid-cols-2'} gap-2 transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                                         {groupedNodes.map(groupedNode => (
                                             <DraggableNode
                                                 className={`${groupedNode.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex h-10 text-zinc-400
@@ -89,7 +89,7 @@ export function ElementsBar({ nodes }: ElementsBarProps) {
                         } else if (!node.grouped) {
                             return (
                                 <DraggableNode
-                                    className={`${node.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex h-10 text-zinc-400
+                                    className={`${node.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex ${oneColumn ? 'h-[60px]' : 'h-10'} text-zinc-400
                                 gap-0 justify-center items-center`}
                                     nodeType={node.nodeType}
                                     key={node.label.trim()}
