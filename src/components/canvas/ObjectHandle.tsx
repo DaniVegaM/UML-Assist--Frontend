@@ -2,7 +2,15 @@ import { Handle, Position, useNodeConnections, useNodeId, useReactFlow, type Con
 import { useCallback } from "react";
 import type { BaseHandleProps } from "../../types/canvas";
 
-export default function ObjectHandle({id, type, position, maxSourceConnections = 1, maxTargetConnections = 1, showSourceHandleOptions, showTargetHandleOptions, className} : BaseHandleProps) {
+export default function ObjectHandle({
+    id, 
+    type, 
+    position, 
+    maxSourceConnections = 1, 
+    maxTargetConnections = 1, 
+    showSourceHandleOptions, 
+    showTargetHandleOptions, 
+    className} : BaseHandleProps) {
     const nodeId = useNodeId();
     const { getNode } = useReactFlow();
 
@@ -33,7 +41,7 @@ export default function ObjectHandle({id, type, position, maxSourceConnections =
         const result = hasSpaceForConnection && isNotSelfConnection && isValidNodeType;
         
         return result;
-    }, [allConnections, nodeId, getNode, maxSourceConnections]);
+    }, [allConnections, nodeId, getNode]);
 
     const isValidTargetConnection = useCallback((connection: Connection | Edge) => {
         const currentNode = getNode(nodeId!);
@@ -55,7 +63,7 @@ export default function ObjectHandle({id, type, position, maxSourceConnections =
         const result = hasSpaceForConnection && isNotSelfConnection && isValidNodeType;
         
         return result;
-    }, [allConnections, nodeId, getNode, maxTargetConnections]);
+    }, [allConnections, nodeId, getNode]);
 
     return (
         <Handle
@@ -64,7 +72,7 @@ export default function ObjectHandle({id, type, position, maxSourceConnections =
             position={position ? position : Position.Top}
             style={{
                 opacity: (type == 'source' ? showSourceHandleOptions : showTargetHandleOptions) ? 1 : 0,
-                pointerEvents: 'all',
+                pointerEvents: (type == 'source' ? showSourceHandleOptions : showTargetHandleOptions) ? 'all' : 'none',
                 transition: 'opacity 0.2s'
             }}
             isConnectable={type === 'source' ? canConnectSource : canConnectTarget}
