@@ -144,7 +144,7 @@ export default function DataNode() {
             <select
                 value={dataType}
                 onChange={onSelectChange}
-                className="nodrag w-fit bg-none dark:bg-zinc-800 dark:text-white px-1 text-xs outline-none cursor-pointer text-center"
+                className={`nodrag w-fit bg-none dark:bg-zinc-800 dark:text-white text-xs outline-none cursor-pointer text-center disabled:opacity-50 disabled:cursor-not-allowed ${isEditing ? 'pointer-events-auto' : 'pointer-events-none appearance-none'}`}
             >
                 <option value="centralBuffer">{"<<centralBuffer>>"}</option>
                 <option value="datastore">{"<<datastore>>"}</option>

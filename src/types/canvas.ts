@@ -7,7 +7,9 @@ export interface DraggableNodeProps {
     label?: string;
     description?: string;
     svg?: React.ReactNode;
-    edgeType?: string;
+    // edgeType?: string;
+    incomingEdge? : string;
+    outgoingEdge? : string;
     setExtendedBar?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 

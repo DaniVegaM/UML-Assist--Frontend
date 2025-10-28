@@ -2,7 +2,7 @@ import { Position, BaseEdge, getSmoothStepPath } from "@xyflow/react";
 import type { EdgeProps } from '@xyflow/react';
 import { useTheme } from "../../../hooks/useTheme";
 
-export default function ObjectFlowEdge ({
+export default function DataOutgoingEdge ({
     id,
     sourceX,
     sourceY,
@@ -22,9 +22,7 @@ export default function ObjectFlowEdge ({
     targetPosition,
   });
 
-  // Marker 'arrow'
-  const markerEnd: string = isDarkMode ? "url('#1__color=#A1A1AA&height=15&type=arrow&width=15')" : "url('#1__color=#52525B&height=15&type=arrow&width=15')";
-  const markerStartId = `rect-marker-start-${id}`;
+  const markerEnd = `rect-marker-start-${id}`;
 
   // Calcular la rotación del marker según la posición del handle target
   const getMarkerRotation = (position: Position) => {
@@ -48,9 +46,9 @@ export default function ObjectFlowEdge ({
     <>
       <defs>
 
-        {/* Marker Start: Rectangulo */}
+        {/* Marker End: Rectangulo */}
         <marker
-          id={markerStartId}
+          id={markerEnd}
           viewBox="-2.5 -2.5 5 5"
           refX="0"
           refY="0"
@@ -73,8 +71,7 @@ export default function ObjectFlowEdge ({
       <BaseEdge 
         id={id} 
         path={path} 
-        markerEnd={`url(#${markerStartId})`}
-        markerStart={markerEnd}
+        markerEnd={`url(#${markerEnd})`}
         style={
           {
             strokeWidth: 2,

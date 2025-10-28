@@ -1,5 +1,7 @@
-import ObjectFlowEdge from "../components/canvas/activities-diagram/ObjectFlowEdge";
+import DataOutgoingEdge from "../components/canvas/activities-diagram/DataOutgoingEdge";
+import DataIncomingEdge from "../components/canvas/activities-diagram/DataIncomingEdge";
 
 export const activityEdgeTypes = {
-    objectFlowEdge: ObjectFlowEdge
+    dataIncomingEdge: DataIncomingEdge,
+    dataOutgoingEdge: DataOutgoingEdge
 };

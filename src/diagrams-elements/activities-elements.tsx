@@ -216,7 +216,6 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'data',
         label: 'Dato',
-        edgeType: 'objectFlowEdge',
         grouped: true
     },
 ];

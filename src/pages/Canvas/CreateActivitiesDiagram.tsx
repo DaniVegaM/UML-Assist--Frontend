@@ -37,7 +37,19 @@ function DiagramContent() {
     const onConnect = useCallback(
         (params: Connection) => {
             const sourceNode: Node | undefined = nodes.find(node => node.id === params.source);
-            const edgeType = sourceNode?.data?.edgeType || 'smoothstep';
+            const targetNode: Node | undefined = nodes.find(node => node.id === params.target);
+
+            let edgeType = {};
+
+            if ( targetNode?.type === 'data' ) {
+                edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
+            }
+            else if ( sourceNode?.type === 'data' ) {
+                edgeType = sourceNode?.data?.outgoingEdge || 'dataOutgoingEdge';
+            }
+            else {
+                edgeType = 'smoothstep'; // tipo por defecto
+            }
             
             const newEdge = {
                 ...params,
@@ -51,7 +63,7 @@ function DiagramContent() {
                 return newEdges;
             });
         },
-        [],
+        [nodes],
     );
 
     useEffect(() => {
