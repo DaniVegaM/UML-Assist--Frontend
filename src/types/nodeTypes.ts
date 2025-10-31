@@ -13,8 +13,10 @@ import MergeNode from "../components/canvas/activities-diagram/MergeNode";
 import ParallelizationNode from "../components/canvas/activities-diagram/ParallelizationNode";
 import ConnectorNode from "../components/canvas/activities-diagram/ConnectorNode";
 import CallBehaviorNode from "../components/canvas/activities-diagram/CallBehaviorNode";
+import Activity from "../components/canvas/activities-diagram/Activity";
 
 export const activitiesNodeTypes = {
+  activity: Activity,
   simpleAction: SimpleAction,
   dataNode: DataNode,
   objectNode: ObjectNode,
