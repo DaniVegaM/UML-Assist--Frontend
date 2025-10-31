@@ -12,6 +12,7 @@ import ObjectNode from "../components/canvas/activities-diagram/ObjectNode";
 import MergeNode from "../components/canvas/activities-diagram/MergeNode";
 import ParallelizationNode from "../components/canvas/activities-diagram/ParallelizationNode";
 import ConnectorNode from "../components/canvas/activities-diagram/ConnectorNode";
+import CallBehaviorNode from "../components/canvas/activities-diagram/CallBehaviorNode";
 
 export const activitiesNodeTypes = {
   simpleAction: SimpleAction,
@@ -28,4 +29,5 @@ export const activitiesNodeTypes = {
   mergeNode: MergeNode,
   parallelizationNode: ParallelizationNode,
   connectorNode: ConnectorNode,
+  callBehavior: CallBehaviorNode,
 };

@@ -83,7 +83,7 @@ export const ACTIVITY_NODES = [
                 <line x1="12.5" y1="20" x2="12.5" y2="34" stroke="black" strokeWidth="3" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'callBehavior',
         label: 'Llamada a un comportamiento',
         grouped: true,
         className: 'text-[10px]'
