@@ -9,6 +9,7 @@ import SendSignal from "../components/canvas/activities-diagram/SendSignal";
 import SimpleAction from "../components/canvas/activities-diagram/SimpleAction";
 import DataNode from "../components/canvas/activities-diagram/DataNode";
 import ObjectNode from "../components/canvas/activities-diagram/ObjectNode";
+import MergeNode from "../components/canvas/activities-diagram/MergeNode";
 
 export const activitiesNodeTypes = {
   simpleAction: SimpleAction,
@@ -22,4 +23,5 @@ export const activitiesNodeTypes = {
   finalNode: FinalNode,
   finalFlowNode: FinalFlowNode,
   decisionControl: DecisionControl,
+  mergeNode: MergeNode,
 };

@@ -163,7 +163,7 @@ export const ACTIVITY_NODES = [
                 <path d="M40.0854 16.0909H42.9298L45.9341 23.4205H46.0619L49.0662 16.0909H51.9106V27H49.6734V19.8995H49.5829L46.7597 26.9467H45.2363L42.4131 19.8729H42.3226V27H40.0854V16.0909Z" fill="black" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'mergeNode',
         label: 'Unir',
         grouped: true,
     },
