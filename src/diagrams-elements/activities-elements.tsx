@@ -186,7 +186,7 @@ export const ACTIVITY_NODES = [
                 <path d="M21.4602 41H18.5057L27.0511 17.7273H29.9602L38.5057 41H35.5511L28.5966 21.4091H28.4148L21.4602 41ZM22.5511 31.9091H34.4602V34.4091H22.5511V31.9091Z" fill="black" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'connectorNode',
         label: 'Conector',
         grouped: true,
     },

@@ -11,6 +11,7 @@ import DataNode from "../components/canvas/activities-diagram/DataNode";
 import ObjectNode from "../components/canvas/activities-diagram/ObjectNode";
 import MergeNode from "../components/canvas/activities-diagram/MergeNode";
 import ParallelizationNode from "../components/canvas/activities-diagram/ParallelizationNode";
+import ConnectorNode from "../components/canvas/activities-diagram/ConnectorNode";
 
 export const activitiesNodeTypes = {
   simpleAction: SimpleAction,
@@ -26,4 +27,5 @@ export const activitiesNodeTypes = {
   decisionControl: DecisionControl,
   mergeNode: MergeNode,
   parallelizationNode: ParallelizationNode,
+  connectorNode: ConnectorNode,
 };
