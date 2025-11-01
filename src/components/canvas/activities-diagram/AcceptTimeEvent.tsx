@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNode } from "../useNode";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Position, useNodeId } from "@xyflow/react";
+import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 
 
 export default function AcceptTimeEvent() {
-    const { showSourceHandleOptions, setShowSourceHandleOptions, showTargetHandleOptions, setShowTargetHandleOptions } = useNode();
     const [isEditing, setIsEditing] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
-    const nodeId = useNodeId();
+    const [showSourceHandle, setShowSourceHandle] = useState(true);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= 50) {
@@ -46,34 +44,20 @@ export default function AcceptTimeEvent() {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
-    const onMouseEnter = () => {
-        if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(false);
-            setShowTargetHandleOptions(true);
-        } else {
-            setShowTargetHandleOptions(false);
-            setShowSourceHandleOptions(true);
-        }
-    }
-
-    const onMouseLeave = () => {
-        setShowSourceHandleOptions(false);
-        setShowTargetHandleOptions(false);
-    }
     return (
         <div
             onDoubleClick={handleDoubleClick}
-            className="flex flex-col items-center justify-center transition-all duration-150"
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
+            className="relative flex flex-col items-center justify-center transition-all duration-150"
             style={{
                 marginRight: '-10px',
                 marginLeft: '-10px',
             }}
+            onMouseEnter={() => setShowSourceHandle(true)}
+            onMouseLeave={() => setShowSourceHandle(false)}
         >
-            <div className="relative z-10">
+            <div className="z-10">
                 <div
-                    className="w-12 h-6 bg-gray-400 dark:bg-neutral-800"
+                    className="relative w-12 h-6 bg-gray-400 dark:bg-neutral-800"
                     style={{
                         clipPath: 'polygon(50% 100%, 100% 0, 0 0)',
                     }}
@@ -84,13 +68,10 @@ export default function AcceptTimeEvent() {
                         clipPath: 'polygon(0 100%, 100% 100%, 50% 0)',
                     }}
                 ></div>
-                {/** SOURCE HANDLES */}
-                <BaseHandle id={0} type="source" position={Position.Right} className="absolute right-0 top-1/2 -translate-y-1/2" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-                <BaseHandle id={1} type="source" position={Position.Left} className="absolute left-0 top-1/2 -translate-y-1/2" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-                {/** TARGETY HANDLES */}
-                <BaseHandle id={2} type="target" position={Position.Right} className="absolute right-0 top-1/2 -translate-y-1/2" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-                <BaseHandle id={3} type="target" position={Position.Left} className="absolute left-0 top-1/2 -translate-y-1/2" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
             </div>
+
+                <BaseHandle id={0} position={Position.Right} showHandle={showSourceHandle && !isTryingToConnect} className="!absolute !right-9 !top-6" />
+                <BaseHandle id={1} position={Position.Left} showHandle={isTryingToConnect} className="!absolute !left-12 !top-6" />
 
             {/* Textarea debajo, sin position absolute */}
             <div className="mt-2 w-full flex justify-center">

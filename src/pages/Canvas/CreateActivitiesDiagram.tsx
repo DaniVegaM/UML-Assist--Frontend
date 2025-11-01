@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
@@ -42,6 +42,7 @@ function DiagramContent() {
             let edgeType = {};
             let defaultLabel = '';
 
+            // Definir el tipo de edge según el tipo de nodo conectado
             if (targetNode?.type === 'dataNode') {
                 edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
             }
@@ -52,6 +53,7 @@ function DiagramContent() {
                 edgeType = 'labeledEdge'; // tipo por defecto
             }
 
+            // Definir etiqueta por defecto según el tipo de nodo conectado
             if (targetNode?.type === 'decisionControl') {
                 defaultLabel = '[Condición]';
             }
@@ -76,6 +78,132 @@ function DiagramContent() {
         },
         [nodes, setEdges],
     );
+
+    const isValidConnection = useCallback(
+        (connection: Edge | Connection) => {
+            const sourceNode = nodes.find((node) => node.id === connection.source);
+            const targetNode = nodes.find((node) => node.id === connection.target);
+
+            console.log('connection ', connection);
+
+            if (!sourceNode || !targetNode) {
+                return false;
+            }
+
+            const sourceNodeId = sourceNode.id;
+            const targetNodeId = targetNode.id;
+            const sourceNodeType = sourceNode.type;
+            const targetNodeType = targetNode.type;
+
+            if ( !targetNodeType || !sourceNodeType ) {
+                return false;
+            }
+
+            // Un solo handle por conexion
+            if (edges.some(edge => 
+                    edge.sourceHandle === connection.sourceHandle 
+                    || edge.sourceHandle === connection.targetHandle 
+                    || edge.targetHandle === connection.targetHandle 
+                    || edge.targetHandle === connection.sourceHandle)) {
+                        return false;
+            }
+
+            // Evitar conexiones a uno mismo
+            if (sourceNodeId === targetNodeId) {
+                return false;
+            }
+
+            // Evitar multiples conexiones entre dos nodos
+            if (edges.some(edge => edge.source === sourceNodeId && edge.target === targetNodeId)) {
+                return false;
+            }
+
+            // Evitar loops entre 2 nodos
+            if (edges.some(edge => edge.source === targetNodeId && edge.target === sourceNodeId)) {
+                return false;
+            }
+
+            // Obtener las conexiones entrantes al nodo objetivo del mismo grupo (simpleAction, callBehavior, callOperation)
+            const relevantTypes = ['simpleAction', 'callBehavior', 'callOperation'];
+            const incomingEdgesFromGroup = edges.filter(edge =>
+                edge.target === targetNodeId &&
+                relevantTypes.some(type => edge.source.includes(type))
+            );
+
+            // Obtener las conexiones salientes del nodo fuente hacia el mismo grupo
+            const outgoingEdgesToGroup = edges.filter(edge =>
+                edge.source === sourceNodeId &&
+                relevantTypes.some(type => edge.target.includes(type))
+            );
+
+            // REGLA 1: Un nodo NO puede tener más de una conexión entrante de estos 3 tipos de nodos
+            if (relevantTypes.includes(targetNodeType) && incomingEdgesFromGroup.length > 0) {
+                return false;
+            }
+
+            // REGLA 2: Un simpleAction NO puede tener múltiples conexiones salientes hacia estos 3 tipos de nodos
+            if (sourceNodeType === 'simpleAction' &&
+                relevantTypes.includes(targetNodeType) &&
+                outgoingEdgesToGroup.length > 0) {
+                return false;
+            }
+            if (sourceNodeType === 'callBehavior' &&
+                relevantTypes.includes(targetNodeType) &&
+                outgoingEdgesToGroup.length > 0) {
+                return false;
+            }
+            if (sourceNodeType === 'callOperation' &&
+                relevantTypes.includes(targetNodeType) &&
+                outgoingEdgesToGroup.length > 0) {
+                return false;
+            }
+
+            // VALIDACIONES PARA DECISION CONTROLS
+            // Hacer que solo tenga 1 conexion de entrada
+            if (targetNodeType === 'decisionControl' && edges.some(edge => edge.target === targetNodeId)) {
+                return false;
+            }
+
+            // VALIDACIONES PARA MERGE NODE
+            // Hacer que solo tenga 1 conexion de salida
+            if (sourceNodeType === 'mergeNode' && edges.some(edge => edge.source === sourceNodeId)) {
+                return false;
+            }
+
+            // VALIDACIONES PARA INITIAL NODE
+            // Hacer que solo tenga 1 conexion de salida
+            if (sourceNodeType === 'initialNode' && edges.some(edge => edge.source === sourceNodeId)) {
+                return false;
+            }
+            //Hacer que no acepte conexiones entrantes
+            if (targetNodeType === 'initialNode') {
+                return false;
+            }
+
+            // VALIDACIONES PARA FINAL NODE
+            // Hacer que no acepte conexiones salientes
+            if (sourceNodeType === 'finalNode') {
+                return false;
+            }
+            // Hacer que solo tenga 1 conexion de entrada
+            if (targetNodeType === 'finalNode' && edges.some(edge => edge.target === targetNodeId)) {
+                return false;
+            }
+
+            // VALIDACIONES PARA FINAL FLOW NODE
+            // Hacer que no acepte conexiones salientes
+            if (sourceNodeType === 'finalFlowNode') {
+                return false;
+            }
+            // Hacer que solo tenga 1 conexion de entrada
+            if (targetNodeType === 'finalFlowNode' && edges.some(edge => edge.target === targetNodeId)) {
+                return false;
+            }
+            
+            return true;
+        }
+        , [edges, nodes]
+    )
 
     useEffect(() => {
         setEdges((currentEdges) =>
@@ -132,6 +260,8 @@ function DiagramContent() {
                         },
                         type: 'labeledEdge',
                     }}
+                    isValidConnection={isValidConnection}
+                    connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     nodes={nodes}
                     edges={edges}
@@ -139,9 +269,9 @@ function DiagramContent() {
                     onEdgesChange={onEdgesChange}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
-                    onConnectStart={() => setIsTryingToConnect({ isTrying: true })}
-                    onConnectEnd={() => setIsTryingToConnect({ isTrying: false })}
                     onConnect={onConnect}
+                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onConnectEnd={() => setIsTryingToConnect(false)}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls

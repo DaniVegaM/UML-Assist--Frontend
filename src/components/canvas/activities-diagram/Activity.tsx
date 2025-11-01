@@ -1,17 +1,13 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, Position, useNodeId, useReactFlow } from "@xyflow/react";
-import { useNode } from "../useNode";
-import BaseHandle from "../BaseHandle";
+import { NodeResizer, useNodeId, useReactFlow } from "@xyflow/react";
 
 
 export default function Activity() {
-    const { showSourceHandleOptions, setShowSourceHandleOptions, showTargetHandleOptions, setShowTargetHandleOptions } = useNode();
-
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
-    const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
+    const { setIsZoomOnScrollEnabled } = useCanvas();
 
     // Obtener el estado del nodo
     const { getNode } = useReactFlow();
@@ -52,27 +48,10 @@ export default function Activity() {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
-    const onMouseEnter = () => {
-        if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(false);
-            setShowTargetHandleOptions(true);
-        } else {
-            setShowTargetHandleOptions(false);
-            setShowSourceHandleOptions(true);
-        }
-    }
-
-    const onMouseLeave = () => {
-        setShowSourceHandleOptions(false);
-        setShowTargetHandleOptions(false);
-    }
-
     return (
         <div
             onDoubleClick={handleDoubleClick}
             className="relative border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 w-full h-full min-w-[200px] min-h-[60px] flex flex-col items-center justify-start transition-all duration-150"
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
         >
             <NodeResizer
                 color="#0084D1"
@@ -80,18 +59,6 @@ export default function Activity() {
                 minWidth={200}
                 minHeight={60}
             />
-            {/* SOURCE HANDLES */}
-            <BaseHandle id={0} type="source" position={Position.Top} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={1} type="source" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={2} type="source" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={3} type="source" position={Position.Bottom} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-
-            {/* TARGET HANDLES */}
-            <BaseHandle id={4} type="target" position={Position.Top} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={5} type="target" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={6} type="target" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={7} type="target" position={Position.Bottom} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-
             <div className="flex flex-col">
                 <textarea
                     ref={textareaRef}

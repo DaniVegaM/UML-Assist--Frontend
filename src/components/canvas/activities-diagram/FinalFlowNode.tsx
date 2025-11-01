@@ -1,39 +1,19 @@
-import { useCanvas } from "../../../hooks/useCanvas";
-import { Position, useNodeId } from "@xyflow/react";
-import { useNode } from "../useNode";
+import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
-
+import { useCanvas } from "../../../hooks/useCanvas";
 
 export default function FinalFlowNode() {
-    const { showSourceHandleOptions, setShowSourceHandleOptions, showTargetHandleOptions, setShowTargetHandleOptions } = useNode();
-    const { isTryingToConnect } = useCanvas();
-    const nodeId = useNodeId();
-
-    const onMouseEnter = () => {
-        if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(false);
-            setShowTargetHandleOptions(true);
-        } else {
-            setShowTargetHandleOptions(false);
-            setShowSourceHandleOptions(false);
-        }
-    }
-
-    const onMouseLeave = () => {
-        setShowSourceHandleOptions(false);
-        setShowTargetHandleOptions(false);
-    }
-
+    const {isTryingToConnect} = useCanvas();
+    
     return (
         <div
             className="relative w-12 h-12 flex items-center justify-center"
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
         >
-            <BaseHandle id={0} type="target" position={Position.Top} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={1} type="target" position={Position.Right} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={2} type="target" position={Position.Left} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={3} type="target" position={Position.Bottom} maxSourceConnections={0} maxTargetConnections={1} className="!border-none !bg-transparent !w-5 !h-5" showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
+
+            <BaseHandle id={0} position={Position.Top} showHandle={isTryingToConnect} className="!bg-black !dark:white !absolute !top-1" />
+            <BaseHandle id={1} position={Position.Right} showHandle={isTryingToConnect} className="!bg-black !dark:white !absolute !right-1" />
+            <BaseHandle id={2} position={Position.Bottom} showHandle={isTryingToConnect} className="!bg-black !dark:white !absolute !bottom-1" />
+            <BaseHandle id={3} position={Position.Left} showHandle={isTryingToConnect} className="!bg-black !dark:white !absolute !left-1" />
             
             <div
                 className="absolute inset-0 border-4 border-neutral-900 bg-transparent z-0 rounded-full"

@@ -1,18 +1,15 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Position, useNodeId } from "@xyflow/react";
-import { useNode } from "../useNode";
 import BaseHandle from "../BaseHandle";
+import { Position } from "@xyflow/react";
 
 
 export default function CallBehaviorNode() {
-    const { showSourceHandleOptions, setShowSourceHandleOptions, showTargetHandleOptions, setShowTargetHandleOptions } = useNode();
-
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
-    const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
-    const nodeId = useNodeId();
+    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const [showHandles, setShowHandles] = useState(false);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= 50) {
@@ -47,40 +44,21 @@ export default function CallBehaviorNode() {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
-    const onMouseEnter = () => {
-        if (isTryingToConnect.isTrying && isTryingToConnect.sourceNodeId !== nodeId) {
-            setShowSourceHandleOptions(false);
-            setShowTargetHandleOptions(true);
-        } else {
-            setShowTargetHandleOptions(false);
-            setShowSourceHandleOptions(true);
-        }
-    }
-
-    const onMouseLeave = () => {
-        setShowSourceHandleOptions(false);
-        setShowTargetHandleOptions(false);
-    }
-
     return (
         <div
             onDoubleClick={handleDoubleClick}
             className="relative border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
+            onMouseEnter={() => setShowHandles(true)}
+            onMouseLeave={() => setShowHandles(false)}
         >
-            {/* SOURCE HANDLES */}
-            <BaseHandle id={0} type="source" position={Position.Top} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={1} type="source" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={2} type="source" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={3} type="source" position={Position.Bottom} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-
-            {/* TARGET HANDLES */}
-            <BaseHandle id={4} type="target" position={Position.Top} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={5} type="target" position={Position.Right} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={6} type="target" position={Position.Left} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-            <BaseHandle id={7} type="target" position={Position.Bottom} showSourceHandleOptions={showSourceHandleOptions} showTargetHandleOptions={showTargetHandleOptions} />
-
+            <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-1/4" />
+            <BaseHandle id={1} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-3/4" />
+            <BaseHandle id={2} position={Position.Right} showHandle={showHandles} className="!absolute !top-1/4 right-0" />
+            <BaseHandle id={3} position={Position.Right} showHandle={showHandles} className="!absolute !top-3/4 right-0" />
+            <BaseHandle id={4} position={Position.Left} showHandle={showHandles} className="!absolute !top-1/4 left-0" />
+            <BaseHandle id={5} position={Position.Left} showHandle={showHandles} className="!absolute !top-3/4 left-0" />
+            <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-0 !left-1/4" />
+            <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-0 !left-3/4" />
             <textarea
                 ref={textareaRef}
                 value={value}
@@ -96,10 +74,10 @@ export default function CallBehaviorNode() {
                 {isEditing &&
                     <p className="w-full text-[10px] text-left text-neutral-400">{`${value.length}/50`}</p>
                 }
-                <div className="bg-neutral-700 w-[20px] h-[20px]" 
-                style={{
-                    clipPath:'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
-                }}></div>
+                <div className="bg-neutral-700 w-[20px] h-[20px]"
+                    style={{
+                        clipPath: 'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
+                    }}></div>
             </div>
         </div>
     )

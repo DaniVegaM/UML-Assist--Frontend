@@ -27,14 +27,10 @@ export interface ElementsBarProps {
 }
 
 export interface BaseHandleProps {
-    id: number;
-    type: 'source' | 'target';
-    showSourceHandleOptions: boolean;
-    showTargetHandleOptions: boolean;
+    id: number | string;
     position?: Position;
-    maxSourceConnections?: number;
-    maxTargetConnections?: number;
     className?: string;
+    showHandle?: boolean;
 }
 
 export interface HeaderProps {
