@@ -1,9 +1,11 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
+import BaseHandle from "../BaseHandle";
+import { Position } from "@xyflow/react";
 
 
 export default function ConnectorNode() {
-
+  const [showHandles, setShowHandles] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState("");
@@ -46,7 +48,14 @@ export default function ConnectorNode() {
     <div
       onDoubleClick={handleDoubleClick}
       className="relative border border-gray-300 dark:border-neutral-900 rounded-full p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 w-[70px] h-[70px] flex flex-col items-center justify-center transition-all duration-150"
+      onMouseEnter={() => setShowHandles(true)}
+      onMouseLeave={() => setShowHandles(false)}
     >
+      <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-1" />
+      <BaseHandle id={1} position={Position.Right} showHandle={showHandles} className="!absolute !right-1" />
+      <BaseHandle id={2} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-1" />
+      <BaseHandle id={3} position={Position.Left} showHandle={showHandles} className="!absolute !left-1" />
+      
       <textarea
         ref={textareaRef}
         value={value}

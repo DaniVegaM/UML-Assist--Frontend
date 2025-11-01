@@ -1,6 +1,8 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { nodeStyles } from "../styles/nodeStyles";
+import BaseHandle from "../BaseHandle";
+import { Position } from "@xyflow/react";
 
 export default function ObjectNode() {
     const TEXT_AREA_MAX_LEN = 50;
@@ -9,6 +11,7 @@ export default function ObjectNode() {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled } = useCanvas();
+    const [showHandles, setShowHandles] = useState(false);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -48,8 +51,13 @@ export default function ObjectNode() {
         <div
             className={ nodeStyles }
             onDoubleClick={ handleDoubleClick }
+            onMouseEnter={() => setShowHandles(true)}
+            onMouseLeave={() => setShowHandles(false)}
         >
-
+            <BaseHandle id={0} position={Position.Top} showHandle={showHandles} />
+            <BaseHandle id={1} position={Position.Right} showHandle={showHandles} />
+            <BaseHandle id={2} position={Position.Bottom} showHandle={showHandles} />
+            <BaseHandle id={3} position={Position.Left} showHandle={showHandles} />
             <textarea
                 className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
                 ref={textareaRef}

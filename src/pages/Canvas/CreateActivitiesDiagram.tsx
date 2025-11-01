@@ -15,6 +15,7 @@ function DiagramContent() {
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
+    // const { getIntersectingNodes } = useReactFlow();
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -33,6 +34,17 @@ function DiagramContent() {
         },
         [],
     );
+
+    // const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+    //     const intersections = getIntersectingNodes(node).map((n) => n.id);
+
+    //     if (intersections.length > 0) {
+    //         console.log('Intersecciones detectadas con los nodos:', intersections);
+    //         node.position = {x:node.position.x, y:node.position.y}
+
+    //         setNodes((nds) => nds.map((n) => (n.id === node.id ? node : n)));
+    //     }
+    // }, []);
 
     const onConnect = useCallback(
         (params: Connection) => {
@@ -95,17 +107,17 @@ function DiagramContent() {
             const sourceNodeType = sourceNode.type;
             const targetNodeType = targetNode.type;
 
-            if ( !targetNodeType || !sourceNodeType ) {
+            if (!targetNodeType || !sourceNodeType) {
                 return false;
             }
 
             // Un solo handle por conexion
-            if (edges.some(edge => 
-                    edge.sourceHandle === connection.sourceHandle 
-                    || edge.sourceHandle === connection.targetHandle 
-                    || edge.targetHandle === connection.targetHandle 
-                    || edge.targetHandle === connection.sourceHandle)) {
-                        return false;
+            if (edges.some(edge =>
+                edge.sourceHandle === connection.sourceHandle
+                || edge.sourceHandle === connection.targetHandle
+                || edge.targetHandle === connection.targetHandle
+                || edge.targetHandle === connection.sourceHandle)) {
+                return false;
             }
 
             // Evitar conexiones a uno mismo
@@ -199,6 +211,29 @@ function DiagramContent() {
             if (targetNodeType === 'finalFlowNode' && edges.some(edge => edge.target === targetNodeId)) {
                 return false;
             }
+
+            // VALIDACIONES PARA CONNECTOR NODE
+            // Hacer que no acepte multiples conexiones salientes
+            if (sourceNodeType === 'connectorNode' && edges.some(edge => edge.source === sourceNodeId || edge.target === sourceNodeId)) {
+                return false;
+            }
+            // Hacer que no acepte multiples conexiones entrantes
+            if (targetNodeType === 'connectorNode' && edges.some(edge => edge.source === targetNodeId || edge.target === targetNodeId)) {
+                return false;
+            }
+
+            // VALIDACIONES PARA DATA NODE
+            // Permitir multiples entradas y una sola salida
+            if (sourceNodeType === 'dataNode' && edges.some(edge => edge.source === sourceNodeId)) {
+                return false;
+            }
+
+            // VALIDACIONES PARA OBJECT NODE
+            // Solo permitir una entrada y una salida
+            if (sourceNodeType === 'objectNode' && edges.some(edge => edge.source === sourceNodeId) 
+                || targetNodeType === 'objectNode' && edges.some(edge => edge.target === targetNodeId)) {
+                return false;
+            }
             
             return true;
         }
@@ -267,6 +302,7 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    // onNodeDrag={onNodeDrag}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
