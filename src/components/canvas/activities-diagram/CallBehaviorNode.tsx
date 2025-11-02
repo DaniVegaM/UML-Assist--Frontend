@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { Position } from "@xyflow/react";
+import { TEXT_AREA_MAX_LEN } from "../variables";
 
 
 export default function CallBehaviorNode() {
@@ -12,8 +13,8 @@ export default function CallBehaviorNode() {
     const [showHandles, setShowHandles] = useState(false);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (evt.target.value.length >= 50) {
-            setValue(evt.target.value.trim().slice(0, 50));
+        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
+            setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
         } else {
             setValue(evt.target.value);
         }
@@ -65,14 +66,14 @@ export default function CallBehaviorNode() {
                 onChange={onChange}
                 onBlur={handleBlur}
                 onWheel={(e) => e.stopPropagation()}
-                placeholder="Llamada a un comportamiento"
+                placeholder={`(Particiones...)\nLlamada a un comportamiento`}
                 className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
                     }`}
                 rows={1}
             />
             <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'} gap-6 w-full`}>
                 {isEditing &&
-                    <p className="w-full text-[10px] text-left text-neutral-400">{`${value.length}/50`}</p>
+                    <p className="w-full text-[10px] text-left text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                 }
                 <div className="bg-neutral-700 w-[20px] h-[20px]"
                     style={{

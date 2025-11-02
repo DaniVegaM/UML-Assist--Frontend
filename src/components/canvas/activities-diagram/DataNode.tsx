@@ -3,9 +3,9 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { nodeStyles } from "../styles/nodeStyles";
 import BaseHandle from "../BaseHandle";
 import { NodeToolbar, Position, useInternalNode, useNodeId } from "@xyflow/react";
+import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
 
 export default function DataNode() {
-    const TEXT_AREA_MAX_LEN = 50;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -70,6 +70,8 @@ export default function DataNode() {
             <BaseHandle id={3} position={Position.Right} showHandle={showHandles} className="!absolute !top-3/4 right-0" />
             <BaseHandle id={4} position={Position.Left} showHandle={showHandles} className="!absolute !top-1/4 left-0" />
             <BaseHandle id={5} position={Position.Left} showHandle={showHandles} className="!absolute !top-3/4 left-0" />
+            <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-1/4" />
+            <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-3/4" />
 
             <NodeToolbar isVisible={node?.selected} position={Position.Top} 
                 className="absolute top-1 w-80 py-1 px-1 flex justify-center items-center gap-2"
@@ -96,7 +98,7 @@ export default function DataNode() {
                 value={value}
                 onChange={onChange}
                 onBlur={handleBlur}
-                placeholder={`${dataType === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
+                placeholder={`(Particiones...)\n${dataType === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
                 rows={1}
                 maxLength={TEXT_AREA_MAX_LEN}
             />

@@ -61,6 +61,9 @@ function DiagramContent() {
             else if (sourceNode?.type === 'dataNode') {
                 edgeType = sourceNode?.data?.outgoingEdge || 'dataOutgoingEdge';
             }
+            else if( targetNode?.type === 'exceptionHandling' ) {
+                edgeType = 'exceptionHandlingEdge';
+            }
             else {
                 edgeType = 'labeledEdge'; // tipo por defecto
             }
@@ -232,6 +235,12 @@ function DiagramContent() {
             // Solo permitir una entrada y una salida
             if (sourceNodeType === 'objectNode' && edges.some(edge => edge.source === sourceNodeId) 
                 || targetNodeType === 'objectNode' && edges.some(edge => edge.target === targetNodeId)) {
+                return false;
+            }
+
+            //VALIDACIONES PARA EXCEPTION HANDLING
+            // Permitir solo una entrada y sin salidas
+            if( sourceNodeType === 'exceptionHandling' ||  (targetNodeType === 'exceptionHandling' && edges.some(edge => edge.target == targetNodeId)) ) {
                 return false;
             }
             

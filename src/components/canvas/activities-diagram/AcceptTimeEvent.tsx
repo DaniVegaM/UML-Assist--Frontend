@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
+import { TEXT_AREA_MAX_LEN } from "../variables";
 
 
 export default function AcceptTimeEvent() {
@@ -12,8 +13,8 @@ export default function AcceptTimeEvent() {
     const [showSourceHandle, setShowSourceHandle] = useState(true);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (evt.target.value.length >= 50) {
-            setValue(evt.target.value.trim().slice(0, 50));
+        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
+            setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
         } else {
             setValue(evt.target.value);
         }
@@ -70,8 +71,8 @@ export default function AcceptTimeEvent() {
                 ></div>
             </div>
 
-                <BaseHandle id={0} position={Position.Right} showHandle={showSourceHandle && !isTryingToConnect} className="!absolute !right-9 !top-6" />
-                <BaseHandle id={1} position={Position.Left} showHandle={isTryingToConnect} className="!absolute !left-12 !top-6" />
+            <BaseHandle id={0} position={Position.Right} showHandle={showSourceHandle && !isTryingToConnect} className="!absolute !right-9 !top-6" />
+            <BaseHandle id={1} position={Position.Left} showHandle={isTryingToConnect} className="!absolute !left-12 !top-6" />
 
             {/* Textarea debajo, sin position absolute */}
             <div className="mt-2 w-full flex justify-center">
@@ -81,10 +82,13 @@ export default function AcceptTimeEvent() {
                     onChange={onChange}
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
-                    placeholder="Evento de tiempo"
+                    placeholder={`(Particiones...)\nEvento de tiempo`}
                     className={`nodrag placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm py-1 overflow-hidden max-w-[120px] w-4/5 ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
                         }`}
                 />
+                {isEditing &&
+                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                }
             </div>
         </div>
     )

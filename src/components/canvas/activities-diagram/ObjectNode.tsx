@@ -3,10 +3,9 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { nodeStyles } from "../styles/nodeStyles";
 import BaseHandle from "../BaseHandle";
 import { Position } from "@xyflow/react";
+import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
 
 export default function ObjectNode() {
-    const TEXT_AREA_MAX_LEN = 50;
-
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
@@ -64,9 +63,8 @@ export default function ObjectNode() {
                 value={value}
                 onChange={onChange}
                 onBlur={handleBlur}
-                placeholder={"nombre:Tipo"}
+                placeholder={`(Particiones...)\nnombre:Tipo`}
                 rows={1}
-                maxLength={TEXT_AREA_MAX_LEN}
             />
             {isEditing &&
                 <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>

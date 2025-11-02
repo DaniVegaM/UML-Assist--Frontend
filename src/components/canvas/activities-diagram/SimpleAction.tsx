@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
-
+import { TEXT_AREA_MAX_LEN } from "../variables";
 
 export default function SimpleAction() {
 
@@ -13,8 +13,8 @@ export default function SimpleAction() {
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (evt.target.value.length >= 100) {
-      setValue(evt.target.value.trim().slice(0, 100));
+    if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
+      setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
     } else {
       setValue(evt.target.value);
     }
@@ -67,13 +67,13 @@ export default function SimpleAction() {
         onChange={onChange}
         onBlur={handleBlur}
         onWheel={(e) => e.stopPropagation()}
-        placeholder="Acción"
+        placeholder={`(Particiones...)\nAcción`}
         className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
           }`}
         rows={1}
       />
       {isEditing &&
-        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/100`}</p>
+        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
       }
     </div>
   )

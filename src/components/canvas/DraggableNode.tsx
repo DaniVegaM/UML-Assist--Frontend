@@ -49,6 +49,9 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     incomingEdge = 'dataIncomingEdge';
                     outgoingEdge = 'dataOutgoingEdge';
                 }
+                if( nodeType === 'exceptionHandling' ) {
+                    incomingEdge = 'exceptionHandlingEdge';
+                }
 
                 const newNode = {
                     id: getId(),

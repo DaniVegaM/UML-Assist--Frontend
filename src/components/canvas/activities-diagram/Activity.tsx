@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useNodeId, useReactFlow } from "@xyflow/react";
-
+import { TEXT_AREA_MAX_LEN } from "../variables";
 
 export default function Activity() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -16,8 +16,8 @@ export default function Activity() {
     const isSelected = node?.selected ?? false;
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (evt.target.value.length >= 50) {
-            setValue(evt.target.value.trim().slice(0, 50));
+        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
+            setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
         } else {
             setValue(evt.target.value);
         }
@@ -66,13 +66,13 @@ export default function Activity() {
                     onChange={onChange}
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
-                    placeholder="Actividad"
+                    placeholder={`(Particiones...)\nActividad`}
                     className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
                         }`}
                     rows={1}
                 />
                 {isEditing &&
-                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/50`}</p>
+                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                 }
             </div>
         </div>

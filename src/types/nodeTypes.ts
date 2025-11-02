@@ -14,6 +14,7 @@ import ParallelizationNode from "../components/canvas/activities-diagram/Paralle
 import ConnectorNode from "../components/canvas/activities-diagram/ConnectorNode";
 import CallBehaviorNode from "../components/canvas/activities-diagram/CallBehaviorNode";
 import Activity from "../components/canvas/activities-diagram/Activity";
+import ExceptionHandling from "../components/canvas/activities-diagram/ExceptionHandling";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -32,4 +33,5 @@ export const activitiesNodeTypes = {
   parallelizationNode: ParallelizationNode,
   connectorNode: ConnectorNode,
   callBehavior: CallBehaviorNode,
+  exceptionHandling: ExceptionHandling,
 };
