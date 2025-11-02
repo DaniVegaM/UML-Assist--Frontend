@@ -32,6 +32,14 @@ export interface BaseHandleProps {
     className?: string;
     showHandle?: boolean;
 }
+export interface ActivityHandleProps {
+    id: string;
+    position?: Position;
+    className?: string;
+    showHandle?: boolean;
+    setSourceHandle?: React.Dispatch<React.SetStateAction<string[] | null>>;
+    setTargetHandle?: React.Dispatch<React.SetStateAction<string[] | null>>;
+}
 
 export interface HeaderProps {
     diagramTitle?: string;

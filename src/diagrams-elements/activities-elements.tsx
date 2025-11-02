@@ -14,7 +14,7 @@ export const ACTIVITY_NODES = [
                 <rect x="59" y="28" width="15" height="9" fill="black" />
             </svg>
         ),
-        nodeType: 'default',
+        nodeType: 'activity',
         label: 'Actividad'
     },
     {
