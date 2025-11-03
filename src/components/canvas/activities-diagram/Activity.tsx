@@ -75,46 +75,46 @@ export default function Activity() {
     }
 
     return (
-        <div
-            onDoubleClick={handleDoubleClick}
-            className="relative border border-gray-300 dark:border-neutral-900 rounded-lg py-2 bg-gray-50 dark:bg-neutral-800 min-w-[1000px] min-h-[600px] h-auto flex flex-col items-center justify-center transition-all duration-150"
-        >
-            <div className="flex flex-col">
-                <textarea
-                    ref={textareaRef}
-                    value={value}
-                    onChange={onChange}
-                    onBlur={handleBlur}
-                    onWheel={(e) => e.stopPropagation()}
-                    placeholder={`Actividad`}
-                    className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                        }`}
-                    rows={1}
+            <div
+                onDoubleClick={handleDoubleClick}
+                className="relative border border-gray-300 dark:border-neutral-900 rounded-lg py-2 bg-gray-50 dark:bg-neutral-800 min-w-[1000px] min-h-[600px] flex flex-col items-center justify-start transition-all duration-150"
+            >
+                <NodeResizer
+                    color="#0084D1"
+                    isVisible={isSelected}
+                    minWidth={1000}
+                    minHeight={600}
                 />
-                {isEditing &&
-                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-                }
-            </div>
-            <div className="flex justify-between items-center w-full">
-                <div className="flex flex-col space-y-4 justify-center items-center">
-                    {sourceHandlesIds && sourceHandlesIds.map((handleId) => (
-                        <ActivityHandle id={handleId} key={handleId} position={Position.Left} setSourceHandle={setSourceHandlesIds} />
-                    ))}
-                    <button onClick={onClickSourceBtn} className="-translate-x-4 cursor-pointer z-50 w-8 h-8 rounded-full bg-neutral-300 hover:bg-neutral-400">+</button>
+                <div className="flex flex-col">
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={onChange}
+                        onBlur={handleBlur}
+                        onWheel={(e) => e.stopPropagation()}
+                        placeholder={`Actividad`}
+                        className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
+                            }`}
+                        rows={1}
+                    />
+                    {isEditing &&
+                        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                    }
                 </div>
-                <div className="flex flex-col space-y-4 justify-center items-center">
-                    {targetHandlesIds && targetHandlesIds.map((handleId) => (
-                        <ActivityHandle id={handleId} key={handleId} position={Position.Right} setTargetHandle={setTargetHandlesIds} />
-                    ))}
-                    <button onClick={onClickTargetBtn} className="translate-x-4 cursor-pointer z-50 w-8 h-8 rounded-full bg-neutral-300 hover:bg-neutral-400">+</button>
+                <div className="flex justify-between items-center w-full">
+                    <div className="flex flex-col space-y-4 justify-center items-center">
+                        {sourceHandlesIds && sourceHandlesIds.map((handleId) => (
+                            <ActivityHandle id={handleId} key={handleId} position={Position.Left} setSourceHandle={setSourceHandlesIds} />
+                        ))}
+                        <button onClick={onClickSourceBtn} className="-translate-x-4 cursor-pointer z-50 w-8 h-8 rounded-full bg-neutral-300 hover:bg-neutral-400">+</button>
+                    </div>
+                    <div className="flex flex-col space-y-4 justify-center items-center">
+                        {targetHandlesIds && targetHandlesIds.map((handleId) => (
+                            <ActivityHandle id={handleId} key={handleId} position={Position.Right} setTargetHandle={setTargetHandlesIds} />
+                        ))}
+                        <button onClick={onClickTargetBtn} className="translate-x-4 cursor-pointer z-50 w-8 h-8 rounded-full bg-neutral-300 hover:bg-neutral-400">+</button>
+                    </div>
                 </div>
             </div>
-            <NodeResizer
-                color="#0084D1"
-                isVisible={isSelected}
-                minWidth={200}
-                minHeight={60}
-            />
-        </div>
     )
 }

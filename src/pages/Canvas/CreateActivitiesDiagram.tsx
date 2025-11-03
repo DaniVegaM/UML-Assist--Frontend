@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
@@ -15,7 +15,7 @@ function DiagramContent() {
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    // const { getIntersectingNodes } = useReactFlow();
+    const { getIntersectingNodes } = useReactFlow();
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -35,16 +35,17 @@ function DiagramContent() {
         [],
     );
 
-    // const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-    //     const intersections = getIntersectingNodes(node).map((n) => n.id);
+    const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+        const intersections = getIntersectingNodes(node).map((n) => n.id);
+        console.log('Nodos que intersectan con el nodo arrastrado:', intersections);
 
-    //     if (intersections.length > 0) {
-    //         console.log('Intersecciones detectadas con los nodos:', intersections);
-    //         node.position = {x:node.position.x, y:node.position.y}
-
-    //         setNodes((nds) => nds.map((n) => (n.id === node.id ? node : n)));
-    //     }
-    // }, []);
+        if(node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
+            node.parentId = intersections.find(nodeId => nodeId.startsWith('activity')) || undefined;
+            node.extent = 'parent';
+        }
+        setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
+        
+    }, []);
 
     const onConnect = useCallback(
         (params: Connection) => {
@@ -311,7 +312,8 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    // onNodeDrag={onNodeDrag}
+                    elevateNodesOnSelect={false}
+                    onNodeDrag={onNodeDrag}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}

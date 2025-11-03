@@ -7,8 +7,8 @@ import type { DraggableNodeProps } from "../../types/canvas";
 export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
     const draggableRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
-    const { setNodes, screenToFlowPosition } = useReactFlow();
-    
+    const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
+
     let id = 0;
     const getId = () => `${nodeType}_${id++}`;
 
@@ -20,7 +20,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 y: offsetY,
             });
         },
-        onDragEnd: ({ event }) => {
+        onDragEnd: async ({ event }) => {
             setExtendedBar?.(false);
             setPosition({ x: 0, y: 0 });
 
@@ -43,13 +43,13 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 // Define el tipo de edge según el tipo de nodo
                 let incomingEdge = 'smoothstep'; // tipo por defecto
                 let outgoingEdge = 'smoothstep'; // tipo por defecto
-                
+
                 // TODO: en caso de edges personalizados, asignar aquí
                 if (nodeType === 'dataNode') {
                     incomingEdge = 'dataIncomingEdge';
                     outgoingEdge = 'dataOutgoingEdge';
                 }
-                if( nodeType === 'exceptionHandling' ) {
+                if (nodeType === 'exceptionHandling') {
                     incomingEdge = 'exceptionHandlingEdge';
                 }
 
@@ -57,17 +57,39 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     id: getId(),
                     type: nodeType,
                     position: flowPosition,
-                    data: { 
+                    data: {
                         label: `${nodeType} node`,
                         incomingEdge: incomingEdge,
                         outgoingEdge: outgoingEdge
                     },
                     draggable: true,
-                    selectable: true,
                     connectable: true,
+                    zIndex: nodeType !== 'activity' ? 1 : -1,
                 };
-                
-                setNodes((nds) => nds.concat(newNode));
+
+                await setNodes((nds) => nds.concat(newNode));
+
+                // Si se esta soltando sobre un activity node, hacer que sea hijo de este 
+                await new Promise(resolve => setTimeout(resolve, 50));
+                const nodes = getNodes();
+                const currentNode = nodes.find(n => n.id === newNode.id);
+                if (!currentNode) return;
+                const intersections = getIntersectingNodes(currentNode).map((n) => n.id);
+
+                if (currentNode.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
+                    setNodes((nds) => nds.map(node => {
+                        if (node.id === currentNode.id) {
+                            return {
+                                ...node,
+                                parentId: intersections.find(nodeId => nodeId.startsWith('activity')) || undefined,
+                                extent: 'parent',
+                            }
+                        }
+                        else {
+                            return node;
+                        }
+                    }));
+                }
             }
         },
     });
