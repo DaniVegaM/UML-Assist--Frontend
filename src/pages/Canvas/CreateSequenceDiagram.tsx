@@ -1,25 +1,28 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
-import { activitiesNodeTypes } from "../../types/nodeTypes";
+import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
+import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
+import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
-    const [nodes, setNodes] = useState<Node[]>([]);
+    const { nodes, setNodes, setLastLifeLine } = useSequenceDiagram();
     const [edges, setEdges] = useState<Edge[]>([]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
+                setLastLifeLine(nodes[nodes.length - 1].type === 'lifeLine' ? nodes[nodes.length - 1] : undefined)
                 console.log('Nodos actuales:', nodes);
                 return nodes;
             });
@@ -117,10 +120,10 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    nodeTypes={activitiesNodeTypes}
+                    nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
-                    onConnectStart={() => setIsTryingToConnect({ isTrying: true })}
-                    onConnectEnd={() => setIsTryingToConnect({ isTrying: false })}
+                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onConnectEnd={() => setIsTryingToConnect(false)}
                     onConnect={onConnect}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -141,7 +144,9 @@ export default function CreateSequenceDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                <DiagramContent />
+                <SequenceCanvasProvider>
+                    <DiagramContent />
+                </SequenceCanvasProvider>
             </CanvasProvider>
         </ReactFlowProvider>
     );

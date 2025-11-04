@@ -3,7 +3,7 @@ export const SEQUENCE_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="20" height="52" viewBox="0 0 20 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="1.5" y="1.5" width="17" height="49" fill="white" stroke="black" stroke-width="3" />
+                <rect x="1.5" y="1.5" width="17" height="49" fill="white" stroke="black" strokeWidth="3" />
             </svg>
         ),
         nodeType: 'simpleActivation',
@@ -12,11 +12,11 @@ export const SEQUENCE_NODES = [
     {
         svg: (
             <svg className="w-full h-full dark:fill-white dark:stroke-white" width="58" height="52" viewBox="0 0 58 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect x="1.5" y="1.5" width="17" height="49" fill="white" stroke="black" stroke-width="3" />
-                <rect x="17" y="12" width="6" height="17" fill="white" stroke="black" stroke-width="2" />
-                <line x1="24" y1="14" x2="58" y2="14" stroke="black" stroke-width="2" />
+                <rect x="1.5" y="1.5" width="17" height="49" fill="white" stroke="black" strokeWidth="3" />
+                <rect x="17" y="12" width="6" height="17" fill="white" stroke="black" strokeWidth="2" />
+                <line x1="24" y1="14" x2="58" y2="14" stroke="black" strokeWidth="2" />
                 <path d="M24.2929 25.2929C23.9024 25.6834 23.9024 26.3166 24.2929 26.7071L30.6569 33.0711C31.0474 33.4616 31.6805 33.4616 32.0711 33.0711C32.4616 32.6805 32.4616 32.0474 32.0711 31.6569L26.4142 26L32.0711 20.3431C32.4616 19.9526 32.4616 19.3195 32.0711 18.9289C31.6805 18.5384 31.0474 18.5384 30.6569 18.9289L24.2929 25.2929ZM58 26V25L25 25V26V27L58 27V26Z" fill="black" />
-                <line x1="57" y1="26" x2="57" y2="14" stroke="black" stroke-width="2" />
+                <line x1="57" y1="26" x2="57" y2="14" stroke="black" strokeWidth="2" />
             </svg>
         ),
         nodeType: 'selfActivation',
