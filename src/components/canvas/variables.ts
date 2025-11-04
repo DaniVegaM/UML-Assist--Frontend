@@ -1,0 +1,1 @@
+export const TEXT_AREA_MAX_LEN = 100;

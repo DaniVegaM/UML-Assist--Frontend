@@ -1,16 +1,16 @@
 import { createBrowserRouter, RouterProvider, redirect } from "react-router";
 import LoginPage from "../pages/Auth/login/LoginPage";
 import { handleCallback } from "../services/authService";
-import ChangePage from "../pages/Auth/changepassword/changePasswordPage";
 
 import type { LoaderFunctionArgs } from "react-router";
 import SignupPage from "../pages/Auth/signup/SignupPage";
 import MainLayout from "../layout/MainLayout/MainLayout";
 import ResetPasswordPage from "../pages/Auth/forgottenpassword/ResetPasswordPage";
 import ForgotPasswordPage from "../pages/Auth/forgottenpassword/ForgotPasswordPage";
+import ChangePasswordPage from "../pages/Auth/changepassword/ChangePasswordPage";
+import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
+import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
 import HomePage from "../pages/Auth/HomePage/HomePage";
-
-
 
 const createAuthCallbackLoader = (provider: "google" | "github") => {
   return async ({ request }: LoaderFunctionArgs) => {
@@ -67,7 +67,15 @@ const router = createBrowserRouter([
   },
   {
     path: "/cambiar-contrasena",
-    element: <ChangePage />,
+    element: <ChangePasswordPage />,
+  },
+  {
+    path: "/crear-diagrama-de-actividades",
+    element: <CreateActivitiesDiagram />,
+  },
+  {
+    path: "/crear-diagrama-de-secuencia",
+    element: <CreateSequenceDiagram />,
   },
 ]);
 
