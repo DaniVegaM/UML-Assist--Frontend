@@ -10,8 +10,7 @@ import ForgotPasswordPage from "../pages/Auth/forgottenpassword/ForgotPasswordPa
 import ChangePasswordPage from "../pages/Auth/changepassword/ChangePasswordPage";
 import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
 import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
-
-const HomePage = () => <div>Home Page</div>;
+import HomePage from "../pages/Auth/HomePage/HomePage";
 
 const createAuthCallbackLoader = (provider: "google" | "github") => {
   return async ({ request }: LoaderFunctionArgs) => {
