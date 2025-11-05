@@ -22,7 +22,9 @@ function DiagramContent() {
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                setLastLifeLine(nodes[nodes.length - 1].type === 'lifeLine' ? nodes[nodes.length - 1] : undefined)
+                if(nodes[nodes.length - 1].type === 'lifeLine'){
+                    setLastLifeLine(nodes[nodes.length - 1])
+                }
                 console.log('Nodos actuales:', nodes);
                 return nodes;
             });

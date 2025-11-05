@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { LIFE_LINE_MAX_LEN_TEXT } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
-import { useNodeId } from "@xyflow/react";
+import { useNodeId, useReactFlow } from "@xyflow/react";
 
 
 export default function LifeLine() {
@@ -11,7 +11,14 @@ export default function LifeLine() {
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const { setNodes, lastLifeLine } = useSequenceDiagram();
+    const { getZoom } = useReactFlow();
+    const zoom = getZoom();
     const nodeId = useNodeId()
+
+    //Estados y referencias para el manejo del hover sobre la linea de vida
+    const [isHovering, setIsHovering] = useState(false);
+    const lifelineRef = useRef<HTMLDivElement>(null);
+    const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= LIFE_LINE_MAX_LEN_TEXT) {
@@ -58,13 +65,51 @@ export default function LifeLine() {
             data: {},
         }])
     }
+
+    const startHideTimer = () => {
+        clearHideTimer(); // Limpia cualquier temporizador antiguo
+        hideTimerRef.current = setTimeout(() => {
+            setIsHovering(false);
+        }, 50); // Oculta después de 50ms
+    };
+
+    const clearHideTimer = () => {
+        if (hideTimerRef.current) {
+            clearTimeout(hideTimerRef.current);
+            hideTimerRef.current = null;
+        }
+    };
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (lifelineRef.current && zoom) {
+            const rect = lifelineRef.current.getBoundingClientRect();
+
+            const relativeY = e.clientY - rect.top;
+            const scaledY = relativeY / zoom; //Es importante considerar el zoom ya que las coordenadas del mouse cambian
+
+            lifelineRef.current.style.setProperty(
+                '--mouse-y',
+                `${scaledY - 16}px`
+            );
+        }
+    };
+
+    const handleLifelineEnter = () => {
+        clearHideTimer();
+        setIsHovering(true);
+    };
+
+    const handleLifelineLeave = () => {
+        startHideTimer();
+    };
+
     return (
         <div className={`${lastLifeLine?.id === nodeId ? 'grid grid-cols-2 gap-28' : ''} nodrag`}>
-            <div className="flex flex-col justify-center items-center">
+            <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
                 <div
                     onDoubleClick={handleDoubleClick}
                     className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
-                >
+                > {/*HEAD DE LA LIFELINE*/}
                     <textarea
                         ref={textareaRef}
                         value={value}
@@ -80,9 +125,34 @@ export default function LifeLine() {
                         <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
                     }
                 </div>
-                <div className="h-[10000px] w-0 border-r-2 border-dashed border-neutral-700"></div>
+                {/*DASHED LINE DE LA LIFELINE*/}
+                <div className="relative h-[10000px] w-40 bg-red-300"
+                    ref={lifelineRef}
+                    onMouseMove={handleMouseMove}
+                    onMouseLeave={handleLifelineLeave}
+                    onMouseEnter={handleLifelineEnter}
+                >
+                    <div
+                        className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0 border-r-2 border-dashed border-neutral-700 pointer-events-none"
+                        aria-hidden="true"
+                    >
+                    </div>
+                    {isHovering && ( /*BOTON DE SUGERENCIA PARA AÑADIR ACTIVACIÓN O HANDLE*/
+                        <div className="flex items-center absolute" style={{ top: 'var(--mouse-y)' }} onMouseEnter={clearHideTimer} onMouseLeave={startHideTimer}>
+                            <div className="h-0 border-t-2 w-16 border-neutral-500 border-dashed pointer-events-none"></div>
+                            <button onClick={() => console.log('añadiendo activacion')}
+                                className="cursor-pointer w-8 h-8 rounded-full border-neutral-400 border-2 flex items-center justify-center bg-neutral-200 hover:bg-neutral-400 hover:text-white transition-colors"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="oklch(70.8% 0 0)" className="w-full h-full hover:stroke-white">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                </svg>
+                            </button>
+                            <div className="h-0 border-t-2 w-16 border-neutral-500 border-dashed pointer-events-none"></div>
+                        </div>
+                    )}
+                </div>
             </div>
-            {
+            { /*SUGERENCIA DE NUEVO LIFELINE*/
                 lastLifeLine && lastLifeLine?.id === nodeId ? (
                     <div className="flex flex-col justify-start items-center">
                         <div className="mb-2 border border-neutral-600 border-dashed dark:border-neutral-900 p-2 min-w-[200px]">
