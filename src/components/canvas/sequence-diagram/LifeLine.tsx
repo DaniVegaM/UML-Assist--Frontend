@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { LIFE_LINE_MAX_LEN_TEXT } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
-import { useNodeId, useReactFlow } from "@xyflow/react";
+import { useNodeId, type Node } from "@xyflow/react";
 
 
 export default function LifeLine() {
@@ -10,15 +10,8 @@ export default function LifeLine() {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled } = useCanvas();
-    const { setNodes, lastLifeLine } = useSequenceDiagram();
-    const { getZoom } = useReactFlow();
-    const zoom = getZoom();
+    const { setNodes, lastLifeLine, nodesPerLifeLine, setNodesPerLifeLine } = useSequenceDiagram();
     const nodeId = useNodeId()
-
-    //Estados y referencias para el manejo del hover sobre la linea de vida
-    const [isHovering, setIsHovering] = useState(false);
-    const lifelineRef = useRef<HTMLDivElement>(null);
-    const hideTimerRef = useRef<NodeJS.Timeout | null>(null);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= LIFE_LINE_MAX_LEN_TEXT) {
@@ -66,42 +59,41 @@ export default function LifeLine() {
         }])
     }
 
-    const startHideTimer = () => {
-        clearHideTimer(); // Limpia cualquier temporizador antiguo
-        hideTimerRef.current = setTimeout(() => {
-            setIsHovering(false);
-        }, 50); // Oculta después de 50ms
-    };
+    const lifelineNodeData = nodesPerLifeLine?.find(item => item.lifeLineId === nodeId);
+    const lifelineNodes = lifelineNodeData?.nodes || [];
 
-    const clearHideTimer = () => {
-        if (hideTimerRef.current) {
-            clearTimeout(hideTimerRef.current);
-            hideTimerRef.current = null;
-        }
-    };
+    const handleAddNode = useCallback((index: number) => {
+        if (!nodeId || !setNodesPerLifeLine) return;
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (lifelineRef.current && zoom) {
-            const rect = lifelineRef.current.getBoundingClientRect();
+        const newNode: Node = {
+            id: `node_${nodeId}_${Date.now()}`,
+            type: 'default',
+            data: { label: `Nodo ${index}` },
+            position: { x: 0, y: 0 }, //La posición es manejada por el layout
+        };
 
-            const relativeY = e.clientY - rect.top;
-            const scaledY = relativeY / zoom; //Es importante considerar el zoom ya que las coordenadas del mouse cambian
+        setNodesPerLifeLine(prev => {
+            const newNodesPerLifeLine = (prev || []).map(item => {
+                if (item.lifeLineId === nodeId) {
+                    const newNodes = [...item.nodes];
+                    newNodes.splice(index, 0, newNode);
+                    return { ...item, nodes: newNodes };
+                }
+                return item;
+            });
 
-            lifelineRef.current.style.setProperty(
-                '--mouse-y',
-                `${scaledY - 16}px`
-            );
-        }
-    };
+            const lifeLineExists = newNodesPerLifeLine.some(item => item.lifeLineId === nodeId);
+            if (!lifeLineExists) {
+                newNodesPerLifeLine.push({
+                    lifeLineId: nodeId,
+                    nodes: [newNode]
+                });
+            }
 
-    const handleLifelineEnter = () => {
-        clearHideTimer();
-        setIsHovering(true);
-    };
+            return newNodesPerLifeLine;
+        });
 
-    const handleLifelineLeave = () => {
-        startHideTimer();
-    };
+    }, [nodeId, setNodesPerLifeLine]);
 
     return (
         <div className={`${lastLifeLine?.id === nodeId ? 'grid grid-cols-2 gap-28' : ''} nodrag`}>
@@ -126,30 +118,24 @@ export default function LifeLine() {
                     }
                 </div>
                 {/*DASHED LINE DE LA LIFELINE*/}
-                <div className="relative h-[10000px] w-40 bg-red-300"
-                    ref={lifelineRef}
-                    onMouseMove={handleMouseMove}
-                    onMouseLeave={handleLifelineLeave}
-                    onMouseEnter={handleLifelineEnter}
-                >
+                <div className="relative h-[10000px] w-40 bg-red-300">
                     <div
                         className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0 border-r-2 border-dashed border-neutral-700 pointer-events-none"
                         aria-hidden="true"
                     >
                     </div>
-                    {isHovering && ( /*BOTON DE SUGERENCIA PARA AÑADIR ACTIVACIÓN O HANDLE*/
-                        <div className="flex items-center absolute" style={{ top: 'var(--mouse-y)' }} onMouseEnter={clearHideTimer} onMouseLeave={startHideTimer}>
-                            <div className="h-0 border-t-2 w-16 border-neutral-500 border-dashed pointer-events-none"></div>
-                            <button onClick={() => console.log('añadiendo activacion')}
-                                className="cursor-pointer w-8 h-8 rounded-full border-neutral-400 border-2 flex items-center justify-center bg-neutral-200 hover:bg-neutral-400 hover:text-white transition-colors"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="oklch(70.8% 0 0)" className="w-full h-full hover:stroke-white">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                </svg>
-                            </button>
-                            <div className="h-0 border-t-2 w-16 border-neutral-500 border-dashed pointer-events-none"></div>
-                        </div>
-                    )}
+                    <div className="absolute top-0 left-0 w-full flex flex-col items-center">
+                        <button className="bg-purple-500 w-20 h-20" onClick={() => handleAddNode(0)}>Añadir nodo</button>
+                        {/* Mapeo de nodos con sus addNodeZone en medio" */}
+                        {lifelineNodes.map((node, i) => (
+                            <div key={node.id}>
+                                <div className="bg-green-500 h-30 w-30">
+                                    <h2>Este es un nodo de activation o algo asi</h2>
+                                </div>
+                                <button className="bg-purple-500 w-20 h-20" onClick={() => handleAddNode(i + 1)}>Añadir nodo</button>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </div>
             { /*SUGERENCIA DE NUEVO LIFELINE*/
