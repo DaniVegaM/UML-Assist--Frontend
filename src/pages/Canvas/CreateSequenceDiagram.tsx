@@ -6,7 +6,7 @@ import Header from "../../layout/Canvas/Header";
 import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
@@ -15,28 +15,27 @@ import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
-    const { nodes, setNodes, setLastLifeLine } = useSequenceDiagram();
-    const [edges, setEdges] = useState<Edge[]>([]);
+    const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+
+    useEffect(() => {
+        console.log('Nodos Actuales:', nodes);
+    }, [nodes]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                if(nodes[nodes.length - 1].type === 'lifeLine'){
-                    setLastLifeLine(nodes[nodes.length - 1])
-                }
-                console.log('Nodos actuales:', nodes);
                 return nodes;
             });
         },
-        [],
+        [setNodes],
     );
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
             setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
         },
-        [],
+        [setEdges],
     );
 
     const onConnect = useCallback(
@@ -88,7 +87,7 @@ function DiagramContent() {
                 labelBgBorderRadius: 4,
             }))
         );
-    }, [isDarkMode]);
+    }, [isDarkMode, setEdges]);
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">

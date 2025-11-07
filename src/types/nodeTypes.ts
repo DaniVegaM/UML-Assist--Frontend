@@ -37,6 +37,20 @@ export const activitiesNodeTypes = {
   exceptionHandling: ExceptionHandling,
 };
 
+/*
+  NOTA IMPORTANTE:
+  Para el diagrama de secuencia vamos a renderizar HiddenNode que es un
+  componente "Dummy" que no renderiza nada. Esto es porque los nodos que estan
+  sobre las lifelines no los esta renderizando ReactFlow sino nosotros mismos
+  dentro del componente LifeLine. Esta especificacion es necesaria para que
+  ReactFlow reconozca estos nodos y los maneje correctamente 
+  pero no queremos que ReactFlow los renderize por su cuenta.
+*/
+const HiddenNode = () => null;
+
 export const sequenceNodeTypes = {
   lifeLine: LifeLine,
+  executionSpecification: HiddenNode,
+  selfMessage: HiddenNode,
+  destructionEvent: HiddenNode,
 };
