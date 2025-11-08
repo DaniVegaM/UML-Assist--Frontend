@@ -59,19 +59,34 @@ export default function LifeLine() {
         const currentIndex = parseInt(nodeId?.split('_')[1] || '0');
         const positionX = 400 + ((currentIndex + 1) * 200) + 112 * (currentIndex + 1);
 
-        setNodes(prev => [...prev, {
-            id: `lifeLine_${currentIndex + 1}`,
-            type: 'lifeLine',
-            position: { x: positionX, y: 100 },
-            data: {
-                orderedHandles: []
-            },
-            connectable: true,
-            zIndex: -1,
-            style: {
-                zIndex: -1
+        const newLifeLineId = `lifeLine_${currentIndex + 1}`;
+        
+        setNodes(prev => {
+            
+            const totalHandlesPerLifeLine = prev[0].data.orderedHandles?.length || 0;
+            
+            const orderedHandles: { id: string, order: number }[] = [];
+            for (let i = 0; i < totalHandlesPerLifeLine; i++) {
+                orderedHandles.push({
+                    id: `defaultHandle_${generateUniqueId()}_belongsTo_${newLifeLineId}`,
+                    order: i
+                });
             }
-        }]);
+
+            return [...prev, {
+                id: newLifeLineId,
+                type: 'lifeLine',
+                position: { x: positionX, y: 100 },
+                data: {
+                    orderedHandles: orderedHandles
+                },
+                connectable: true,
+                zIndex: -1,
+                style: {
+                    zIndex: -1
+                }
+            }]
+        });
     }, [nodeId, setNodes]);
 
     const addHandle = useCallback((order: number, handleType: string = 'defaultHandle') => {
@@ -147,7 +162,7 @@ export default function LifeLine() {
                     </div>
                     <div className="absolute top-0 left-0 w-full flex flex-col items-center justify-center">
                         <button
-                            className="mt-10 bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer"
+                            className={`mt-10 bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
                             onClick={() => addHandle(0)}
                         > {/* Botón para agregar el primer nodo */}
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
@@ -159,11 +174,11 @@ export default function LifeLine() {
                         {nodes.find(node => node.id == nodeId) ? nodes.find(node => node.id == nodeId)!.data.orderedHandles?.map((handle, index) => (
                             <div key={handle.id} className="flex flex-col justify-center items-center space-y-10">
                                 <div className="relative w-8 h-8 flex justify-center items-center">
-                                    <BaseHandle id={handle.id} position={Position.Bottom} className="!absolute !w-4 !h-4 !top-1/2 !left-1/2" showHandle={showHandles} />
+                                    <BaseHandle id={handle.id} position={Position.Bottom} className="!absolute !w-4 !h-4 !top-1/2 !left-1/2" showHandle={true} />
                                 </div>
                                 {/* Botón para agregar otro nodo después de este */}
                                 <button
-                                    className="bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer"
+                                    className={`bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
                                     onClick={() => addHandle(index + 1)}
                                 >
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
