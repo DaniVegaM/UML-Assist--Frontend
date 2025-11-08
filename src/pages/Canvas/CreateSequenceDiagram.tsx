@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
@@ -43,8 +43,8 @@ function DiagramContent() {
 
             const newEdge: Edge = {
                 ...params,
-                id: `edge-${params.source}-${params.target}`,
-                type: 'smoothstep',
+                id: `edge-${params.sourceHandle}-${params.targetHandle}`,
+                type: 'messageEdge', 
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
@@ -70,7 +70,7 @@ function DiagramContent() {
                     stroke: isDarkMode ? '#FFFFFF' : '#171717',
                 },
                 markerEnd: {
-                    type: 'arrow',
+                    type: 'arrowclosed',
                     width: 15,
                     height: 15,
                     color: isDarkMode ? '#A1A1AA' : '#52525B'
@@ -99,24 +99,26 @@ function DiagramContent() {
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
                     attributionPosition="bottom-right"
+                    connectionMode={ConnectionMode.Loose}
                     edgeTypes={edgeTypes}
                     defaultEdgeOptions={{
                         animated: false,
                         markerEnd: {
-                            type: 'arrow',
+                            type: 'arrowclosed',
                             width: 15,
                             height: 15,
                             color: isDarkMode ? '#A1A1AA' : '#52525B'
                         },
                         focusable: true,
                         reconnectable: true,
+                        selectable: true,
                         style: {
                             strokeWidth: 2,
                             stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
-                        type: 'smoothstep',
+                        type: 'messageEdge',
                     }}
-                    connectionLineType={ConnectionLineType.SmoothStep}
+                    connectionLineType={ConnectionLineType.Straight}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}

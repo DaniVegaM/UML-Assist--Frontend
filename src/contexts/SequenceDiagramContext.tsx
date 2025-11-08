@@ -1,10 +1,23 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, type ReactNode } from 'react';
-import { type Node, type Edge } from '@xyflow/react';
+
+import { createContext, type ReactNode, useState } from "react";
+import { type Edge, type Node } from "@xyflow/react";
+
+// Define el tipo para los handles
+interface Handle {
+    id: string;
+    order: number;
+}
+
+// Extiende el tipo de data del nodo para incluir orderedHandles
+interface NodeData {
+    orderedHandles?: Handle[];
+    [key: string]: any;
+}
 
 interface SequenceDiagramContextType {
-    nodes: Node[],
-    setNodes: React.Dispatch<React.SetStateAction<Node[]>>,
+    nodes: Node<NodeData>[],
+    setNodes: React.Dispatch<React.SetStateAction<Node<NodeData>[]>>,
     edges: Edge[],
     setEdges: React.Dispatch<React.SetStateAction<Edge[]>>,
 }
@@ -12,15 +25,25 @@ interface SequenceDiagramContextType {
 export const SequenceDiagramContext = createContext<SequenceDiagramContextType | undefined>(undefined);
 
 export function CanvasProvider({ children }: { children: ReactNode }) {
-    const initialNodes: Node[] = [
-        { id: 'lifeLine_0', type: 'lifeLine', position: { x: 400, y: 100 }, data: {} },
+    const initialNodes: Node<NodeData>[] = [
+        { 
+            id: 'lifeLine_0', 
+            type: 'lifeLine', 
+            position: { x: 400, y: 100 }, 
+            data: { orderedHandles: [] },
+            connectable: true,
+            zIndex: -1,
+            style: {
+                zIndex: -1
+            }
+        },
     ]
-    const [nodes, setNodes] = useState<Node[]>(initialNodes);
+    const [nodes, setNodes] = useState<Node<NodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>([]);
 
     return (
-        <SequenceDiagramContext value={{ nodes, setNodes, edges, setEdges }}>
+        <SequenceDiagramContext.Provider value={{ nodes, setNodes, edges, setEdges }}>
             {children}
-        </SequenceDiagramContext>
+        </SequenceDiagramContext.Provider>
     );
 }

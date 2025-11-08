@@ -4,7 +4,6 @@ import type { BaseHandleProps } from "../../types/canvas";
 export default function BaseHandle({ id, position, className, showHandle }: BaseHandleProps) {
     const nodeId = useNodeId();
     
-
     return (
         <Handle
             id={`${nodeId}_Handle-${id}`}
