@@ -4,6 +4,8 @@ import { LIFE_LINE_MAX_LEN_TEXT } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import { Position, useNodeId, useUpdateNodeInternals } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
+import ChangeHandleType from "./contextMenus/ChangeHandleType";
+import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 
 
 export default function LifeLine() {
@@ -15,6 +17,9 @@ export default function LifeLine() {
     const nodeId = useNodeId();
     const [showHandles, setShowHandles] = useState(false);
     const updateNodeInternals = useUpdateNodeInternals();
+
+    const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+    const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
 
     //Verificamos si este es el último lifeLine para mostrar el botón de agregar otro lifeLine
     const isLastLifeLine = useMemo(() => {
@@ -60,11 +65,11 @@ export default function LifeLine() {
         const positionX = 400 + ((currentIndex + 1) * 200) + 112 * (currentIndex + 1);
 
         const newLifeLineId = `lifeLine_${currentIndex + 1}`;
-        
+
         setNodes(prev => {
-            
+
             const totalHandlesPerLifeLine = prev[0].data.orderedHandles?.length || 0;
-            
+
             const orderedHandles: { id: string, order: number }[] = [];
             for (let i = 0; i < totalHandlesPerLifeLine; i++) {
                 orderedHandles.push({
@@ -96,7 +101,7 @@ export default function LifeLine() {
 
                 const newHandle = {
                     id: `${handleType}_${generateUniqueId()}_belongsTo_${node.id}`,
-                    order: order
+                    order: order,
                 };
 
                 const currentHandles = node.data.orderedHandles || [];
@@ -127,6 +132,18 @@ export default function LifeLine() {
             updateNodeInternals(nodeIds);
         }
     }, [nodes, updateNodeInternals]);
+
+    const handleContextMenu = (event: React.MouseEvent, handleId: string) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setContextMenuEvent(event.nativeEvent);
+        setSelectedHandle(handleId);
+    };
+
+    const closeContextMenu = () => {
+        setContextMenuEvent(null);
+        setSelectedHandle(null);
+    };
 
     return (
         <div className={`${isLastLifeLine ? 'grid grid-cols-2 gap-28' : ''} nodrag`}>
@@ -170,21 +187,32 @@ export default function LifeLine() {
                             </svg>
                         </button>
 
-                        {/* Renderizar los nodos que pertenecen a esta lifeLine */}
+                        {/* Renderizar los handles que pertenecen a esta lifeLine */}
                         {nodes.find(node => node.id == nodeId) ? nodes.find(node => node.id == nodeId)!.data.orderedHandles?.map((handle, index) => (
                             <div key={handle.id} className="flex flex-col justify-center items-center space-y-10">
-                                <div className="relative w-8 h-8 flex justify-center items-center">
-                                    <BaseHandle id={handle.id} position={Position.Bottom} className="!absolute !w-4 !h-4 !top-1/2 !left-1/2" showHandle={true} />
+                                <div className="relative w-8 h-8 flex justify-center items-center"
+                                    onContextMenu={handle.order == nodes.find(node => node.id == nodeId)!.data.orderedHandles!.length - 1 ? (e: React.MouseEvent<Element, MouseEvent>) => handleContextMenu(e, handle.id) : undefined}>
+                                    {handle.id.includes('defaultHandle') ? (
+                                        <BaseHandle id={handle.id} position={Position.Bottom} className="!absolute !w-4 !h-4 !top-1/2 !left-1/2" showHandle={true} />
+                                    ) : (
+                                        <div className="cursor-pointer rounded-full w-12 h-12 absolute top-1/2 -left-1/4">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="black" className="w-full h-full">
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                            </svg>
+                                        </div>
+                                    )}
                                 </div>
-                                {/* Botón para agregar otro nodo después de este */}
-                                <button
-                                    className={`bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
-                                    onClick={() => addHandle(index + 1)}
-                                >
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                                    </svg>
-                                </button>
+                                {/* Botón para agregar otro handle después de este */}
+                                {handle.id.includes('defaultHandle') ? (
+                                    <button
+                                        className={`bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
+                                        onClick={() => addHandle(index + 1)}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                                        </svg>
+                                    </button>
+                                ) : null}
                             </div>
                         )) : null}
                     </div>
@@ -204,6 +232,16 @@ export default function LifeLine() {
                     </div>
                 ) : null
             }
+            {contextMenuEvent && (
+                <ContextMenuPortal event={contextMenuEvent} onClose={closeContextMenu}>
+                    <ChangeHandleType
+                        id="change-handle-type-menu"
+                        onClose={closeContextMenu}
+                        handleId={selectedHandle}
+                        lifeLineId={nodeId!}
+                    />
+                </ContextMenuPortal>
+            )}
         </div>
     )
 }
