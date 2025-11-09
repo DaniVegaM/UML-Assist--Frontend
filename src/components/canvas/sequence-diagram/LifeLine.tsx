@@ -10,6 +10,7 @@ import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 
 export default function LifeLine() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
+    const handlesContainerRef = useRef<HTMLDivElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled, generateUniqueId } = useCanvas();
@@ -20,6 +21,7 @@ export default function LifeLine() {
 
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
+    const [containerHeight, setContainerHeight] = useState(0);
 
     //Verificamos si este es el último lifeLine para mostrar el botón de agregar otro lifeLine
     const isLastLifeLine = useMemo(() => {
@@ -40,6 +42,13 @@ export default function LifeLine() {
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     }, [value]);
+
+    useEffect(() => { //Medimos la altura real del contenedor de handles dinámicamente
+        if (handlesContainerRef.current) {
+            const height = handlesContainerRef.current.scrollHeight;
+            setContainerHeight(height);
+        }
+    }, [nodes, nodeId]);
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
@@ -68,6 +77,8 @@ export default function LifeLine() {
 
         setNodes(prev => {
 
+            //Le colocamos a la nueva lifeLine la misma cantidad de handles que la primera lifeLine
+            //De modo que sea todo el layout como una tabla uniforme
             const totalHandlesPerLifeLine = prev[0].data.orderedHandles?.length || 0;
 
             const orderedHandles: { id: string, order: number }[] = [];
@@ -105,6 +116,12 @@ export default function LifeLine() {
                 };
 
                 const currentHandles = node.data.orderedHandles || [];
+
+                //Si el ultimo handle de este node es de tipo destroy evito que se agreguen más handles despues del destroy
+                const lastHandle = currentHandles[currentHandles.length - 1];
+                if (lastHandle && lastHandle.id.includes('destroyHandle') && order > lastHandle.order) {
+                    return node;
+                }
 
                 const updatedHandles = [...currentHandles];
                 updatedHandles.splice(order, 0, newHandle);
@@ -145,6 +162,13 @@ export default function LifeLine() {
         setSelectedHandle(null);
     };
 
+    const dashedLineHeight = useMemo(() => {
+        if (containerHeight > 0) {
+            return containerHeight;
+        }
+        return 10000;
+    }, [containerHeight]);
+
     return (
         <div className={`${isLastLifeLine ? 'grid grid-cols-2 gap-28' : ''} nodrag`}>
             <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
@@ -168,7 +192,7 @@ export default function LifeLine() {
                     }
                 </div>
                 {/*DASHED LINE DE LA LIFELINE*/}
-                <div className="relative h-[10000px] w-20"
+                <div className={`relative w-20`} style={{ height: `${dashedLineHeight}px` }}
                     onMouseEnter={() => setShowHandles(true)}
                     onMouseLeave={() => setShowHandles(false)}
                 >
@@ -177,7 +201,7 @@ export default function LifeLine() {
                         aria-hidden="true"
                     > {/* Aspecto de dashed line */}
                     </div>
-                    <div className="absolute top-0 left-0 w-full flex flex-col items-center justify-center">
+                    <div ref={handlesContainerRef} className="absolute top-0 left-0 w-full flex flex-col items-center justify-center">
                         <button
                             className={`mt-10 bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
                             onClick={() => addHandle(0)}
