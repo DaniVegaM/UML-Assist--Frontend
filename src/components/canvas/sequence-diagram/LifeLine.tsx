@@ -25,7 +25,10 @@ export default function LifeLine() {
 
     //Verificamos si este es el último lifeLine para mostrar el botón de agregar otro lifeLine
     const isLastLifeLine = useMemo(() => {
-        return nodes[nodes.length - 1]?.id === nodeId;
+        //Buscamos si el id incluye lifeline sino vamos retrocediendo hasta encontrar un lifeline
+        const lifeLineNodes = nodes.filter(n => n.type === 'lifeLine');
+        if (lifeLineNodes.length === 0) return false;
+        return lifeLineNodes[lifeLineNodes.length - 1].id === nodeId;
     }, [nodes, nodeId]);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
