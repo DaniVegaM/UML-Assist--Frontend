@@ -45,7 +45,7 @@ function DiagramContent() {
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
-                type: 'messageEdge', 
+                type: `${params.source == params.target? 'selfMessageEdge' : 'messageEdge'}`, 
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,

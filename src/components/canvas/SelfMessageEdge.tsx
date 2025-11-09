@@ -2,14 +2,13 @@ import React, { useState } from 'react';
 import {
     BaseEdge,
     EdgeLabelRenderer,
-    getStraightPath,
     useReactFlow,
     type EdgeProps
 } from '@xyflow/react';
 import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
 import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
 
-export function MessageEdge({
+export function SelfMessageEdge({
     id,
     sourceX,
     sourceY,
@@ -27,14 +26,10 @@ export function MessageEdge({
     const { setEdges } = useReactFlow();
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
+    const [offSetX, setOffSetX] = useState(50);
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
-
-    const [edgePath, labelX, labelY] = getStraightPath({
-        sourceX: sourceX,
-        sourceY: sourceY,
-        targetX : targetX -10,
-        targetY: targetY,
-    });
+ 
+    const edgePath = `M ${sourceX} ${sourceY} L ${sourceX + 50} ${sourceY} L ${sourceX + 50} ${targetY } L ${targetX} ${targetY}`;
 
     const onSave = () => {
         setIsEditing(false);
@@ -75,6 +70,7 @@ export function MessageEdge({
 
     const onLabelChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setEditingLabel(evt.target.value.slice(0, 30));
+        setOffSetX(60 + evt.target.value.length * 3);
     };
 
     const handleContextMenu = (event: React.MouseEvent) => {
@@ -104,7 +100,7 @@ export function MessageEdge({
                 <div
                     style={{
                         position: 'absolute',
-                        transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+                        transform: `translate(-50%, -50%) translate(${isEditing ? sourceX + 50 : sourceX + offSetX}px,${(sourceY + targetY) / 2}px)`,
                         pointerEvents: isEditing ? 'all' : 'none',
                     }}
                     className="nodrag nopan"

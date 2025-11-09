@@ -217,7 +217,7 @@ export default function LifeLine() {
                                 <div className="relative w-8 h-8 flex justify-center items-center"
                                     onContextMenu={handle.order == nodes.find(node => node.id == nodeId)!.data.orderedHandles!.length - 1 ? (e: React.MouseEvent<Element, MouseEvent>) => handleContextMenu(e, handle.id) : undefined}>
                                     {handle.id.includes('defaultHandle') ? (
-                                        <BaseHandle id={handle.id} position={Position.Bottom} className="!absolute !w-4 !h-4 !top-1/2 !left-1/2 !bg-neutral-200" showHandle={true} />
+                                        <BaseHandle id={handle.id} position={Position.Right} className="!absolute !w-4 !h-4 !top-[40px] !left-[0px] !bg-neutral-200" showHandle={true} />
                                     ) : (
                                         <div className="cursor-pointer rounded-full w-12 h-12 absolute top-1/2 -left-1/4">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="black" className="w-full h-full">
