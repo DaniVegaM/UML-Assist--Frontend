@@ -6,6 +6,8 @@ import {
     useReactFlow,
     type EdgeProps
 } from '@xyflow/react';
+import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
+import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
 
 export function MessageEdge({
     id,
@@ -25,6 +27,7 @@ export function MessageEdge({
     const { setEdges } = useReactFlow();
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
+    const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
 
     const [edgePath, labelX, labelY] = getStraightPath({
         sourceX,
@@ -74,6 +77,16 @@ export function MessageEdge({
         setEditingLabel(evt.target.value.slice(0, 30));
     };
 
+    const handleContextMenu = (event: React.MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setContextMenuEvent(event.nativeEvent);
+    };
+
+    const closeContextMenu = () => {
+        setContextMenuEvent(null);
+    };
+
     return (
         <>
             <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
@@ -83,6 +96,7 @@ export function MessageEdge({
                 stroke="transparent"
                 strokeWidth={20}
                 onDoubleClick={onDoubleClick}
+                onContextMenu={handleContextMenu}
                 cursor="pointer"
             />
 
@@ -142,6 +156,15 @@ export function MessageEdge({
                     )}
                 </div>
             </EdgeLabelRenderer>
+
+            {contextMenuEvent && (
+                <ContextMenuPortal event={contextMenuEvent} onClose={closeContextMenu}>
+                    <ChangeEdgeType
+                        onClose={closeContextMenu}
+                        edgeId={id}
+                    />
+                </ContextMenuPortal>
+            )}
         </>
     );
 }

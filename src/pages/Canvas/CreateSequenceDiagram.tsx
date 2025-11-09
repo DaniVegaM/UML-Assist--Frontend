@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
@@ -19,7 +19,8 @@ function DiagramContent() {
 
     useEffect(() => {
         console.log('Nodos Actuales:', nodes);
-    }, [nodes]);
+        console.log('Edges Actuales:', edges);
+    }, [nodes, edges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -49,6 +50,20 @@ function DiagramContent() {
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
                 targetHandle: params.targetHandle || null,
+                data: {
+                    edgeType: 'async'
+                },
+                style: {
+                    strokeWidth: 2,
+                    stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                    strokeDasharray: 'none'
+                },
+                markerEnd: {
+                    type: MarkerType.Arrow,
+                    width: 20,
+                    height: 20,
+                    color: isDarkMode ? '#FFFFFF' : '#171717'
+                }
             };
 
             setEdges((edgesSnapshot) => {
@@ -58,34 +73,35 @@ function DiagramContent() {
             });
 
         },
-        [setEdges],
+        [setEdges, isDarkMode],
     );
 
     useEffect(() => {
         setEdges((currentEdges) =>
-            currentEdges.map((edge) => ({
-                ...edge,
-                style: {
-                    ...edge.style,
-                    stroke: isDarkMode ? '#FFFFFF' : '#171717',
-                },
-                markerEnd: {
-                    type: 'arrowclosed',
-                    width: 15,
-                    height: 15,
-                    color: isDarkMode ? '#A1A1AA' : '#52525B'
-                },
-                labelStyle: {
-                    fill: isDarkMode ? '#FFFFFF' : '#171717', // Color del texto
-                    fontWeight: 600,
-                },
-                labelBgStyle: {
-                    fill: isDarkMode ? '#18181B' : '#F3F4F6', // Color del fondo
-                    fillOpacity: 0.8,
-                },
-                labelBgPadding: [4, 4],
-                labelBgBorderRadius: 4,
-            }))
+            currentEdges.map((edge) => {
+                const newMarkerEnd = typeof edge.markerEnd === 'object'
+                    ? { ...edge.markerEnd, color: isDarkMode ? '#FFFFFF' : '#171717' }
+                    : edge.markerEnd;
+
+                return {
+                    ...edge,
+                    style: {
+                        ...edge.style,
+                        stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                    },
+                    markerEnd: newMarkerEnd,
+                    labelStyle: {
+                        fill: isDarkMode ? '#FFFFFF' : '#171717',
+                        fontWeight: 600,
+                    },
+                    labelBgStyle: {
+                        fill: isDarkMode ? '#18181B' : '#F3F4F6',
+                        fillOpacity: 0.8,
+                    },
+                    labelBgPadding: [4, 4],
+                    labelBgBorderRadius: 4,
+                };
+            })
         );
     }, [isDarkMode, setEdges]);
 
