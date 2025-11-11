@@ -2,9 +2,50 @@
 import { Link } from 'react-router'
 import { useTheme } from '../../hooks/useTheme';
 import type { HeaderProps } from '../../types/canvas';
+import { useEffect, useState } from 'react';
+import { createDiagram, updateDiagram } from '../../services/diagramSerivce';
+import type { Diagram } from '../../types/diagramsModel';
 
-export default function Header({ diagramTitle }: HeaderProps) {
+export default function Header({ diagramTitle='', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
+    const [title, setTitle] = useState<string>('')
+    const [saving, setSaving] = useState<boolean>(false)
+    
+    useEffect(() => {
+        if (diagramTitle?.length > 0) 
+            setTitle(diagramTitle);
+        else {
+            setTitle('Diagrama sin título')
+        }
+    }, [diagramTitle])
+
+    const saveDiagram = async () => {
+        if(saving === true) return;
+        setSaving(true);
+        const diagramData: Diagram = {
+            id: diagramId ? diagramId : undefined,
+            title: title,
+            content: {
+                type: type,
+                canvas: {
+                    nodes: nodes,
+                    edges: edges,
+                    totalNodes: nodes.length,
+                    totalEdges: edges.length
+                }
+            }
+        }
+        console.log('Guardando diagrama:', diagramData);
+        let response;
+        if(!diagramId) {
+            response = await createDiagram(diagramData)
+        } else{
+            response = await updateDiagram(diagramData)
+        }
+        console.log('Diagrama guardado:', response.data);
+        setSaving(false);
+    }
+
     return (
         <section className="h-full bg-sky-600 md:grid grid-cols-3 gap-4 p-1 items-center">
             <div className="flex items-center justify-center gap-2">
@@ -28,16 +69,18 @@ export default function Header({ diagramTitle }: HeaderProps) {
                         <line x1="17.5" y1="10" x2="17.5" y2="14" />
                     </svg>
                 </Link>
-                <p className="text-center text-white font-bold uppercase">{diagramTitle ? diagramTitle : 'Diagrama de actividades'}</p>
+                <p className="text-center text-white font-bold uppercase">{title}</p>
             </div>
             <input
                 className="text-xl min-w-64 text-white focus-visible: outline-none hover:border-b border-white bg-sky-600 text-center col-span-1 placeholder-white"
                 type="text"
-                placeholder="Diagrama sin título"
+                placeholder={title || "Diagrama sin título"}
+                value={title || ""}
                 onClick={e => e.currentTarget.select()}
+                onChange = {e => setTitle(e.target.value)}
             />
             <div className="flex justify-center gap-4">
-                <button className="bg-white py-1 px-4 text-sky-600 font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
+                <button onClick={() => saveDiagram()} className="bg-white py-1 px-4 text-sky-600 font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
 
                 <button className="bg-white py-1 px-4 text-sky-600 font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Exportar</button>
 
