@@ -71,11 +71,11 @@ const router = createBrowserRouter([
     element: <ChangePasswordPage />,
   },
   {
-    path: "/crear-diagrama-de-actividades",
+    path: "/crear-diagrama-de-actividades/:id?",
     element: <CreateActivitiesDiagram />,
   },
   {
-    path: "/crear-diagrama-de-secuencia",
+    path: "/crear-diagrama-de-secuencia/:id?",
     element: <CreateSequenceDiagram />,
   },
   {
