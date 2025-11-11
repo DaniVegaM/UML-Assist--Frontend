@@ -1,4 +1,4 @@
-import type { Position } from "@xyflow/react";
+import type { Edge, Node, Position } from "@xyflow/react";
 
 export interface DraggableNodeProps {
     className?: string;
@@ -43,4 +43,8 @@ export interface ActivityHandleProps {
 
 export interface HeaderProps {
     diagramTitle?: string;
+    diagramId: number | undefined;
+    type: string;
+    nodes: Node[];
+    edges: Edge[];
 }
