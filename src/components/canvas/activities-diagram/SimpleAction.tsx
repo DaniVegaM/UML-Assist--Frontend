@@ -12,10 +12,10 @@ export default function SimpleAction() {
   const [value, setValue] = useState("");
   const [showHandles, setShowHandles] = useState(false);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { magneticHandle } = useHandle();
   const nodeRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
   const [ handlePosition, setHandlePosition ] = useState<Position>(Position.Top);
+  const { magneticHandle } = useHandle(handleRef);
 
   // Textarea managing
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -57,7 +57,7 @@ export default function SimpleAction() {
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
       className="bg-transparent p-4"
-      onMouseMove={(evt) => {magneticHandle(evt, nodeRef, handleRef, setHandlePosition)}}
+      onMouseMove={(evt) => {magneticHandle(evt, nodeRef, setHandlePosition)}}
     >
       <div ref={nodeRef} className="relative border border-gray-300 dark:border-neutral-900 rounded-lg bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150">
         <BaseHandle id={0} ref={handleRef} showHandle={true} position={handlePosition}/>

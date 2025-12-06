@@ -1,18 +1,18 @@
-import { Position, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
+import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
 import { useCallback } from "react"
 
-export function useHandle() {
+export function useHandle(handleRef:React.RefObject<HTMLDivElement | null>) {
     const nodeId = useNodeId();
     const updateNodeInternals = useUpdateNodeInternals();
     const { zoom } = useViewport();
+    const connection = useConnection();
+    const connections = useNodeConnections({ handleId: handleRef.current?.id});
 
-    const magneticHandle = useCallback((evt: React.MouseEvent, nodeRef:React.RefObject<HTMLDivElement | null>, handleRef:React.RefObject<HTMLDivElement | null>, setHandlePosition:React.Dispatch<React.SetStateAction<Position>>) => {
-        if (!nodeRef.current || !handleRef.current) return;
+    const magneticHandle = useCallback((evt: React.MouseEvent, nodeRef:React.RefObject<HTMLDivElement | null>, setHandlePosition:React.Dispatch<React.SetStateAction<Position>>) => {
+        if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId)) return;
+        if(connections.length > 0) return; // Si ya hay una conexión ya no se mueve el handle
+
         const bounds = nodeRef.current.getBoundingClientRect();
-
-        console.log('Magnetic Handle Move');
-        console.log('Bounds:', bounds);
-        console.log('Event ClientX:', evt.clientX, 'ClientY:', evt.clientY);
 
         // Calculamos la posición relativa dentro del nodo
         const rawX = (evt.clientX - bounds.left) / zoom;
@@ -63,7 +63,7 @@ export function useHandle() {
 
         setHandlePosition((prev) => (prev !== newPos ? newPos : prev));
         updateNodeInternals(nodeId ? nodeId : '');
-    }, [zoom, nodeId, updateNodeInternals]);
+    }, [zoom, nodeId, updateNodeInternals, connection, connections, handleRef]);
 
     return {
         magneticHandle,
