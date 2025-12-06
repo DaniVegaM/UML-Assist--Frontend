@@ -3,6 +3,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../variables";
+import { useHandle } from "../../../hooks/useHandle";
 
 export default function SimpleAction() {
 
@@ -11,7 +12,12 @@ export default function SimpleAction() {
   const [value, setValue] = useState("");
   const [showHandles, setShowHandles] = useState(false);
   const { setIsZoomOnScrollEnabled } = useCanvas();
+  const { magneticHandle } = useHandle();
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const handleRef = useRef<HTMLDivElement>(null);
+  const [ handlePosition, setHandlePosition ] = useState<Position>(Position.Top);
 
+  // Textarea managing
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
       setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
@@ -48,33 +54,29 @@ export default function SimpleAction() {
   return (
     <div
       onDoubleClick={handleDoubleClick}
-      className="relative border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
+      className="bg-transparent p-4"
+      onMouseMove={(evt) => {magneticHandle(evt, nodeRef, handleRef, setHandlePosition)}}
     >
-      <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-1/4"/>
-      <BaseHandle id={1} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-3/4"/>
-      <BaseHandle id={2} position={Position.Right} showHandle={showHandles} className="!absolute !top-1/4 right-0"/>
-      <BaseHandle id={3} position={Position.Right} showHandle={showHandles} className="!absolute !top-3/4 right-0"/>
-      <BaseHandle id={4} position={Position.Left} showHandle={showHandles} className="!absolute !top-1/4 left-0"/>
-      <BaseHandle id={5} position={Position.Left} showHandle={showHandles} className="!absolute !top-3/4 left-0"/>
-      <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-0 !left-1/4" />
-      <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-0 !left-3/4" />
-      
-      <textarea
-        ref={textareaRef}
-        value={value}
-        onChange={onChange}
-        onBlur={handleBlur}
-        onWheel={(e) => e.stopPropagation()}
-        placeholder={`(Particiones...)\nAcción`}
-        className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-          }`}
-        rows={1}
-      />
-      {isEditing &&
-        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-      }
+      <div ref={nodeRef} className="relative border border-gray-300 dark:border-neutral-900 rounded-lg bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150">
+        <BaseHandle id={0} ref={handleRef} showHandle={true} position={handlePosition}/>
+
+        <textarea
+          ref={textareaRef}
+          value={value}
+          onChange={onChange}
+          onBlur={handleBlur}
+          onWheel={(e) => e.stopPropagation()}
+          placeholder={`(Particiones...)\nAcción`}
+          className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
+            }`}
+          rows={1}
+        />
+        {isEditing &&
+          <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+        }
+      </div>
     </div>
   )
 }
