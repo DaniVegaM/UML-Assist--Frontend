@@ -1,27 +1,47 @@
 import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 
-export function useHandle(handleRef:React.RefObject<HTMLDivElement | null>) {
+export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
+    const [handles, setHandles] = useState<{ id: number; position: Position, left?: number, top?: number }[]>(
+        [
+            {
+                id: 0,
+                position: Position.Top
+            },
+        ]
+    );
+
     const nodeId = useNodeId();
+    const lastHandleId = handles.length - 1;
     const updateNodeInternals = useUpdateNodeInternals();
     const { zoom } = useViewport();
     const connection = useConnection();
-    const connections = useNodeConnections({ handleId: handleRef.current?.id});
+    const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!))|| 
+                                                            (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));
 
-    const magneticHandle = useCallback((evt: React.MouseEvent, nodeRef:React.RefObject<HTMLDivElement | null>, setHandlePosition:React.Dispatch<React.SetStateAction<Position>>) => {
+    const magneticHandle = useCallback((evt: React.MouseEvent, nodeRef: React.RefObject<HTMLDivElement | null>) => {
         if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId)) return;
-        if(connections.length > 0) return; // Si ya hay una conexión ya no se mueve el handle
 
+        if (connections.length > 0) {
+            // Si el ultimo handle ya tiene una conexión, se crea un nuevo handle en la posición por defecto
+            setHandles(handles => [...handles, {
+                id: handles.length,
+                position: Position.Top
+            }]);
+
+            updateNodeInternals(nodeId ? nodeId : '');
+            return;
+        }; // Retornamos para que se actualice el handleRef al nuevo handle creado
+
+
+        // Calculamos la posición relativa del puntero dentro del nodo
         const bounds = nodeRef.current.getBoundingClientRect();
-
-        // Calculamos la posición relativa dentro del nodo
         const rawX = (evt.clientX - bounds.left) / zoom;
         const rawY = (evt.clientY - bounds.top) / zoom;
 
-        
         const nodeWidth = bounds.width / zoom;
         const nodeHeight = bounds.height / zoom;
-        
+
         // Aseguramos que las coordenadas estén dentro de los límites del nodo en caso de que rawX/rawY se salgan
         const clientX = Math.max(0, Math.min(rawX, nodeWidth));
         const clientY = Math.max(0, Math.min(rawY, nodeHeight));
@@ -41,31 +61,45 @@ export function useHandle(handleRef:React.RefObject<HTMLDivElement | null>) {
         /* Se colocaron algunas positions como 'auto' para evitar problemas de CSS al posicionar el handle
         ya que ReactFlow maneja los Positions de manera específica */
         if (min === distLeft) {
-            newX = `0`; 
-            newY = `${clientY}px`; 
+            newX = `0`;
+            newY = `${clientY}px`;
             newPos = Position.Left;
         } else if (min === distRight) {
-            newX = `auto`; 
-            newY = `${clientY}px`; 
+            newX = `auto`;
+            newY = `${clientY}px`;
             newPos = Position.Right;
         } else if (min === distTop) {
-            newX = `${clientX}px`; 
-            newY = `0`; 
+            newX = `${clientX}px`;
+            newY = `0`;
             newPos = Position.Top;
         } else if (min === distBottom) {
-            newX = `${clientX}px`; 
-            newY = `auto`; 
+            newX = `${clientX}px`;
+            newY = `auto`;
             newPos = Position.Bottom;
         }
 
         handleRef.current.style.left = newX;
         handleRef.current.style.top = newY;
 
-        setHandlePosition((prev) => (prev !== newPos ? newPos : prev));
+        //Actualizamos la información de la posición del handle
+        setHandles(handles => handles.map(handle => {
+            if (handle.id === handles.length - 1) {
+                return {
+                    ...handle,
+                    position: newPos,
+                    left: parseFloat(newX) || undefined,
+                    top: parseFloat(newY) || undefined,
+                };
+            }
+            return handle;
+        }));
+
         updateNodeInternals(nodeId ? nodeId : '');
-    }, [zoom, nodeId, updateNodeInternals, connection, connections, handleRef]);
+    }, [zoom, nodeId, updateNodeInternals, connection, connections, handleRef, handles.length]);
 
     return {
+        handles,
+        setHandles,
         magneticHandle,
     }
 }

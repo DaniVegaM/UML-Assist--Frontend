@@ -28,7 +28,7 @@ export interface ElementsBarProps {
 
 export interface BaseHandleProps {
     id: number | string;
-    ref?: React.RefObject<HTMLDivElement | null>;
+    ref?: React.Ref<HTMLDivElement | null>;
     position?: Position;
     className?: string;
     showHandle?: boolean;
