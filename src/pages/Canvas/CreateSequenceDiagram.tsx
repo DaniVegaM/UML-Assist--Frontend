@@ -1,37 +1,42 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
-import { activitiesNodeTypes } from "../../types/nodeTypes";
+import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
+import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
+import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
-    const [nodes, setNodes] = useState<Node[]>([]);
-    const [edges, setEdges] = useState<Edge[]>([]);
+    const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+
+    useEffect(() => {
+        console.log('Nodos Actuales:', nodes);
+        console.log('Edges Actuales:', edges);
+    }, [nodes, edges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                console.log('Nodos actuales:', nodes);
                 return nodes;
             });
         },
-        [],
+        [setNodes],
     );
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
             setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
         },
-        [],
+        [setEdges],
     );
 
     const onConnect = useCallback(
@@ -39,12 +44,26 @@ function DiagramContent() {
 
             const newEdge: Edge = {
                 ...params,
-                id: `edge-${params.source}-${params.target}`,
-                type: 'smoothstep',
+                id: `edge-${params.sourceHandle}-${params.targetHandle}`,
+                type: `${params.source == params.target? 'selfMessageEdge' : 'messageEdge'}`, 
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
                 targetHandle: params.targetHandle || null,
+                data: {
+                    edgeType: 'async'
+                },
+                style: {
+                    strokeWidth: 2,
+                    stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                    strokeDasharray: 'none'
+                },
+                markerEnd: {
+                    type: MarkerType.Arrow,
+                    width: 20,
+                    height: 20,
+                    color: isDarkMode ? '#FFFFFF' : '#171717'
+                }
             };
 
             setEdges((edgesSnapshot) => {
@@ -54,36 +73,37 @@ function DiagramContent() {
             });
 
         },
-        [setEdges],
+        [setEdges, isDarkMode],
     );
 
     useEffect(() => {
         setEdges((currentEdges) =>
-            currentEdges.map((edge) => ({
-                ...edge,
-                style: {
-                    ...edge.style,
-                    stroke: isDarkMode ? '#FFFFFF' : '#171717',
-                },
-                markerEnd: {
-                    type: 'arrow',
-                    width: 15,
-                    height: 15,
-                    color: isDarkMode ? '#A1A1AA' : '#52525B'
-                },
-                labelStyle: {
-                    fill: isDarkMode ? '#FFFFFF' : '#171717', // Color del texto
-                    fontWeight: 600,
-                },
-                labelBgStyle: {
-                    fill: isDarkMode ? '#18181B' : '#F3F4F6', // Color del fondo
-                    fillOpacity: 0.8,
-                },
-                labelBgPadding: [4, 4],
-                labelBgBorderRadius: 4,
-            }))
+            currentEdges.map((edge) => {
+                const newMarkerEnd = typeof edge.markerEnd === 'object'
+                    ? { ...edge.markerEnd, color: isDarkMode ? '#FFFFFF' : '#171717' }
+                    : edge.markerEnd;
+
+                return {
+                    ...edge,
+                    style: {
+                        ...edge.style,
+                        stroke: isDarkMode ? '#FFFFFF' : '#171717',
+                    },
+                    markerEnd: newMarkerEnd,
+                    labelStyle: {
+                        fill: isDarkMode ? '#FFFFFF' : '#171717',
+                        fontWeight: 600,
+                    },
+                    labelBgStyle: {
+                        fill: isDarkMode ? '#18181B' : '#F3F4F6',
+                        fillOpacity: 0.8,
+                    },
+                    labelBgPadding: [4, 4],
+                    labelBgBorderRadius: 4,
+                };
+            })
         );
-    }, [isDarkMode]);
+    }, [isDarkMode, setEdges]);
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
@@ -95,32 +115,34 @@ function DiagramContent() {
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
                     attributionPosition="bottom-right"
+                    connectionMode={ConnectionMode.Loose}
                     edgeTypes={edgeTypes}
                     defaultEdgeOptions={{
                         animated: false,
                         markerEnd: {
-                            type: 'arrow',
+                            type: 'arrowclosed',
                             width: 15,
                             height: 15,
                             color: isDarkMode ? '#A1A1AA' : '#52525B'
                         },
                         focusable: true,
                         reconnectable: true,
+                        selectable: true,
                         style: {
                             strokeWidth: 2,
                             stroke: isDarkMode ? '#FFFFFF' : '#171717',
                         },
-                        type: 'smoothstep',
+                        type: 'messageEdge',
                     }}
-                    connectionLineType={ConnectionLineType.SmoothStep}
+                    connectionLineType={ConnectionLineType.Straight}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
-                    nodeTypes={activitiesNodeTypes}
+                    nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
-                    onConnectStart={() => setIsTryingToConnect({ isTrying: true })}
-                    onConnectEnd={() => setIsTryingToConnect({ isTrying: false })}
+                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onConnectEnd={() => setIsTryingToConnect(false)}
                     onConnect={onConnect}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -141,7 +163,9 @@ export default function CreateSequenceDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                <DiagramContent />
+                <SequenceCanvasProvider>
+                    <DiagramContent />
+                </SequenceCanvasProvider>
             </CanvasProvider>
         </ReactFlowProvider>
     );

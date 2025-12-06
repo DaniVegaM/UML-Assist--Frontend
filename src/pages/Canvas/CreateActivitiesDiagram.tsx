@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
@@ -9,19 +9,43 @@ import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
+import { useParams } from "react-router";
+import type { Diagram } from "../../types/diagramsModel";
+import { fetchDiagramById } from "../../services/diagramSerivce";
 
 function DiagramContent() {
+    const { id: diagramId } = useParams();
+    const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
 
+    useEffect(() => {
+        const loadDiagram = async () => {
+            if (diagramId) {
+                const response = await fetchDiagramById(diagramId);
+                const data = response.data;
+                setDiagram(data);
+            }
+        };
+        loadDiagram();
+    }, [diagramId]);
+
+    useEffect(() => {
+        if (diagram?.content) {
+            console.log('Diagrama cargado:', diagram);
+            setNodes(diagram.content.canvas.nodes);
+            setEdges(diagram.content.canvas.edges || []);
+        }
+    }, [diagram]);
+
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                console.log('Nodos actuales:', nodes);
+                // console.log('Nodos actuales:', nodes);
                 return nodes;
             });
         },
@@ -37,14 +61,14 @@ function DiagramContent() {
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node).map((n) => n.id);
-        console.log('Nodos que intersectan con el nodo arrastrado:', intersections);
+        // console.log('Nodos que intersectan con el nodo arrastrado:', intersections);
 
-        if(node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
+        if (node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
             node.parentId = intersections.find(nodeId => nodeId.startsWith('activity')) || undefined;
             node.extent = 'parent';
         }
         setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
-        
+
     }, []);
 
     const onConnect = useCallback(
@@ -62,7 +86,7 @@ function DiagramContent() {
             else if (sourceNode?.type === 'dataNode') {
                 edgeType = sourceNode?.data?.outgoingEdge || 'dataOutgoingEdge';
             }
-            else if( targetNode?.type === 'exceptionHandling' ) {
+            else if (targetNode?.type === 'exceptionHandling') {
                 edgeType = 'exceptionHandlingEdge';
             }
             else {
@@ -87,7 +111,7 @@ function DiagramContent() {
 
             setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
-                console.log('Conexiones actuales:', newEdges);
+                // console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
 
@@ -234,17 +258,17 @@ function DiagramContent() {
 
             // VALIDACIONES PARA OBJECT NODE
             // Solo permitir una entrada y una salida
-            if (sourceNodeType === 'objectNode' && edges.some(edge => edge.source === sourceNodeId) 
+            if (sourceNodeType === 'objectNode' && edges.some(edge => edge.source === sourceNodeId)
                 || targetNodeType === 'objectNode' && edges.some(edge => edge.target === targetNodeId)) {
                 return false;
             }
 
             //VALIDACIONES PARA EXCEPTION HANDLING
             // Permitir solo una entrada y sin salidas
-            if( sourceNodeType === 'exceptionHandling' ||  (targetNodeType === 'exceptionHandling' && edges.some(edge => edge.target == targetNodeId)) ) {
+            if (sourceNodeType === 'exceptionHandling' || (targetNodeType === 'exceptionHandling' && edges.some(edge => edge.target == targetNodeId))) {
                 return false;
             }
-            
+
             return true;
         }
         , [edges, nodes]
@@ -280,7 +304,13 @@ function DiagramContent() {
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
-            <Header />
+            <Header 
+                diagramId={ diagramId ? parseInt(diagramId, 10) : undefined}
+                diagramTitle={diagram?.title}
+                type="actividades"
+                nodes={useNodes()}
+                edges={useEdges()}
+            />
 
             <section className="h-full w-full relative">
                 <ReactFlow

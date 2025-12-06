@@ -15,6 +15,8 @@ import ConnectorNode from "../components/canvas/activities-diagram/ConnectorNode
 import CallBehaviorNode from "../components/canvas/activities-diagram/CallBehaviorNode";
 import Activity from "../components/canvas/activities-diagram/Activity";
 import ExceptionHandling from "../components/canvas/activities-diagram/ExceptionHandling";
+import LifeLine from "../components/canvas/sequence-diagram/LifeLine";
+import BaseFragment from "../components/canvas/sequence-diagram/BaseFragment";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -34,4 +36,9 @@ export const activitiesNodeTypes = {
   connectorNode: ConnectorNode,
   callBehavior: CallBehaviorNode,
   exceptionHandling: ExceptionHandling,
+};
+
+export const sequenceNodeTypes = {
+  lifeLine: LifeLine,
+  baseFragment: BaseFragment
 };

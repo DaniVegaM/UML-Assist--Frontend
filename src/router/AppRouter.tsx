@@ -11,6 +11,7 @@ import ChangePasswordPage from "../pages/Auth/changepassword/ChangePasswordPage"
 import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
 import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
 import HomePage from "../pages/Auth/HomePage/HomePage";
+import Dashboard from "../pages/Dashboard";
 
 const createAuthCallbackLoader = (provider: "google" | "github") => {
   return async ({ request }: LoaderFunctionArgs) => {
@@ -70,12 +71,16 @@ const router = createBrowserRouter([
     element: <ChangePasswordPage />,
   },
   {
-    path: "/crear-diagrama-de-actividades",
+    path: "/crear-diagrama-de-actividades/:id?",
     element: <CreateActivitiesDiagram />,
   },
   {
-    path: "/crear-diagrama-de-secuencia",
+    path: "/crear-diagrama-de-secuencia/:id?",
     element: <CreateSequenceDiagram />,
+  },
+  {
+    path: "/dashboard",
+    element: <Dashboard />,
   },
 ]);
 
