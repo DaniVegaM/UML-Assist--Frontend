@@ -1,7 +1,7 @@
 import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
 import { useCallback, useState } from "react"
 
-export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
+export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nodeRef: React.RefObject<HTMLDivElement | null>, disableMagneticPoints?: boolean) {
     const [handles, setHandles] = useState<{ id: number; position: Position, left?: number, top?: number }[]>(
         [
             {
@@ -17,11 +17,9 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
     const { zoom } = useViewport();
     const connection = useConnection();
     const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!))|| 
-                                                            (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));
-    
-    const paddingMagnet = 25; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo                                                    
+                                                            (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));                                                  
 
-    const magneticHandle = useCallback((evt: React.MouseEvent, nodeRef: React.RefObject<HTMLDivElement | null>) => {
+    const magneticHandle = useCallback((evt: React.MouseEvent) => {
         if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId)) return;
 
         if (connections.length > 0) {
@@ -47,6 +45,8 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
         const midWidth = nodeWidth / 2;
         const midHeight = nodeHeight / 2;
 
+        const paddingMagnet = 0.125 * nodeWidth; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo  
+
         // Aseguramos que las coordenadas estén dentro de los límites del nodo en caso de que rawX/rawY se salgan
         const clientX = Math.max(0, Math.min(rawX, nodeWidth));
         const clientY = Math.max(0, Math.min(rawY, nodeHeight));
@@ -70,7 +70,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
             newY = `${clientY}px`;
             newPos = Position.Left;
 
-            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet) {
+            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet && !disableMagneticPoints) {
                 newY = `${midHeight}px`;
             }
         } else if (min === distRight) {
@@ -78,7 +78,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
             newY = `${clientY}px`;
             newPos = Position.Right;
 
-            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet) {
+            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet && !disableMagneticPoints) {
                 newY = `${midHeight}px`;
             }
         } else if (min === distTop) {
@@ -86,7 +86,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
             newY = `0`;
             newPos = Position.Top;
 
-            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet) {
+            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet && !disableMagneticPoints) {
                 newX = `${midWidth}px`;
             }
         } else if (min === distBottom) {
@@ -94,7 +94,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
             newY = `auto`;
             newPos = Position.Bottom;
 
-            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet) {
+            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet && !disableMagneticPoints) {
                 newX = `${midWidth}px`;
             }
         }

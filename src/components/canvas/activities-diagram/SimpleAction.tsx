@@ -15,13 +15,13 @@ export default function SimpleAction() {
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
-  const { handles, magneticHandle } = useHandle(handleRef);
+  const { handles, magneticHandle } = useHandle(handleRef, nodeRef);
 
   // Callback ref para actualizar handleRef cuando cambie el último handle
   const setHandleRef = useCallback((node: HTMLDivElement | null) => {
     handleRef.current = node;
   }, []);
-  
+
 
   // Manejo del textarea
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -63,7 +63,7 @@ export default function SimpleAction() {
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
       className="bg-transparent p-4"
-      onMouseMove={(evt) => { magneticHandle(evt, nodeRef) }}
+      onMouseMove={(evt) => { magneticHandle(evt) }}
     >
       <div ref={nodeRef} className="relative border border-gray-300 dark:border-neutral-900 rounded-lg bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150">
         {handles.map((handle, i) => (
