@@ -4,6 +4,7 @@ import { useCallback, useState } from "react"
 type useHandleProps = {
     handleRef: React.RefObject<HTMLDivElement | null>;
     nodeRef: React.RefObject<HTMLDivElement | null>;
+    maxHandles?: number;
     disableMagneticPoints?: boolean;
     disableTop?: boolean;
     disableRight?: boolean;
@@ -11,7 +12,7 @@ type useHandleProps = {
     disableLeft?: boolean;
 }
 
-export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft }: useHandleProps) {
+export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft, maxHandles }: useHandleProps) {
     const [handles, setHandles] = useState<{ id: number; position: Position, left?: number, top?: number }[]>(
         [
             {
@@ -26,13 +27,14 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
     const updateNodeInternals = useUpdateNodeInternals();
     const { zoom } = useViewport();
     const connection = useConnection();
+    const totalConnections = useNodeConnections().filter(conn => conn.sourceHandle?.includes(nodeId!) || conn.targetHandle?.includes(nodeId!)).length;
     const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!)) ||
                                                     (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));
 
     const magneticHandle = useCallback((evt: React.MouseEvent) => {
-        if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId)) return;
-
-        if (connections.length > 0) {
+        if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId) || (handles.length == maxHandles && totalConnections == maxHandles)) return;
+        console.log('handles: ' + handles.length);
+        if (connections.length > 0 && ((maxHandles && handles.length < maxHandles) || !maxHandles)) {
             // Si el ultimo handle ya tiene una conexión, se crea un nuevo handle en la posición por defecto
             setHandles(handles => [...handles, {
                 id: handles.length,
