@@ -15,7 +15,7 @@ export default function SimpleAction() {
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
-  const { handles, magneticHandle } = useHandle(handleRef, nodeRef);
+  const { handles, magneticHandle } = useHandle({ handleRef, nodeRef });
 
   // Callback ref para actualizar handleRef cuando cambie el último handle
   const setHandleRef = useCallback((node: HTMLDivElement | null) => {

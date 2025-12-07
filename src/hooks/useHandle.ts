@@ -1,7 +1,17 @@
 import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
 import { useCallback, useState } from "react"
 
-export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nodeRef: React.RefObject<HTMLDivElement | null>, disableMagneticPoints?: boolean) {
+type useHandleProps = {
+    handleRef: React.RefObject<HTMLDivElement | null>;
+    nodeRef: React.RefObject<HTMLDivElement | null>;
+    disableMagneticPoints?: boolean;
+    disableTop?: boolean;
+    disableRight?: boolean;
+    disableBottom?: boolean;
+    disableLeft?: boolean;
+}
+
+export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft }: useHandleProps) {
     const [handles, setHandles] = useState<{ id: number; position: Position, left?: number, top?: number }[]>(
         [
             {
@@ -16,8 +26,8 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nod
     const updateNodeInternals = useUpdateNodeInternals();
     const { zoom } = useViewport();
     const connection = useConnection();
-    const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!))|| 
-                                                            (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));                                                  
+    const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!)) ||
+                                                    (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));
 
     const magneticHandle = useCallback((evt: React.MouseEvent) => {
         if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId)) return;
@@ -42,21 +52,22 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nod
         const nodeWidth = bounds.width / zoom;
         const nodeHeight = bounds.height / zoom;
 
-        const midWidth = nodeWidth / 2;
-        const midHeight = nodeHeight / 2;
-
-        const paddingMagnet = 0.125 * nodeWidth; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo  
-
         // Aseguramos que las coordenadas estén dentro de los límites del nodo en caso de que rawX/rawY se salgan
         const clientX = Math.max(0, Math.min(rawX, nodeWidth));
         const clientY = Math.max(0, Math.min(rawY, nodeHeight));
+
+        const midWidth = nodeWidth / 2;
+        const midHeight = nodeHeight / 2;
+
+        const paddingMagnet = 0.065 * nodeWidth; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo  
+
 
         // Distancias a los bordes del nodo para saber cuál es el más cercano
         const distLeft = clientX;
         const distRight = nodeWidth - clientX;
         const distTop = clientY;
         const distBottom = nodeHeight - clientY;
-        const min = Math.min(distLeft, distRight, distTop, distBottom);
+        const min = Math.min(disableLeft ? 99999 : distLeft, disableRight ? 99999 : distRight, disableTop ? 99999 : distTop, disableBottom ? 99999 : distBottom);
 
         let newX = '0px';
         let newY = '0px';
@@ -70,7 +81,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nod
             newY = `${clientY}px`;
             newPos = Position.Left;
 
-            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet && !disableMagneticPoints) {
+            if (clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet && !disableMagneticPoints) {
                 newY = `${midHeight}px`;
             }
         } else if (min === distRight) {
@@ -78,7 +89,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nod
             newY = `${clientY}px`;
             newPos = Position.Right;
 
-            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet && !disableMagneticPoints) {
+            if (clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet && !disableMagneticPoints) {
                 newY = `${midHeight}px`;
             }
         } else if (min === distTop) {
@@ -86,7 +97,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nod
             newY = `0`;
             newPos = Position.Top;
 
-            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet && !disableMagneticPoints) {
+            if (clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet && !disableMagneticPoints) {
                 newX = `${midWidth}px`;
             }
         } else if (min === distBottom) {
@@ -94,7 +105,7 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>, nod
             newY = `auto`;
             newPos = Position.Bottom;
 
-            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet && !disableMagneticPoints) {
+            if (clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet && !disableMagneticPoints) {
                 newX = `${midWidth}px`;
             }
         }
