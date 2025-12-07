@@ -18,6 +18,8 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
     const connection = useConnection();
     const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!))|| 
                                                             (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));
+    
+    const paddingMagnet = 25; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo                                                    
 
     const magneticHandle = useCallback((evt: React.MouseEvent, nodeRef: React.RefObject<HTMLDivElement | null>) => {
         if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId)) return;
@@ -42,6 +44,9 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
         const nodeWidth = bounds.width / zoom;
         const nodeHeight = bounds.height / zoom;
 
+        const midWidth = nodeWidth / 2;
+        const midHeight = nodeHeight / 2;
+
         // Aseguramos que las coordenadas estén dentro de los límites del nodo en caso de que rawX/rawY se salgan
         const clientX = Math.max(0, Math.min(rawX, nodeWidth));
         const clientY = Math.max(0, Math.min(rawY, nodeHeight));
@@ -64,18 +69,34 @@ export function useHandle(handleRef: React.RefObject<HTMLDivElement | null>) {
             newX = `0`;
             newY = `${clientY}px`;
             newPos = Position.Left;
+
+            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet) {
+                newY = `${midHeight}px`;
+            }
         } else if (min === distRight) {
             newX = `auto`;
             newY = `${clientY}px`;
             newPos = Position.Right;
+
+            if(clientY >= midHeight - paddingMagnet && clientY <= midHeight + paddingMagnet) {
+                newY = `${midHeight}px`;
+            }
         } else if (min === distTop) {
             newX = `${clientX}px`;
             newY = `0`;
             newPos = Position.Top;
+
+            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet) {
+                newX = `${midWidth}px`;
+            }
         } else if (min === distBottom) {
             newX = `${clientX}px`;
             newY = `auto`;
             newPos = Position.Bottom;
+
+            if(clientX >= midWidth - paddingMagnet && clientX <= midWidth + paddingMagnet) {
+                newX = `${midWidth}px`;
+            }
         }
 
         handleRef.current.style.left = newX;
