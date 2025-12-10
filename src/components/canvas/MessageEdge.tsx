@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
     BaseEdge,
     EdgeLabelRenderer,
@@ -8,6 +8,11 @@ import {
 } from '@xyflow/react';
 import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
 import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
+
+const SEQUENCE_MESSAGE_REGEX =
+    /^(?:[A-Za-z_]\w*\s*=\s*)?[A-Za-z_]\w*\s*\((?:\s*[A-Za-z_]\w*\s*(?:,\s*[A-Za-z_]\w*\s*)*)?\)\s*(?::\s*[A-Za-z_]\w*\s*)?$/;
+
+const MAX_MESSAGE_LENGTH = 50;
 
 export function MessageEdge({
     id,
@@ -21,13 +26,32 @@ export function MessageEdge({
     labelStyle,
     labelBgStyle,
     labelBgPadding,
-    labelBgBorderRadius
+    labelBgBorderRadius,
+    data
 }: EdgeProps) {
 
     const { setEdges } = useReactFlow();
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+    const [hasWarnedEmpty, setHasWarnedEmpty] = useState(false);
+    const inputRef = useRef<HTMLInputElement | null>(null);
+
+    useEffect(() => {
+        if (!isEditing && (!label || label === '') && (data as any)?.mustFillLabel) {
+            setEditingLabel('');
+            setIsEditing(true);
+            setHasWarnedEmpty(false); 
+
+            setEdges((currentEdges) =>
+                currentEdges.map((e) =>
+                    e.id === id
+                        ? { ...e, data: { ...(e.data || {}), mustFillLabel: false } }
+                        : e
+                )
+            );
+        }
+    }, [data, label, isEditing, id, setEdges]);
 
     const [edgePath, labelX, labelY] = getStraightPath({
         sourceX: sourceX,
@@ -37,17 +61,24 @@ export function MessageEdge({
     });
 
     const onSave = () => {
-        setIsEditing(false);
+        
         const trimmedLabel = editingLabel.trim();
-        let formattedLabel = '';
 
-        if (trimmedLabel !== '') {
-            if (trimmedLabel.startsWith('[') && trimmedLabel.endsWith(']')) {
-                formattedLabel = trimmedLabel;
-            } else {
-                formattedLabel = `[${trimmedLabel}]`;
-            }
+        if (trimmedLabel === '') {
+            window.alert(
+                'El mensaje no puede estar vacío.\n\nFormato esperado:\n[Variable = ] Name(param1, param2)[: ReturnValue]'
+            );
+            return;
         }
+
+        if (!SEQUENCE_MESSAGE_REGEX.test(trimmedLabel)) {
+            window.alert(
+                'Mensaje inválido.\n\nFormato esperado:\n[Variable = ] Name(param1, param2)[: ReturnValue]'
+            );
+            return;
+        }
+
+        const formattedLabel = `[${trimmedLabel}]`;
 
         setEdges((currentEdges) =>
             currentEdges.map((e) => {
@@ -57,24 +88,49 @@ export function MessageEdge({
                 return e;
             })
         );
+
+        setIsEditing(false);
     };
 
     const onDoubleClick = () => {
         const currentText = String(label || '').replace(/^\[|\]$/g, '');
         setEditingLabel(currentText);
         setIsEditing(true);
+        setHasWarnedEmpty(false);
     };
 
     const onKeyDown = (evt: React.KeyboardEvent<HTMLInputElement>) => {
         if (evt.key === 'Enter') {
             onSave();
         } else if (evt.key === 'Escape') {
-            setIsEditing(false);
+             const isMandatory =
+                (data as any)?.mustFillLabel && (!label || label === '');
+            if (!isMandatory) {
+                setIsEditing(false);
+            }
         }
     };
 
     const onLabelChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
         setEditingLabel(evt.target.value.slice(0, 30));
+    };
+
+    const handleBlur = () => {
+        const trimmed = editingLabel.trim();
+        const isMandatory =
+            ((data as any)?.mustFillLabel || (!label || label === '')) &&
+            trimmed === '';
+
+        if (isMandatory && !hasWarnedEmpty) {
+            window.alert('Falta colocar el mensaje.');
+            setHasWarnedEmpty(true);
+
+            
+            setTimeout(() => {
+                inputRef.current?.focus();
+            }, 0);
+        }
+        
     };
 
     const handleContextMenu = (event: React.MouseEvent) => {

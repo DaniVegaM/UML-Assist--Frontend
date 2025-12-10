@@ -8,6 +8,10 @@ import {
 import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
 import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
 
+const SEQUENCE_MESSAGE_REGEX =
+    /^(?:[A-Za-z_]\w*\s*=\s*)?[A-Za-z_]\w*\s*\((?:\s*[A-Za-z_]\w*\s*(?:,\s*[A-Za-z_]\w*\s*)*)?\)\s*(?::\s*[A-Za-z_]\w*\s*)?$/;
+
+
 export function SelfMessageEdge({
     id,
     sourceX,
@@ -32,17 +36,29 @@ export function SelfMessageEdge({
     const edgePath = `M ${sourceX} ${sourceY} L ${sourceX + 50} ${sourceY} L ${sourceX + 50} ${targetY } L ${targetX} ${targetY}`;
 
     const onSave = () => {
-        setIsEditing(false);
         const trimmedLabel = editingLabel.trim();
-        let formattedLabel = '';
-
-        if (trimmedLabel !== '') {
-            if (trimmedLabel.startsWith('[') && trimmedLabel.endsWith(']')) {
-                formattedLabel = trimmedLabel;
-            } else {
-                formattedLabel = `[${trimmedLabel}]`;
-            }
+         if (trimmedLabel === '') {
+            setEdges((currentEdges) =>
+                currentEdges.map((e) => {
+                    if (e.id === id) {
+                        return { ...e, label: '' };
+                    }
+                    return e;
+                })
+            );
+            setIsEditing(false);
+            return;
         }
+
+
+        if (!SEQUENCE_MESSAGE_REGEX.test(trimmedLabel)) {
+            window.alert(
+                'Mensaje inválido.\n\nFormato esperado:\n[Variable = ] Name(param1, param2)[: ReturnValue]'
+            );
+            return;
+        }
+
+        const formattedLabel = `[${trimmedLabel}]`;
 
         setEdges((currentEdges) =>
             currentEdges.map((e) => {
@@ -52,8 +68,10 @@ export function SelfMessageEdge({
                 return e;
             })
         );
-    };
 
+        setIsEditing(false);
+    };
+    
     const onDoubleClick = () => {
         const currentText = String(label || '').replace(/^\[|\]$/g, '');
         setEditingLabel(currentText);
