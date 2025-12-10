@@ -74,13 +74,13 @@ export default function ChangePasswordPage() {
         <div className="relative w-full flex items-center justify-center mb-4">
           <button
             onClick={() => navigate(-1)}
-            className="absolute left-0 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 transition p-2"
+            className="absolute left-0 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all duration-600 ease-in-out cursor-pointer p-2"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 20 20"
               fill="currentColor"
-              className="w-6 h-6 text-gray-900 dark:text-white"
+              className="w-6 h-6 text-sky-600 dark:text-sky-400"
             >
               <g clipPath="url(#a)">
                 <path
