@@ -6,6 +6,8 @@ import { Position, useNodeId, useUpdateNodeInternals } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import { useTheme } from "../../../hooks/useTheme";
+import "../styles/nodeStyles.css";
 
 
 export default function LifeLine() {
@@ -22,6 +24,7 @@ export default function LifeLine() {
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
     const [containerHeight, setContainerHeight] = useState(0);
+    const { isDarkMode } = useTheme();
 
     //Verificamos si este es el último lifeLine para mostrar el botón de agregar otro lifeLine
     const isLastLifeLine = useMemo(() => {
@@ -177,7 +180,7 @@ export default function LifeLine() {
             <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
                 <div
                     onDoubleClick={handleDoubleClick}
-                    className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+                    className="node-lifeline"
                 > {/*HEAD DE LA LIFELINE*/}
                     <textarea
                         ref={textareaRef}
@@ -186,12 +189,11 @@ export default function LifeLine() {
                         onBlur={handleBlur}
                         onWheel={(e) => e.stopPropagation()}
                         placeholder={`Rol : Clase`}
-                        className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                            }`}
+                        className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
                         rows={1}
                     />
                     {isEditing &&
-                        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
+                        <p className="char-counter char-counter-right">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
                     }
                 </div>
                 {/*DASHED LINE DE LA LIFELINE*/}
@@ -200,13 +202,13 @@ export default function LifeLine() {
                     onMouseLeave={() => setShowHandles(false)}
                 >
                     <div
-                        className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0 border-r-2 border-dashed border-neutral-300 pointer-events-none"
+                        className={`absolute top-0 left-1/2 -translate-x-1/2 h-full w-0 border-r-2 border-dashed pointer-events-none ${isDarkMode ? 'border-neutral-600' : 'border-neutral-300'}`}
                         aria-hidden="true"
                     > {/* Aspecto de dashed line */}
                     </div>
                     <div ref={handlesContainerRef} className="absolute top-0 left-0 w-full flex flex-col items-center justify-center">
                         <button
-                            className={`mt-10 bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
+                            className={`mt-10 w-10 h-10 rounded-full cursor-pointer flex items-center justify-center transition-all duration-300 ${isDarkMode ? 'bg-neutral-600 hover:bg-neutral-500' : 'bg-neutral-300 hover:bg-neutral-400'} ${showHandles ? 'opacity-100' : 'opacity-0'}`}
                             onClick={() => addHandle(0)}
                         > {/* Botón para agregar el primer nodo */}
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
@@ -232,7 +234,7 @@ export default function LifeLine() {
                                 {/* Botón para agregar otro handle después de este */}
                                 {handle.id.includes('defaultHandle') ? (
                                     <button
-                                        className={`bg-neutral-300 hover:bg-neutral-400 dark:bg-neutral-600 dark:hover:bg-neutral-500 transition-all duration-300 w-10 h-10 flex items-center justify-center rounded-full cursor-pointer ${showHandles ? 'opacity-100' : 'opacity-0'}`}
+                                        className={`w-10 h-10 rounded-full cursor-pointer flex items-center justify-center transition-all duration-300 ${isDarkMode ? 'bg-neutral-600 hover:bg-neutral-500' : 'bg-neutral-300 hover:bg-neutral-400'} ${showHandles ? 'opacity-100' : 'opacity-0'}`}
                                         onClick={() => addHandle(index + 1)}
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
@@ -248,7 +250,7 @@ export default function LifeLine() {
             { /*SUGERENCIA DE NUEVO LIFELINE*/
                 isLastLifeLine ? (
                     <div className="flex flex-col justify-start items-center">
-                        <div className="mb-2 border border-neutral-600 border-dashed dark:border-neutral-900 p-2 min-w-[200px]">
+                        <div className={`mb-2 border border-dashed p-2 min-w-[200px] ${isDarkMode ? 'border-white' : 'border-neutral-800'}`}>
                             <p className="text-neutral-400 font-bold text-center">Nueva linea de vida</p>
                         </div>
                         <button onClick={addNewLifeLine} className="cursor-pointer w-8 h-8 rounded-full border-neutral-400 border-2 flex items-center justify-center hover:bg-neutral-400 hover:text-white transition-colors">

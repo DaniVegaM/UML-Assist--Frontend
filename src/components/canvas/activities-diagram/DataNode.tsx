@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { nodeStyles } from "../styles/nodeStyles";
 import BaseHandle from "../BaseHandle";
 import { NodeToolbar, Position, useInternalNode, useNodeId } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
+import "../styles/nodeStyles.css";
 
 export default function DataNode() {
 
@@ -59,7 +59,7 @@ export default function DataNode() {
 
     return (
         <div
-            className={nodeStyles + 'relative'}
+            className="node-rect"
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
@@ -90,10 +90,10 @@ export default function DataNode() {
                 </button>
             </NodeToolbar>
 
-            <p>{`<<${dataType}>>`}</p>
+            <p className="node-textarea">{`<<${dataType}>>`}</p>
 
             <textarea
-                className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                className={`node-textarea nowheel ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
                 ref={textareaRef}
                 value={value}
                 onChange={onChange}
@@ -103,7 +103,7 @@ export default function DataNode() {
                 maxLength={TEXT_AREA_MAX_LEN}
             />
             {isEditing &&
-                <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
             }
         </div>
     )
