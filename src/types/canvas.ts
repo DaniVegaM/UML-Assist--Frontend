@@ -32,6 +32,7 @@ export interface BaseHandleProps {
     position?: Position;
     className?: string;
     showHandle?: boolean;
+    onContextMenu?: (e: React.MouseEvent<Element, MouseEvent>) => void;
 }
 export interface ActivityHandleProps {
     id: string;

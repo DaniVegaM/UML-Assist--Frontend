@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { LIFE_LINE_MAX_LEN_TEXT } from "../variables";
+import { LIFE_LINE_MAX_LEN_TEXT, LIFE_LINE_BASE_HEIGHT, LIFE_LINE_HEIGHT_PER_HANDLE } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
-import { useNodeId, useUpdateNodeInternals } from "@xyflow/react";
+import { Position, useNodeId, useUpdateNodeInternals } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
@@ -11,11 +11,10 @@ import { useHandle } from "../../../hooks/useHandle";
 
 export default function LifeLine() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    // const handlesContainerRef = useRef<HTMLDivElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
-    const { setIsZoomOnScrollEnabled, generateUniqueId } = useCanvas();
-    const { nodes, setNodes } = useSequenceDiagram();
+    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const { nodes } = useSequenceDiagram();
     const nodeId = useNodeId();
     const updateNodeInternals = useUpdateNodeInternals();
 
@@ -23,7 +22,7 @@ export default function LifeLine() {
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
-    const { handles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, });
+    const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, });
 
     // Callback ref para actualizar handleRef cuando cambie el último handle
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {
@@ -32,15 +31,10 @@ export default function LifeLine() {
 
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
-    // const [containerHeight, setContainerHeight] = useState(0);
-
-    //Verificamos si este es el último lifeLine para mostrar el botón de agregar otro lifeLine
-    // const isLastLifeLine = useMemo(() => {
-    //     //Buscamos si el id incluye lifeline sino vamos retrocediendo hasta encontrar un lifeline
-    //     const lifeLineNodes = nodes.filter(n => n.type === 'lifeLine');
-    //     if (lifeLineNodes.length === 0) return false;
-    //     return lifeLineNodes[lifeLineNodes.length - 1].id === nodeId;
-    // }, [nodes, nodeId]);
+    const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
+    
+    // Estado para el evento de destrucción - guarda el índice del handle que tiene la destrucción
+    const [destroyHandleIndex, setDestroyHandleIndex] = useState<number | null>(null);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= LIFE_LINE_MAX_LEN_TEXT) {
@@ -56,13 +50,6 @@ export default function LifeLine() {
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     }, [value]);
-
-    // useEffect(() => { //Medimos la altura real del contenedor de handles dinámicamente
-    //     if (handlesContainerRef.current) {
-    //         const height = handlesContainerRef.current.scrollHeight;
-    //         setContainerHeight(height);
-    //     }
-    // }, [nodes, nodeId]);
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
@@ -82,43 +69,6 @@ export default function LifeLine() {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
-    //Función para agregar una nueva LifeLine
-    // const addNewLifeLine = useCallback(() => {
-    //     const currentIndex = parseInt(nodeId?.split('_')[1] || '0');
-    //     const positionX = 400 + ((currentIndex + 1) * 200) + 112 * (currentIndex + 1);
-
-    //     const newLifeLineId = `lifeLine_${currentIndex + 1}`;
-
-    //     setNodes(prev => {
-
-    //         //Le colocamos a la nueva lifeLine la misma cantidad de handles que la primera lifeLine
-    //         //De modo que sea todo el layout como una tabla uniforme
-    //         const totalHandlesPerLifeLine = prev[0].data.orderedHandles?.length || 0;
-
-    //         const orderedHandles: { id: string, order: number }[] = [];
-    //         for (let i = 0; i < totalHandlesPerLifeLine; i++) {
-    //             orderedHandles.push({
-    //                 id: `defaultHandle_${generateUniqueId()}_belongsTo_${newLifeLineId}`,
-    //                 order: i
-    //             });
-    //         }
-
-    //         return [...prev, {
-    //             id: newLifeLineId,
-    //             type: 'lifeLine',
-    //             position: { x: positionX, y: 100 },
-    //             data: {
-    //                 orderedHandles: orderedHandles
-    //             },
-    //             connectable: true,
-    //             zIndex: -1,
-    //             style: {
-    //                 zIndex: -1
-    //             }
-    //         }]
-    //     });
-    // }, [nodeId, setNodes]);
-
     useEffect(() => {
         if (nodes.length > 0) {
             const nodeIds = nodes.map(n => n.id);
@@ -126,17 +76,58 @@ export default function LifeLine() {
         }
     }, [nodes, updateNodeInternals]);
 
+    const handleContextMenu = (event: React.MouseEvent, handleId: string, handleIndex: number) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setContextMenuEvent(event.nativeEvent);
+        setSelectedHandle(handleId);
+        setSelectedHandleIndex(handleIndex);
+    };
+
     const closeContextMenu = () => {
         setContextMenuEvent(null);
         setSelectedHandle(null);
+        setSelectedHandleIndex(null);
     };
 
-    // const dashedLineHeight = useMemo(() => {
-    //     if (containerHeight > 0) {
-    //         return containerHeight;
-    //     }
-    //     return 10000;
-    // }, [containerHeight]);
+    // Callback para cuando se selecciona el evento de destrucción
+    const handleDestroyEvent = useCallback((action: 'destroy' | 'default') => {
+        if (action === 'destroy' && selectedHandleIndex !== null) {
+            // Guardar el índice del handle con destrucción
+            setDestroyHandleIndex(selectedHandleIndex);
+            
+            // Si el handle con destrucción es el último, crear un nuevo handle para que sea el magnético
+            if (selectedHandleIndex === handles.length - 1) {
+                setHandles(prev => [...prev, {
+                    id: prev.length,
+                    position: Position.Right,
+                    top: undefined,
+                    left: undefined
+                }]);
+                updateNodeInternals(nodeId || '');
+            }
+        } else if (action === 'default') {
+            // Si el handle seleccionado es el que tiene la destrucción, quitarla
+            if (selectedHandleIndex === destroyHandleIndex) {
+                setDestroyHandleIndex(null);
+            }
+        }
+    }, [selectedHandleIndex, destroyHandleIndex, handles.length, setHandles, updateNodeInternals, nodeId]);
+
+    // Calcular altura dinámica basada en la cantidad de handles
+    const lifeLineHeight = useMemo(() => {
+        return LIFE_LINE_BASE_HEIGHT + (handles.length * LIFE_LINE_HEIGHT_PER_HANDLE);
+    }, [handles.length]);
+
+    // Calcular la posición Y del handle de destrucción
+    const destroyPosition = useMemo(() => {
+        if (destroyHandleIndex === null || !handles[destroyHandleIndex]) return null;
+        const handle = handles[destroyHandleIndex];
+        return handle.top ? (typeof handle.top === 'string' ? parseInt(handle.top) : handle.top) : null;
+    }, [destroyHandleIndex, handles]);
+
+    // Verificar si la lifeline está destruida
+    const isDestroyed = destroyPosition !== null;
 
     return (
         <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
@@ -160,18 +151,58 @@ export default function LifeLine() {
                 }
             </div>
             {/*DASHED LINE DE LA LIFELINE*/}
-            <div className="bg-transparent px-4 w-6" style={{ height: `${1000}px` }} onMouseMove={(evt) => { magneticHandle(evt) }} onMouseEnter={() => setShowHandles(true)} onMouseLeave={() => setShowHandles(false)}>
+            <div 
+                className="bg-transparent px-4 w-6" 
+                style={{ height: `${lifeLineHeight}px` }} 
+                onMouseMove={(evt) => { magneticHandle(evt) }} 
+                onMouseEnter={() => { setShowHandles(true) }} 
+                onMouseLeave={() => setShowHandles(false)}
+            >
                 <div className={`relative w-[1px] h-full`}
                     ref={nodeRef}
                 >
                     <div
-                        className="absolute top-0 left-1/2 -translate-x-1/2 h-full w-0 border-r-2 border-dashed border-neutral-300 pointer-events-none"
+                        className="absolute top-0 left-1/2 -translate-x-1/2 w-0 border-r-2 border-dashed border-neutral-300 pointer-events-none"
+                        style={{ height: isDestroyed ? `${destroyPosition}px` : '100%' }}
                         aria-hidden="true"
                     > {/* Aspecto de dashed line */}
                     </div>
-                    {handles.map((handle, i) => (
-                        <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} className="!w-3 !h-3"/>
-                    ))}
+                    
+                    {handles.map((handle, i) => {
+                        const isLastHandle = i === handles.length - 1;
+                        const hasDestruction = i === destroyHandleIndex;
+                        
+                        return (
+                            <BaseHandle 
+                                key={handle.id} 
+                                id={handle.id} 
+                                ref={isLastHandle ? setHandleRef : undefined} 
+                                showHandle={isLastHandle ? showHandles : false} 
+                                position={handle.position} 
+                                className={`!w-3 !h-3 ${hasDestruction ? '!opacity-0' : ''}`}
+                                onContextMenu={isLastHandle && !hasDestruction ? (e) => handleContextMenu(e, handle.id.toString(), i) : undefined}
+                            />
+                        );
+                    })}
+                    
+                    {isDestroyed && destroyHandleIndex !== null && handles[destroyHandleIndex] && (
+                        <div 
+                            className="absolute left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform z-10"
+                            style={{ top: `${destroyPosition! - 12}px` }}
+                            onContextMenu={(e) => handleContextMenu(e, handles[destroyHandleIndex].id.toString(), destroyHandleIndex)}
+                        >
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                fill="none" 
+                                viewBox="0 0 24 24" 
+                                strokeWidth="2" 
+                                stroke="currentColor" 
+                                className="w-6 h-6 text-neutral-600 dark:text-neutral-300"
+                            >
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                    )}
                 </div>
             </div>
             {contextMenuEvent && (
@@ -181,6 +212,7 @@ export default function LifeLine() {
                         onClose={closeContextMenu}
                         handleId={selectedHandle}
                         lifeLineId={nodeId!}
+                        onDestroyEvent={handleDestroyEvent}
                     />
                 </ContextMenuPortal>
             )}

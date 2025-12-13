@@ -6,9 +6,10 @@ interface ChangeHandleTypeProps {
     onClose: () => void;
     lifeLineId: string;
     handleId: string | null;
+    onDestroyEvent?: (action: 'destroy' | 'default') => void;
 }
 
-export default function ChangeHandleType({ onClose, handleId, lifeLineId }: ChangeHandleTypeProps) {
+export default function ChangeHandleType({ onClose, handleId, lifeLineId, onDestroyEvent }: ChangeHandleTypeProps) {
 
     const { setNodes } = useSequenceDiagram();
 
@@ -41,7 +42,13 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId }: Chan
                     return node;
                 }
             });
-        })
+        });
+        
+        // Llamar callback para notificar el evento de destrucción
+        if (onDestroyEvent) {
+            onDestroyEvent(action as 'destroy' | 'default');
+        }
+        
         //NOTA: En este caso no necesitamos colocar el updateNodeInternals porque igual
         //eso ya ese hace en el useEffect del LifeLine que escucha los cambios en los nodos.
         onClose();
