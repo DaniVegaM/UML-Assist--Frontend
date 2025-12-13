@@ -42,6 +42,8 @@ function DiagramContent() {
     const onConnect = useCallback(
         (params: Connection) => {
 
+            const isSelfMessage = params.source === params.target;
+
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
@@ -51,7 +53,8 @@ function DiagramContent() {
                 sourceHandle: params.sourceHandle || null,
                 targetHandle: params.targetHandle || null,
                 data: {
-                    edgeType: 'async'
+                    edgeType: 'async',
+                    mustFillLabel: !isSelfMessage,  
                 },
                 style: {
                     strokeWidth: 2,
