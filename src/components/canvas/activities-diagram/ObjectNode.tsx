@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { nodeStyles } from "../styles/nodeStyles";
 import BaseHandle from "../BaseHandle";
 import { Position } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
+import "../styles/nodeStyles.css";
 
 export default function ObjectNode() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -48,7 +48,7 @@ export default function ObjectNode() {
 
     return (
         <div
-            className={ nodeStyles }
+            className="node-rect"
             onDoubleClick={ handleDoubleClick }
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
@@ -58,7 +58,7 @@ export default function ObjectNode() {
             <BaseHandle id={2} position={Position.Bottom} showHandle={showHandles} />
             <BaseHandle id={3} position={Position.Left} showHandle={showHandles} />
             <textarea
-                className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                className={`node-textarea nowheel ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
                 ref={textareaRef}
                 value={value}
                 onChange={onChange}
@@ -67,7 +67,7 @@ export default function ObjectNode() {
                 rows={1}
             />
             {isEditing &&
-                <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
             }
         </div>
     )

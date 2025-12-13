@@ -3,6 +3,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, Position, useNodeId, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../variables";
 import ActivityHandle from "../ActivityHandle";
+import "../styles/nodeStyles.css";
 
 export default function Activity() {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -77,7 +78,7 @@ export default function Activity() {
     return (
             <div
                 onDoubleClick={handleDoubleClick}
-                className="relative border border-gray-300 dark:border-neutral-900 rounded-lg py-2 bg-gray-50 dark:bg-neutral-800 min-w-[1000px] min-h-[600px] flex flex-col items-center justify-start transition-all duration-150"
+                className="node-container"
             >
                 <NodeResizer
                     color="#0084D1"
@@ -93,12 +94,11 @@ export default function Activity() {
                         onBlur={handleBlur}
                         onWheel={(e) => e.stopPropagation()}
                         placeholder={`Actividad`}
-                        className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                            }`}
+                        className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
                         rows={1}
                     />
                     {isEditing &&
-                        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                        <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                     }
                 </div>
                 <div className="flex justify-between items-center w-full">
