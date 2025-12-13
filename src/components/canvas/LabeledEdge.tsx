@@ -28,12 +28,24 @@ export function LabeledEdge({
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
 
+    const SNAP_THRESHOLD = 25;
+    let finalTargetX = targetX;
+    let finalTargetY = targetY;
+
+    if (Math.abs(targetY - sourceY) < SNAP_THRESHOLD) {
+        finalTargetY = sourceY;
+    }
+
+    if (Math.abs(targetX - sourceX) < SNAP_THRESHOLD) {
+        finalTargetX = sourceX;
+    }
+
     const [edgePath, labelX, labelY] = getSmoothStepPath({
         sourceX,
         sourceY,
         sourcePosition,
-        targetX,
-        targetY,
+        targetX: finalTargetX,
+        targetY: finalTargetY,
         targetPosition,
         borderRadius: 5,
     });

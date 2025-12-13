@@ -81,6 +81,22 @@ export function MessageEdge({
     );
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+    const SNAP_THRESHOLD = 25; //Umbral sobre eje Y para guias horizontales
+
+    const deltaY = targetY - sourceY;
+    
+    // Si estamos dentro del umbral, ajustamos para que sea una linea recta horizontal
+    if (Math.abs(deltaY) < SNAP_THRESHOLD) {
+        targetY = sourceY;
+    }
+
+    const [edgePath, labelX, labelY] = getStraightPath({
+        sourceX: sourceX,
+        sourceY: sourceY,
+        targetX : targetX -10,
+        targetY: targetY,
+    });
+  
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const isEmpty = editingLabel.trim().length === 0;
@@ -123,13 +139,6 @@ export function MessageEdge({
         );
         }
     }, [data, label, isEditing, id, setEdges]);
-
-    const [edgePath, labelX, labelY] = getStraightPath({
-        sourceX,
-        sourceY,
-        targetX: targetX - 10,
-        targetY,
-    });
 
     const isValidFinal = (raw: string) => {
         const trimmed = raw.trim();

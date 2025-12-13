@@ -7,5 +7,7 @@ export function useSequenceDiagram() {
   if (context === undefined) {
     throw new Error('useSequenceDiagramContext must be used within a CanvasProvider');
   }
+
+  
   return context;
 }

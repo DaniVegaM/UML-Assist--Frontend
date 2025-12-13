@@ -11,11 +11,14 @@ import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
+import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
+import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+    const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
 
     useEffect(() => {
         console.log('Nodos Actuales:', nodes);
@@ -25,8 +28,22 @@ function DiagramContent() {
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
-                const nodes = applyNodeChanges(changes, nodesSnapshot)
-                return nodes;
+                //Guardamos las posiciones Y originales antes de aplicar cambios
+                const originalYPositions = new Map(
+                    nodesSnapshot.map(node => [node.id, node.position.y])
+                );
+
+                //Aplicamos los cambios a los nodos
+                const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
+
+                //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
+                return updatedNodes.map(node => ({
+                    ...node,
+                    position: {
+                        ...node.position,
+                        y: originalYPositions.get(node.id) ?? node.position.y
+                    }
+                }));
             });
         },
         [setNodes],
@@ -38,6 +55,8 @@ function DiagramContent() {
         },
         [setEdges],
     );
+
+
 
     const onConnect = useCallback(
         (params: Connection) => {
@@ -112,7 +131,7 @@ function DiagramContent() {
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header diagramTitle="Diagrama de Secuencia"/>
 
-            <section className="h-full w-full relative">
+            <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}
@@ -138,6 +157,7 @@ function DiagramContent() {
                         type: 'messageEdge',
                     }}
                     connectionLineType={ConnectionLineType.Straight}
+                    connectionLineComponent={SnapConnectionLine}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}

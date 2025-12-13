@@ -10,8 +10,7 @@ import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
-import type { Diagram } from "../../types/diagramsModel";
-import { fetchDiagramById } from "../../services/diagramSerivce";
+import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -124,7 +123,7 @@ function DiagramContent() {
             const sourceNode = nodes.find((node) => node.id === connection.source);
             const targetNode = nodes.find((node) => node.id === connection.target);
 
-            console.log('connection ', connection);
+            // console.log('connection ', connection);
 
             if (!sourceNode || !targetNode) {
                 return false;
@@ -338,6 +337,7 @@ function DiagramContent() {
                     isValidConnection={isValidConnection}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
+                    connectionLineComponent={SnapConnectionLine}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}

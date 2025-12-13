@@ -3,6 +3,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { NodeToolbar, Position, useInternalNode, useNodeId } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
+import { useHandle } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
 
 export default function DataNode() {
@@ -14,7 +15,17 @@ export default function DataNode() {
     const node = useInternalNode(nodeId ? nodeId : '');
     const [dataType, setDataType] = useState<'centralBuffer' | 'datastore'>('datastore');
     const { setIsZoomOnScrollEnabled } = useCanvas();
+
+    // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
+    const nodeRef = useRef<HTMLDivElement>(null);
+    const handleRef = useRef<HTMLDivElement>(null);
+    const { handles, magneticHandle } = useHandle({ handleRef, nodeRef });
+
+    // Callback ref para actualizar handleRef cuando cambie el último handle
+    const setHandleRef = useCallback((node: HTMLDivElement | null) => {
+        handleRef.current = node;
+    }, []);
 
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -59,52 +70,50 @@ export default function DataNode() {
 
     return (
         <div
-            className="node-rect"
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            className="bg-transparent p-4"
+            onMouseMove={(evt) => { magneticHandle(evt) }}
         >
-            <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-1/4" />
-            <BaseHandle id={1} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-3/4" />
-            <BaseHandle id={2} position={Position.Right} showHandle={showHandles} className="!absolute !top-1/4 right-0" />
-            <BaseHandle id={3} position={Position.Right} showHandle={showHandles} className="!absolute !top-3/4 right-0" />
-            <BaseHandle id={4} position={Position.Left} showHandle={showHandles} className="!absolute !top-1/4 left-0" />
-            <BaseHandle id={5} position={Position.Left} showHandle={showHandles} className="!absolute !top-3/4 left-0" />
-            <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-1/4" />
-            <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-3/4" />
+            <div ref={nodeRef} className="node-rect">
+                {handles.map((handle, i) => (
+                    <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
+                ))}
 
-            <NodeToolbar isVisible={node?.selected} position={Position.Top} 
-                className="absolute top-1 w-80 py-1 px-1 flex justify-center items-center gap-2"
-            >
-                <button 
-                    onClick={() => onClick('datastore')}
-                    className={`border-neutral-600 border-1 py-1 px-2 rounded-sm hover:bg-neutral-600 ${dataType == 'centralBuffer' ? '' : 'bg-neutral-600 text-white'} hover:text-white font-bold transition-all duration-300 cursor-pointer`}
+                <NodeToolbar isVisible={node?.selected} position={Position.Top}
+                    className="absolute top-1 w-80 py-1 px-1 flex justify-center items-center gap-2"
                 >
-                    Data Store
-                </button>
-                <button 
-                    onClick={() => onClick('centralBuffer')}
-                    className={`border-neutral-600 border-1 py-1 px-2 rounded-sm hover:bg-neutral-600 ${dataType == 'centralBuffer' ? 'bg-neutral-600 text-white' : ''} hover:text-white font-bold transition-all duration-300 cursor-pointer`}
-                >
-                    Central Buffer
-                </button>
-            </NodeToolbar>
+                    <button
+                        onClick={() => onClick('datastore')}
+                        className={`border-neutral-600 border-1 py-1 px-2 rounded-sm hover:bg-neutral-600 ${dataType == 'centralBuffer' ? '' : 'bg-neutral-600 text-white'} hover:text-white font-bold transition-all duration-300 cursor-pointer`}
+                    >
+                        Data Store
+                    </button>
+                    <button
+                        onClick={() => onClick('centralBuffer')}
+                        className={`border-neutral-600 border-1 py-1 px-2 rounded-sm hover:bg-neutral-600 ${dataType == 'centralBuffer' ? 'bg-neutral-600 text-white' : ''} hover:text-white font-bold transition-all duration-300 cursor-pointer`}
+                    >
+                        Central Buffer
+                    </button>
+                </NodeToolbar>
 
-            <p className="node-textarea">{`<<${dataType}>>`}</p>
+                <p className="node-textarea">{`<<${dataType}>>`}</p>
 
-            <textarea
-                className={`node-textarea nowheel ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
-                ref={textareaRef}
-                value={value}
-                onChange={onChange}
-                onBlur={handleBlur}
-                placeholder={`(Particiones...)\n${dataType === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
-                rows={1}
-                maxLength={TEXT_AREA_MAX_LEN}
-            />
-            {isEditing &&
-                <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-            }
+                <textarea
+                    className={`node-textarea nowheel ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+                    ref={textareaRef}
+                    value={value}
+                    onChange={onChange}
+                    onBlur={handleBlur}
+                    placeholder={`(Particiones...)\n${dataType === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
+                    rows={1}
+                    maxLength={TEXT_AREA_MAX_LEN}
+                />
+                {isEditing &&
+                    <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                }
+            </div>
         </div>
     )
 }

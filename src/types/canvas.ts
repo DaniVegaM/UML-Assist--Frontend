@@ -28,9 +28,11 @@ export interface ElementsBarProps {
 
 export interface BaseHandleProps {
     id: number | string;
+    ref?: React.Ref<HTMLDivElement | null>;
     position?: Position;
     className?: string;
     showHandle?: boolean;
+    onContextMenu?: (e: React.MouseEvent<Element, MouseEvent>) => void;
 }
 export interface ActivityHandleProps {
     id: string;
