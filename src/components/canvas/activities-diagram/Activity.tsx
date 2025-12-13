@@ -106,13 +106,13 @@ export default function Activity() {
                         {sourceHandlesIds && sourceHandlesIds.map((handleId) => (
                             <ActivityHandle id={handleId} key={handleId} position={Position.Left} setSourceHandle={setSourceHandlesIds} />
                         ))}
-                        <button onClick={onClickSourceBtn} className="node-button -translate-x-4">+</button>
+                        <button onClick={onClickSourceBtn} className="-translate-x-4 cursor-pointer z-50 w-8 h-8 rounded-full bg-neutral-300 hover:bg-neutral-400">+</button>
                     </div>
                     <div className="flex flex-col space-y-4 justify-center items-center">
                         {targetHandlesIds && targetHandlesIds.map((handleId) => (
                             <ActivityHandle id={handleId} key={handleId} position={Position.Right} setTargetHandle={setTargetHandlesIds} />
                         ))}
-                        <button onClick={onClickTargetBtn} className="node-button translate-x-4">+</button>
+                        <button onClick={onClickTargetBtn} className="translate-x-4 cursor-pointer z-50 w-8 h-8 rounded-full bg-neutral-300 hover:bg-neutral-400">+</button>
                     </div>
                 </div>
             </div>
