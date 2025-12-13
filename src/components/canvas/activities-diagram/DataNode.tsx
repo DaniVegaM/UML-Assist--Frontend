@@ -2,7 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { nodeStyles } from "../styles/nodeStyles";
 import BaseHandle from "../BaseHandle";
-import { NodeToolbar, Position, useInternalNode, useNodeId } from "@xyflow/react";
+import { Position, useInternalNode, useNodeId } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
 
 export default function DataNode() {
@@ -12,8 +12,8 @@ export default function DataNode() {
     const [value, setValue] = useState("");
     const nodeId = useNodeId();
     const node = useInternalNode(nodeId ? nodeId : '');
-    const [dataType, setDataType] = useState<'centralBuffer' | 'datastore'>('datastore');
-    const { setIsZoomOnScrollEnabled } = useCanvas();
+
+    const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
     const [showHandles, setShowHandles] = useState(false);
 
 
@@ -46,16 +46,22 @@ export default function DataNode() {
         }
     }, [isEditing, setIsZoomOnScrollEnabled]);
 
-    const onClick = useCallback((value: 'centralBuffer' | 'datastore') => {
-        setDataType(value)
-    }, []
-    )
-
     const handleBlur = useCallback(() => {
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
         setValue(prevValue => prevValue.trim());
     }, [setIsZoomOnScrollEnabled]);
+
+    // Context Menu
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault(); // evita menú del navegador
+        e.stopPropagation(); // evita que React Flow arrastre
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
 
     return (
         <div
@@ -63,6 +69,8 @@ export default function DataNode() {
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
+            style={{ pointerEvents: "auto" }}
         >
             <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-1/4" />
             <BaseHandle id={1} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-3/4" />
@@ -73,34 +81,19 @@ export default function DataNode() {
             <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-1/4" />
             <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-3/4" />
 
-            <NodeToolbar isVisible={node?.selected} position={Position.Top} 
-                className="absolute top-1 w-80 py-1 px-1 flex justify-center items-center gap-2"
-            >
-                <button 
-                    onClick={() => onClick('datastore')}
-                    className={`border-neutral-600 border-1 py-1 px-2 rounded-sm hover:bg-neutral-600 ${dataType == 'centralBuffer' ? '' : 'bg-neutral-600 text-white'} hover:text-white font-bold transition-all duration-300 cursor-pointer`}
-                >
-                    Data Store
-                </button>
-                <button 
-                    onClick={() => onClick('centralBuffer')}
-                    className={`border-neutral-600 border-1 py-1 px-2 rounded-sm hover:bg-neutral-600 ${dataType == 'centralBuffer' ? 'bg-neutral-600 text-white' : ''} hover:text-white font-bold transition-all duration-300 cursor-pointer`}
-                >
-                    Central Buffer
-                </button>
-            </NodeToolbar>
+            {/* Título */}
+            <p>{`<<${node?.data?.objectVariant ?? 'datastore'}>>`}</p>
 
-            <p>{`<<${dataType}>>`}</p>
-
+            {/* Textarea */}
             <textarea
-                className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
                 ref={textareaRef}
                 value={value}
                 onChange={onChange}
                 onBlur={handleBlur}
-                placeholder={`(Particiones...)\n${dataType === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
+                placeholder={`(Particiones...)\n${node?.data?.objectVariant === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
                 rows={1}
                 maxLength={TEXT_AREA_MAX_LEN}
+                className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
             />
             {isEditing &&
                 <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>

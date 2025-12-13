@@ -10,6 +10,7 @@ import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
+import DataNodeContextMenu from "../../components/canvas/activities-diagram/contextMenu/DataNodeContextMenu";
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 
@@ -304,8 +305,8 @@ function DiagramContent() {
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
-            <Header 
-                diagramId={ diagramId ? parseInt(diagramId, 10) : undefined}
+            <Header
+                diagramId={diagramId ? parseInt(diagramId, 10) : undefined}
                 diagramTitle={diagram?.title}
                 type="actividades"
                 nodes={useNodes()}
@@ -357,6 +358,7 @@ function DiagramContent() {
                         aria-label="Controles de lienzo"
                         position="bottom-right"
                     />
+                    <DataNodeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
             </section>
