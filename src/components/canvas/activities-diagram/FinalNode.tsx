@@ -34,7 +34,7 @@ export default function FinalNode() {
                     <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
                 ))}
                 <div
-                    className={`absolute w-14 h-14 flex items-center justify-center ${isDarkMode ? 'bg-neutral-800' : 'bg-white'}`
+                    className={`absolute w-14 h-14 flex items-center justify-center ${isDarkMode ? 'bg-neutral-800' : 'bg-white'}`}
                     style={{
                         clipPath: 'circle(50.0% at 50% 50%)',
                         zIndex: 1,

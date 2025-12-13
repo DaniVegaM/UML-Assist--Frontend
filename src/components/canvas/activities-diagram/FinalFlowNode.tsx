@@ -31,13 +31,13 @@ export default function FinalFlowNode() {
                 {handles.map((handle, i) => (
                     <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
                 ))}
-                
+
                 <div
                     className={`absolute inset-0 border-4 bg-transparent z-0 rounded-full ${isDarkMode ? 'border-neutral-100' : 'border-neutral-900'}`}
                     style={{
-                      clipPath: 'circle(50% at 50% 50%)',
+                        clipPath: 'circle(50% at 50% 50%)',
                     }}
-                  />
+                />
 
                 <div className="absolute inset-0 flex items-center justify-center z-0">
                     <div className="relative w-[45px] h-[45px]">
@@ -64,6 +64,7 @@ export default function FinalFlowNode() {
                             }}
                         />
                     </div>
+                </div>
             </div>
         </div>
     )

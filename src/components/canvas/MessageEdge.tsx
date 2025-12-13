@@ -140,13 +140,6 @@ export function MessageEdge({
         }
     }, [data, label, isEditing, id, setEdges]);
 
-    const [edgePath, labelX, labelY] = getStraightPath({
-        sourceX,
-        sourceY,
-        targetX: targetX - 10,
-        targetY,
-    });
-
     const isValidFinal = (raw: string) => {
         const trimmed = raw.trim();
         if (!trimmed) return false;
