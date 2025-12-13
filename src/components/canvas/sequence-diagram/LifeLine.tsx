@@ -211,6 +211,7 @@ export default function LifeLine() {
                         id="change-handle-type-menu"
                         onClose={closeContextMenu}
                         handleId={selectedHandle}
+                        handleIndex={selectedHandleIndex}
                         lifeLineId={nodeId!}
                         onDestroyEvent={handleDestroyEvent}
                     />

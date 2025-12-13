@@ -61,7 +61,6 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
             return; // Retornamos para que se actualice el handleRef al nuevo handle creado
         }
         
-        console.log('handles: ' + handles.length);
         if (connections.length > 0 && ((maxHandles && handles.length < maxHandles) || !maxHandles) && !isSelfConnectionInProgress) {
             // Si el ultimo handle ya tiene una conexión, se crea un nuevo handle en la posición por defecto
             setHandles(handles => [...handles, {
