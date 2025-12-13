@@ -22,7 +22,7 @@ export default function LifeLine() {
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
-    const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, });
+    const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, allowSelfConnection: true });
 
     // Callback ref para actualizar handleRef cuando cambie el último handle
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {
@@ -33,7 +33,7 @@ export default function LifeLine() {
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
     const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
     
-    // Estado para el evento de destrucción - guarda el índice del handle que tiene la destrucción
+    // Estado para el evento de destrucción (guarda el índice del handle que tiene la destrucción)
     const [destroyHandleIndex, setDestroyHandleIndex] = useState<number | null>(null);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {

@@ -1,5 +1,5 @@
 import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useRef, useState } from "react"
 
 type useHandleProps = {
     handleRef: React.RefObject<HTMLDivElement | null>;
@@ -10,9 +10,10 @@ type useHandleProps = {
     disableRight?: boolean;
     disableBottom?: boolean;
     disableLeft?: boolean;
+    allowSelfConnection?: boolean;
 }
 
-export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft, maxHandles }: useHandleProps) {
+export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft, maxHandles, allowSelfConnection = false }: useHandleProps) {
     const [handles, setHandles] = useState<{ id: number; position: Position, left?: number, top?: number }[]>(
         [
             {
@@ -31,10 +32,37 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
     const connections = useNodeConnections().filter(conn => (conn.sourceHandle?.includes('Handle-' + lastHandleId.toString()) && conn.sourceHandle?.includes(nodeId!)) ||
                                                     (conn.targetHandle?.includes('Handle-' + lastHandleId.toString()) && conn.targetHandle?.includes(nodeId!)));
 
+    // Ref para rastrear si ya creamos el handle target para self-connection
+    const selfConnectionHandleCreated = useRef(false);
+
+    // Detectar cuando termina una conexión para resetear el flag
+    useEffect(() => {
+        if (!connection.inProgress) {
+            selfConnectionHandleCreated.current = false;
+        }
+    }, [connection.inProgress]);
+
     const magneticHandle = useCallback((evt: React.MouseEvent) => {
-        if (!nodeRef.current || !handleRef.current || (connection.inProgress && connection.fromNode.id === nodeId) || (handles.length == maxHandles && totalConnections == maxHandles)) return;
+        // Si allowSelfConnection es true, permitir que el handle aparezca incluso cuando la conexión viene del mismo nodo
+        const blockSelfConnection = !allowSelfConnection && connection.inProgress && connection.fromNode.id === nodeId;
+        if (!nodeRef.current || !handleRef.current || blockSelfConnection || (handles.length == maxHandles && totalConnections == maxHandles)) return;
+        
+        // Si hay una self-connection en progreso, crear un nuevo handle para el target
+        const isSelfConnectionInProgress = allowSelfConnection && connection.inProgress && connection.fromNode.id === nodeId;
+        
+        if (isSelfConnectionInProgress && !selfConnectionHandleCreated.current) {
+            // Crear un nuevo handle para el target de la self-connection
+            selfConnectionHandleCreated.current = true;
+            setHandles(handles => [...handles, {
+                id: handles.length,
+                position: Position.Right
+            }]);
+            updateNodeInternals(nodeId ? nodeId : '');
+            return; // Retornamos para que se actualice el handleRef al nuevo handle creado
+        }
+        
         console.log('handles: ' + handles.length);
-        if (connections.length > 0 && ((maxHandles && handles.length < maxHandles) || !maxHandles)) {
+        if (connections.length > 0 && ((maxHandles && handles.length < maxHandles) || !maxHandles) && !isSelfConnectionInProgress) {
             // Si el ultimo handle ya tiene una conexión, se crea un nuevo handle en la posición por defecto
             setHandles(handles => [...handles, {
                 id: handles.length,
@@ -129,7 +157,7 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
         }));
 
         updateNodeInternals(nodeId ? nodeId : '');
-    }, [zoom, nodeId, updateNodeInternals, connection, connections, handleRef, handles.length]);
+    }, [zoom, nodeId, updateNodeInternals, connection, connections, handleRef, handles.length, allowSelfConnection]);
 
     return {
         handles,

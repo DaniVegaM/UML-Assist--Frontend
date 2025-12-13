@@ -21,6 +21,8 @@ export default function BaseHandle({ id, ref, position, className, showHandle, o
                 position: 'absolute',
             }}
             isConnectable={showHandle}
+            isConnectableStart={showHandle}
+            isConnectableEnd={true}
             onContextMenu={onContextMenu}
         />
     )
