@@ -1,6 +1,7 @@
 import BaseHandle from "../BaseHandle";
 import { useCallback, useRef, useState } from "react";
 import { useHandle } from "../../../hooks/useHandle";
+import "../styles/nodeStyles.css";
 
 
 
@@ -23,7 +24,10 @@ export default function InitialNode() {
             className="bg-transparent p-4"
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >
-            <div ref={nodeRef} className="relative w-12 h-12 bg-neutral-900 flex flex-col items-center justify-center transition-all duration-150 rounded-full">
+            <div ref={nodeRef} className="node-circle node-circle-sm"
+            style={{
+                clipPath: 'circle(50.0% at 50% 50%)',
+            }}>
                 {handles.map((handle, i) => (
                     <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
                 ))}

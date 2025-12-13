@@ -113,14 +113,14 @@ export default function Dashboard() {
             const diagramData: Diagram = {
                 id: diagramId ? diagramId : undefined,
                 title: diagramTitle,
-                
+
             }
             try {
                 await patchDiagram(diagramData);
             } catch (err) {
                 console.error('Error al renombrar el diagrama:', err);
             }
-                
+
             setDiagrams(diagrams.map(diagram => {
                 if (diagram.id === selectedDiagramCard.id) {
                     return { ...diagram, title: diagram.title };
@@ -182,8 +182,15 @@ export default function Dashboard() {
                     </div>
                 )}
 
-                {!loading && !error && diagrams.length === 0 && (
-                    <div className="py-20">
+                {!loading && diagrams.length === 0 && (
+                    <div className="py-20"
+                        style={{
+                            backdropFilter: 'blur(3px) saturate(180%)',
+                            WebkitBackdropFilter: 'blur(3px) saturate(180%)',
+                            backgroundColor: 'rgba(248, 248, 248, 0.1)',
+                            minHeight: '100vh'
+                        }}
+                    >
                         <div className="text-center max-w-md mx-auto">
                             <div className="w-20 h-20 bg-sky-100 dark:bg-sky-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <svg className="w-10 h-10 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,14 +198,14 @@ export default function Dashboard() {
                                 </svg>
                             </div>
                             <h2 className="text-2xl font-bold dark:text-white mb-3">
-                                No tienes diagramas aún
+                                {error ? 'No se pudieron cargar tus diagramas' : 'No tienes diagramas aún'}
                             </h2>
                             <p className="text-zinc-600 dark:text-zinc-400 mb-6">
                                 Crea tu primer diagrama UML y comienza a modelar con asistencia inteligente
                             </p>
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300"
+                                className="cursor-pointer inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
@@ -210,7 +217,14 @@ export default function Dashboard() {
                 )}
 
                 {!loading && !error && diagrams.length > 0 && (
-                    <div>
+                    <div style={{
+                                backdropFilter: 'blur(3px) saturate(180%)',
+                                WebkitBackdropFilter: 'blur(3px) saturate(180%)',
+                                backgroundColor: 'rgba(248, 248, 248, 0.1)',
+                                minHeight: '100vh',
+                                padding: '40px'
+                            }}
+                    >
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                             <h1 className="text-3xl font-black leading-tight dark:text-white text-center md:text-left uppercase text-gray-800 md:text-4xl mb-3">
                                 Mis diagramas
@@ -226,17 +240,12 @@ export default function Dashboard() {
                             </button>
                         </div>
 
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 p-10"
-                            style={{
-                                backdropFilter: 'blur(3px) saturate(180%)',
-                                WebkitBackdropFilter: 'blur(3px) saturate(180%)',
-                                backgroundColor: 'rgba(248, 248, 248, 0.1)',
-                            }}
-                        >
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 p-10">
                             {diagrams.map((diagram) => (
                                 <div
                                     key={diagram.id}
                                     onClick={() => handleDiagramNavigate(diagram)}
+                                    onContextMenu={(e) => handleContextMenu(e, diagram)}
                                     className="flex flex-col cursor-pointer p-6 rounded-2xl border-2 border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-800 hover:border-sky-400 dark:hover:border-sky-500 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                                 >
                                     <div className="flex justify-between items-start">
@@ -323,7 +332,7 @@ export default function Dashboard() {
                     style={{
                         position: 'fixed',
                         top: `${menuPosition.y}px`,
-                        left: `${menuPosition.x - 150}px`,
+                        left: `${menuPosition.x}px`,
                         zIndex: 1000,
                     }}
                 >

@@ -2,6 +2,7 @@ import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import { useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
+import "../styles/nodeStyles.css";
 
 
 export default function DecitionControl() {
@@ -10,7 +11,7 @@ export default function DecitionControl() {
 
     return (
         <div
-            className="relative p-2 bg-gray-300 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[50px] min-h-[50px] flex flex-col items-center justify-center transition-all duration-150"
+            className="node-diamond"
             style={{
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
             }}

@@ -55,7 +55,6 @@
 
 /* Estilos para el switch del dark-mode */
 .toggle {
-  background-color: #000;
   width: 34px;
   height: 34px;
   border-radius: 50%;
@@ -97,10 +96,5 @@
 #switch-mobile:checked ~ .icon--sun {
   transition-delay: 200ms;
   transform: scale(1) rotate(360deg);
-}
-
-.toggle:has(#switch:checked),
-.toggle:has(#switch-mobile:checked) {
-  background-color: #fff;
 }
 

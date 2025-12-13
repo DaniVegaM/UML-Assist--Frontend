@@ -3,6 +3,8 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../variables";
 import { useHandle } from "../../../hooks/useHandle";
+import { useTheme } from "../../../hooks/useTheme";
+import "../styles/nodeStyles.css";
 
 
 export default function CallBehaviorNode() {
@@ -21,6 +23,7 @@ export default function CallBehaviorNode() {
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {
         handleRef.current = node;
     }, []);
+    const { isDarkMode } = useTheme();
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -63,7 +66,7 @@ export default function CallBehaviorNode() {
             className="bg-transparent p-4"
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >
-            <div ref={nodeRef} className="relative border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150">
+            <div ref={nodeRef} className="node-rounded">
                 {handles.map((handle, i) => (
                     <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
                 ))}
@@ -74,15 +77,14 @@ export default function CallBehaviorNode() {
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
                     placeholder={`(Particiones...)\nLlamada a un comportamiento`}
-                    className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                        }`}
+                    className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
                     rows={1}
                 />
                 <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'} gap-6 w-full`}>
                     {isEditing &&
-                        <p className="w-full text-[10px] text-left text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                        <p className="char-counter char-counter-left">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                     }
-                    <div className="bg-neutral-700 w-[20px] h-[20px]"
+                    <div className={`w-5 h-5 ${isDarkMode ? 'bg-neutral-300' : 'bg-neutral-700'}`}
                         style={{
                             clipPath: 'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
                         }}></div>

@@ -71,29 +71,51 @@ export default function ChangePasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-dots dark:bg-dots-dark">
       <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-8 rounded-lg shadow-md">
-        <Link to="/" className="flex items-center space-x-2">
-          <svg
-            className="h-8 w-8 text-sky-600"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="relative w-full flex items-center justify-center mb-4">
+          <button
+            onClick={() => navigate(-1)}
+            className="absolute left-0 rounded-full hover:bg-gray-200 dark:hover:bg-zinc-700 transition-all duration-600 ease-in-out cursor-pointer p-2"
           >
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-            <line x1="10" y1="6.5" x2="14" y2="6.5" />
-            <line x1="10" y1="17.5" x2="14" y2="17.5" />
-            <line x1="6.5" y1="10" x2="6.5" y2="14" />
-            <line x1="17.5" y1="10" x2="17.5" y2="14" />
-          </svg>
-          <span className="text-lg font-bold text-gray-900 dark:text-white">
-            UML Assist
-          </span>
-        </Link>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+              className="w-6 h-6 text-sky-600 dark:text-sky-400"
+            >
+              <g clipPath="url(#a)">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.25-7.25a.75.75 0 0 0 0-1.5H8.66l2.1-1.95a.75.75 0 1 0-1.02-1.1l-3.5 3.25a.75.75 0 0 0 0 1.1l3.5 3.25a.75.75 0 0 0 1.02-1.1l-2.1-1.95h4.59Z"
+                  clipRule="evenodd"
+                />
+              </g>
+            </svg>
+          </button>
+
+          <Link to="/" className="flex items-center space-x-2">
+            <svg
+              className="h-8 w-8 text-sky-600"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="3" width="7" height="7" />
+              <rect x="14" y="3" width="7" height="7" />
+              <rect x="14" y="14" width="7" height="7" />
+              <rect x="3" y="14" width="7" height="7" />
+              <line x1="10" y1="6.5" x2="14" y2="6.5" />
+              <line x1="10" y1="17.5" x2="14" y2="17.5" />
+              <line x1="6.5" y1="10" x2="6.5" y2="14" />
+              <line x1="17.5" y1="10" x2="17.5" y2="14" />
+            </svg>
+            <span className="text-lg font-bold text-gray-900 dark:text-white">
+              UML Assist
+            </span>
+          </Link>
+        </div>
 
         <h1 className="text-2xl uppercase font-black dark:text-white mb-4">
           Cambiar Contraseña

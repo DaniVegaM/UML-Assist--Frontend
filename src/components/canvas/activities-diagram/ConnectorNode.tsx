@@ -2,6 +2,7 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { useHandle } from "../../../hooks/useHandle";
+import "../styles/nodeStyles.css";
 
 
 export default function ConnectorNode() {
@@ -62,7 +63,7 @@ export default function ConnectorNode() {
       className="bg-transparent p-4"
       onMouseMove={(evt) => { magneticHandle(evt) }}
     >
-      <div ref={nodeRef} className="relative border border-gray-300 dark:border-neutral-900 rounded-full p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 w-[70px] h-[70px] flex flex-col items-center justify-center transition-all duration-150">
+      <div ref={nodeRef} className="node-circle-outline w-[70px] h-[70px]">
         {handles.map((handle, i) => (
           <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
         ))}
@@ -74,12 +75,11 @@ export default function ConnectorNode() {
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
           placeholder="ABC"
-          className={`font-black nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-            }`}
+          className={`font-black node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
           rows={1}
         />
         {isEditing &&
-          <p className="font-black w-full text-[10px] text-right text-neutral-400">{`${value.length}/3`}</p>
+          <p className="font-black char-counter char-counter-right">{`${value.length}/3`}</p>
         }
       </div>
     </div>

@@ -4,6 +4,7 @@ import BaseHandle from "../BaseHandle";
 import { NodeToolbar, Position, useInternalNode, useNodeId } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
 import { useHandle } from "../../../hooks/useHandle";
+import "../styles/nodeStyles.css";
 
 export default function DataNode() {
 
@@ -75,7 +76,7 @@ export default function DataNode() {
             className="bg-transparent p-4"
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >
-            <div ref={nodeRef} className="relative border border-gray-300 dark:border-neutral-900 rounded-lg bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150">
+            <div ref={nodeRef} className="node-rect">
                 {handles.map((handle, i) => (
                     <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
                 ))}
@@ -97,10 +98,10 @@ export default function DataNode() {
                     </button>
                 </NodeToolbar>
 
-                <p>{`<<${dataType}>>`}</p>
+                <p className="node-textarea">{`<<${dataType}>>`}</p>
 
                 <textarea
-                    className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                    className={`node-textarea nowheel ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
                     ref={textareaRef}
                     value={value}
                     onChange={onChange}
@@ -110,7 +111,7 @@ export default function DataNode() {
                     maxLength={TEXT_AREA_MAX_LEN}
                 />
                 {isEditing &&
-                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                    <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                 }
             </div>
         </div>

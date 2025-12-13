@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import BaseHandle from "../BaseHandle";
 import { Position, useNodeConnections, useNodeId, useUpdateNodeInternals } from "@xyflow/react";
 import { useCanvas } from "../../../hooks/useCanvas";
+import "../styles/nodeStyles.css";
 
 export default function ParallelizationNode() {
     const [showHandles, setShowHandles] = useState(false);
@@ -29,7 +30,7 @@ export default function ParallelizationNode() {
 
     return (
         <div
-            className="relative p-2 bg-neutral-900 dark:bg-neutral-500 hover:bg-neutral-950 dark:hover:bg-neutral-400 w-[8px] min-h-[100px] flex flex-col items-center justify-center transition-all duration-150"
+            className="node-bar"
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
         >

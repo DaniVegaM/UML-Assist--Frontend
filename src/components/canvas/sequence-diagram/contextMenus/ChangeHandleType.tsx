@@ -219,9 +219,9 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
                 onClick={() => handleItemClick('destroy')}
                 className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
             >
-                <div className="w-6 h-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-full h-full">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                <div className="rounded-full w-6 h-6">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" className="w-full h-full stroke-black dark:stroke-neutral-400">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
                     </svg>
                 </div>
                 <p>Evento de destrucción</p>

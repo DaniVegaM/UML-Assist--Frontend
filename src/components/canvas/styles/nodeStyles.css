@@ -1,0 +1,151 @@
+/* stylelint-disable at-rule-no-unknown */
+@reference "../../../index.css";
+
+/* Layout común para todos los nodos */
+.node-rounded,
+.node-rect,
+.node-diamond,
+.node-signal,
+.node-circle,
+.node-circle-outline,
+.node-bar,
+.node-container,
+.node-lifeline {
+  @apply flex flex-col items-center justify-center;
+  @apply transition-all duration-150;
+}
+
+/* NODOS RECTANGULARES CON ESQUINAS REDONDEADAS */
+.node-rounded {
+  @apply relative border border-neutral-800 rounded-lg p-2 min-w-[200px];
+  @apply bg-gray-100 hover:bg-gray-200;
+}
+
+.dark .node-rounded {
+  @apply border-white bg-neutral-800 hover:bg-zinc-600;
+}
+
+/* NODOS RECTANGULARES SIN ESQUINAS REDONDEADAS */
+.node-rect {
+  @apply relative border border-neutral-800 p-2 min-w-[200px] h-fit;
+  @apply bg-gray-100 hover:bg-gray-200;
+}
+
+.dark .node-rect {
+  @apply border-white bg-neutral-800 hover:bg-zinc-600;
+}
+
+
+/* NODOS EN FORMA DE ROMBO (con clipPath) */
+.node-diamond {
+  @apply relative p-2 min-w-[50px] min-h-[50px];
+  @apply bg-gray-300 hover:bg-gray-200;
+}
+
+.dark .node-diamond {
+  @apply bg-neutral-800 hover:bg-zinc-600;
+}
+
+
+/* NODOS DE SEÑAL (con clipPath) */
+.node-signal {
+  @apply relative p-2 min-w-[150px] min-h-[50px];
+  @apply bg-gray-300 hover:bg-gray-200;
+}
+
+.dark .node-signal {
+  @apply bg-neutral-800 hover:bg-zinc-600;
+}
+
+/* NODOS CIRCULARES SÓLIDOS (con clipPath) */
+.node-circle {
+  @apply relative;
+  @apply bg-neutral-900;
+}
+
+.dark .node-circle {
+  @apply bg-neutral-100;
+}
+
+/* NODOS CIRCULARES CON BORDE */
+.node-circle-outline {
+  @apply relative border border-neutral-800 rounded-full p-2;
+  @apply bg-gray-100 hover:bg-gray-200;
+}
+
+.dark .node-circle-outline {
+  @apply border-white bg-neutral-800 hover:bg-zinc-600;
+}
+
+/* NODOS DE BARRA */
+.node-bar {
+  @apply relative p-2 w-2 min-h-[100px];
+  @apply bg-neutral-900 hover:bg-neutral-950;
+}
+
+.dark .node-bar {
+  @apply bg-neutral-500 hover:bg-neutral-400;
+}
+
+/* NODOS CONTENEDORES  */
+.node-container {
+  @apply relative border border-neutral-800 rounded-lg py-2;
+  @apply bg-gray-50 min-w-[1000px] min-h-[600px];
+  @apply justify-start;
+}
+
+.dark .node-container {
+  @apply border-white bg-neutral-800;
+}
+
+/* CABECERA DE LIFELINE */
+.node-lifeline {
+  @apply relative border border-neutral-800 p-2 min-w-[200px];
+  @apply hover:bg-gray-200;
+}
+
+.dark .node-lifeline {
+  @apply border-white hover:bg-zinc-600;
+}
+
+/* Tamaños específicos para nodos circulares */
+.node-circle-sm {
+  @apply w-12 h-12;
+}
+
+.node-circle-md {
+  @apply w-15 h-15;
+}
+
+
+/* TEXTAREAS Y CONTADORES */
+.node-textarea {
+  @apply w-full placeholder-gray-400 bg-transparent;
+  @apply border-none outline-none resize-none;
+  @apply text-center text-sm px-2 py-1 overflow-hidden;
+}
+
+.dark .node-textarea {
+  @apply text-white;
+}
+
+.node-textarea-editing {
+  @apply pointer-events-auto;
+}
+
+.node-textarea-readonly {
+  @apply pointer-events-none;
+}
+
+/* Contador de caracteres */
+.char-counter {
+  @apply w-full text-[10px] text-neutral-400;
+}
+
+.char-counter-right {
+  @apply text-right;
+}
+
+.char-counter-left {
+  @apply text-left;
+}

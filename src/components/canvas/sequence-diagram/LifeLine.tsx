@@ -7,6 +7,8 @@ import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import { useHandle } from "../../../hooks/useHandle";
+import { useTheme } from "../../../hooks/useTheme";
+import "../styles/nodeStyles.css";
 
 
 export default function LifeLine() {
@@ -31,6 +33,7 @@ export default function LifeLine() {
 
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
+    const { isDarkMode } = useTheme();
     const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
     
     // Estado para el evento de destrucción (guarda el índice del handle que tiene la destrucción)
