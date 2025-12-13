@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useReactFlow } from "@xyflow/react";
+import { useReactFlow, useStore } from "@xyflow/react";
 import { useSequenceDiagram } from "./useSequenceDiagram";
 
 export function useAddLifeLinesBtns() {
@@ -9,6 +9,15 @@ export function useAddLifeLinesBtns() {
     const [isHiding, setIsHiding] = useState(false); // Estado para controlar la animación de salida
     const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const fadeOutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    
+    // Detectar si alguna lifeline se está arrastrando
+    const isDraggingLifeLine = useStore((state) => {
+        // Verificar si hay algún nodo tipo lifeLine siendo arrastrado
+        const draggingNodes = Array.from(state.nodeLookup.values()).filter(
+            (node) => node.type === 'lifeLine' && node.dragging
+        );
+        return draggingNodes.length > 0;
+    });
 
     // Rango Y donde se muestran los botones (cerca de los headers de las LifeLines)
     const HEADER_Y_MIN = 50;  // Límite superior
@@ -89,6 +98,26 @@ export function useAddLifeLinesBtns() {
 
     // Manejador para el movimiento del mouse en el canvas
     const handleMouseMove = useCallback((event: React.MouseEvent) => {
+        // Si se está arrastrando una lifeline, no mostrar botones
+        if (isDraggingLifeLine) {
+            // Ocultar botones si están visibles durante el drag
+            if (isVisible && !isHiding) {
+                setIsHiding(true);
+                setButtonsHiding(true);
+                
+                if (hideTimeoutRef.current) {
+                    clearTimeout(hideTimeoutRef.current);
+                }
+                
+                hideTimeoutRef.current = setTimeout(() => {
+                    setIsVisible(false);
+                    setIsHiding(false);
+                    hideTimeoutRef.current = null;
+                }, 300);
+            }
+            return;
+        }
+
         // Convertimos las coordenadas de pantalla a coordenadas del canvas (sensibles a pan/zoom)
         const flowPosition = screenToFlowPosition({
             x: event.clientX,
@@ -124,7 +153,7 @@ export function useAddLifeLinesBtns() {
                 }, 300); // Duración de la animación
             }
         }
-    }, [isVisible, isHiding, HEADER_Y_MIN, HEADER_Y_MAX, screenToFlowPosition, setButtonsHiding]);
+    }, [isVisible, isHiding, isDraggingLifeLine, HEADER_Y_MIN, HEADER_Y_MAX, screenToFlowPosition, setButtonsHiding]);
 
     //Creamos un identificador único basado solo en las LifeLines (no en los botones)
     const lifeLineSignature = useMemo(() => {
@@ -143,6 +172,24 @@ export function useAddLifeLinesBtns() {
             hideAddLLBtns();
         }
     }, [isVisible, showAddLLBtns, hideAddLLBtns]);
+
+    // Ocultar botones cuando comienza el dragging de una lifeline
+    useEffect(() => {
+        if (isDraggingLifeLine && isVisible && !isHiding) {
+            setIsHiding(true);
+            setButtonsHiding(true);
+            
+            if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+            }
+            
+            hideTimeoutRef.current = setTimeout(() => {
+                setIsVisible(false);
+                setIsHiding(false);
+                hideTimeoutRef.current = null;
+            }, 300);
+        }
+    }, [isDraggingLifeLine, isVisible, isHiding, setButtonsHiding]);
 
     // Actualizar posiciones de botones cuando cambian las LifeLines (solo si están visibles)
     useEffect(() => {
