@@ -29,6 +29,15 @@ export function MessageEdge({
     const [editingLabel, setEditingLabel] = useState('');
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
 
+    const SNAP_THRESHOLD = 25; //Umbral sobre eje Y para guias horizontales
+
+    const deltaY = targetY - sourceY;
+    
+    // Si estamos dentro del umbral, ajustamos para que sea una linea recta horizontal
+    if (Math.abs(deltaY) < SNAP_THRESHOLD) {
+        targetY = sourceY;
+    }
+
     const [edgePath, labelX, labelY] = getStraightPath({
         sourceX: sourceX,
         sourceY: sourceY,

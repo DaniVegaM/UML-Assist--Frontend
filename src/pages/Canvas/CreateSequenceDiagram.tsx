@@ -12,6 +12,7 @@ import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
+import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -153,6 +154,7 @@ function DiagramContent() {
                         type: 'messageEdge',
                     }}
                     connectionLineType={ConnectionLineType.Straight}
+                    connectionLineComponent={SnapConnectionLine}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}
