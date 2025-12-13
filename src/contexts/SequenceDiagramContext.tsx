@@ -37,6 +37,28 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
                 zIndex: -1
             }
         },
+        { 
+            id: 'addLifeLineBtn_0', 
+            type: 'addLifeLineBtn', 
+            position: { x: 210, y: 100 }, //Le restamos 200 para centrar el botón respecto a la LifeLine
+            data: {},
+            connectable: false,
+            zIndex: 10,
+            style: {
+                zIndex: 10
+            }
+        },
+        { 
+            id: 'addLifeLineBtn_1', 
+            type: 'addLifeLineBtn', 
+            position: { x: 750, y: 100 }, //Le sumamos 170 para centrar el botón respecto a la LifeLine
+            data: {},
+            connectable: false,
+            zIndex: 10,
+            style: {
+                zIndex: 10
+            }
+        },
     ]
     const [nodes, setNodes] = useState<Node<NodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>([]);

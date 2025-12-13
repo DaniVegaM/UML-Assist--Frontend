@@ -11,11 +11,13 @@ import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
+import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+    useAddLifeLinesBtns(); // Activa la actualización automática de botones
 
     useEffect(() => {
         console.log('Nodos Actuales:', nodes);
@@ -25,8 +27,22 @@ function DiagramContent() {
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
-                const nodes = applyNodeChanges(changes, nodesSnapshot)
-                return nodes;
+                //Guardamos las posiciones Y originales antes de aplicar cambios
+                const originalYPositions = new Map(
+                    nodesSnapshot.map(node => [node.id, node.position.y])
+                );
+
+                //Aplicamos los cambios a los nodos
+                const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
+
+                //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
+                return updatedNodes.map(node => ({
+                    ...node,
+                    position: {
+                        ...node.position,
+                        y: originalYPositions.get(node.id) ?? node.position.y
+                    }
+                }));
             });
         },
         [setNodes],
@@ -38,6 +54,8 @@ function DiagramContent() {
         },
         [setEdges],
     );
+
+
 
     const onConnect = useCallback(
         (params: Connection) => {
