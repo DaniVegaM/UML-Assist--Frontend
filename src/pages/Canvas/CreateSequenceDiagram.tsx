@@ -17,7 +17,7 @@ function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
-    useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
+    const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
 
     useEffect(() => {
         console.log('Nodos Actuales:', nodes);
@@ -127,7 +127,7 @@ function DiagramContent() {
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header diagramTitle="Diagrama de Secuencia"/>
 
-            <section className="h-full w-full relative">
+            <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}

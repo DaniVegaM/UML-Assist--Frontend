@@ -3,8 +3,9 @@ import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram"; // Ajust
 import type { NodeProps } from "@xyflow/react";
 
 // Recibimos el ID y la posición directamente del nodo
-export default function AddLifeLineButton({ id, positionAbsoluteX }: NodeProps) {
+export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeProps) {
     const { nodes, setNodes } = useSequenceDiagram();
+    const isHiding = data?.isHiding as boolean || false;
 
     const addNewLifeLine = useCallback(() => {
         //Si positionAbsoluteX falla, buscamos el nodo en el estado
@@ -83,8 +84,11 @@ export default function AddLifeLineButton({ id, positionAbsoluteX }: NodeProps) 
     return (
         <button 
             onClick={addNewLifeLine} 
-            className="nodrag cursor-pointer bg-neutral-500 hover:bg-neutral-600 text-white p-2 rounded-full shadow-md flex items-center justify-center w-8 h-8 transition-transform hover:scale-110"
+            className="nodrag cursor-pointer bg-neutral-500 hover:bg-neutral-600 text-white p-2 rounded-full shadow-md flex items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out hover:scale-110"
             title="Agregar línea de vida aquí"
+            style={{
+                animation: isHiding ? 'fadeOut 0.3s ease-in-out forwards' : 'fadeIn 0.3s ease-in-out'
+            }}
         >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />

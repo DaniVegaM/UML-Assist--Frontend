@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useReactFlow } from "@xyflow/react";
 import { useSequenceDiagram } from "./useSequenceDiagram";
 
 export function useAddLifeLinesBtns() {
     const { nodes, setNodes } = useSequenceDiagram();
+    const { screenToFlowPosition } = useReactFlow();
+    const [isVisible, setIsVisible] = useState(false);
+    const [isHiding, setIsHiding] = useState(false); // Estado para controlar la animación de salida
+    const hideTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const fadeOutTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Rango Y donde se muestran los botones (cerca de los headers de las LifeLines)
+    const HEADER_Y_MIN = 50;  // Límite superior
+    const HEADER_Y_MAX = 150; // Límite inferior
 
     const showAddLLBtns = useCallback(() => {
         setNodes(prevNodes => {
@@ -48,7 +58,7 @@ export function useAddLifeLinesBtns() {
                 id: `addLifeLineBtn_${index}`,
                 type: 'addLifeLineBtn',
                 position: { x: pos.x, y: pos.y },
-                data: {},
+                data: { isHiding: false },
                 connectable: false,
                 zIndex: 10,
                 style: {
@@ -60,6 +70,62 @@ export function useAddLifeLinesBtns() {
         });
     }, [setNodes]);
 
+    // Función para marcar los botones como "ocultándose" (para la animación)
+    const setButtonsHiding = useCallback((hiding: boolean) => {
+        setNodes(prevNodes => prevNodes.map(node => {
+            if (node.type === 'addLifeLineBtn') {
+                return {
+                    ...node,
+                    data: { ...node.data, isHiding: hiding }
+                };
+            }
+            return node;
+        }));
+    }, [setNodes]);
+
+    const hideAddLLBtns = useCallback(() => {
+        setNodes(prevNodes => prevNodes.filter(node => node.type !== 'addLifeLineBtn'));
+    }, [setNodes]);
+
+    // Manejador para el movimiento del mouse en el canvas
+    const handleMouseMove = useCallback((event: React.MouseEvent) => {
+        // Convertimos las coordenadas de pantalla a coordenadas del canvas (sensibles a pan/zoom)
+        const flowPosition = screenToFlowPosition({
+            x: event.clientX,
+            y: event.clientY
+        });
+
+        // Verificamos si el mouse está en la zona de los headers (coordenadas del canvas)
+        const isInHeaderZone = flowPosition.y >= HEADER_Y_MIN && flowPosition.y <= HEADER_Y_MAX;
+
+        if (isInHeaderZone && !isVisible) {
+            // Cancelamos cualquier timeout de ocultar pendiente
+            if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+                hideTimeoutRef.current = null;
+            }
+            if (fadeOutTimeoutRef.current) {
+                clearTimeout(fadeOutTimeoutRef.current);
+                fadeOutTimeoutRef.current = null;
+            }
+            setIsHiding(false);
+            setIsVisible(true);
+        } else if (!isInHeaderZone && isVisible && !isHiding) {
+            // Iniciamos la animación de fade out
+            if (!hideTimeoutRef.current) {
+                setIsHiding(true);
+                setButtonsHiding(true);
+                
+                // Esperamos a que termine la animación antes de eliminar los botones
+                hideTimeoutRef.current = setTimeout(() => {
+                    setIsVisible(false);
+                    setIsHiding(false);
+                    hideTimeoutRef.current = null;
+                }, 300); // Duración de la animación
+            }
+        }
+    }, [isVisible, isHiding, HEADER_Y_MIN, HEADER_Y_MAX, screenToFlowPosition, setButtonsHiding]);
+
     //Creamos un identificador único basado solo en las LifeLines (no en los botones)
     const lifeLineSignature = useMemo(() => {
         const lifeLines = nodes
@@ -69,10 +135,33 @@ export function useAddLifeLinesBtns() {
         return lifeLines.map(ll => `${ll.id}_${ll.position.x}`).join('|');
     }, [nodes]);
 
-    //Actualizamos botones solo cuando cambia la configuración de LifeLines
+    // Mostrar/ocultar botones basado en isVisible
     useEffect(() => {
-        showAddLLBtns();
-    }, [lifeLineSignature, showAddLLBtns]);
+        if (isVisible) {
+            showAddLLBtns();
+        } else {
+            hideAddLLBtns();
+        }
+    }, [isVisible, showAddLLBtns, hideAddLLBtns]);
 
-    return { showAddLLBtns };
+    // Actualizar posiciones de botones cuando cambian las LifeLines (solo si están visibles)
+    useEffect(() => {
+        if (isVisible) {
+            showAddLLBtns();
+        }
+    }, [lifeLineSignature, isVisible, showAddLLBtns]);
+
+    // Limpieza del timeout al desmontar
+    useEffect(() => {
+        return () => {
+            if (hideTimeoutRef.current) {
+                clearTimeout(hideTimeoutRef.current);
+            }
+            if (fadeOutTimeoutRef.current) {
+                clearTimeout(fadeOutTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    return { showAddLLBtns, hideAddLLBtns, handleMouseMove, isVisible };
 }
