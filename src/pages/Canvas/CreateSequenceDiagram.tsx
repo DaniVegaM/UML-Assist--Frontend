@@ -17,7 +17,7 @@ function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
-    useAddLifeLinesBtns(); // Activa la actualización automática de botones
+    useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
 
     useEffect(() => {
         console.log('Nodos Actuales:', nodes);

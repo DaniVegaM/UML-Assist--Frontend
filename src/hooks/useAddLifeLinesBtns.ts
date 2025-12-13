@@ -7,30 +7,38 @@ export function useAddLifeLinesBtns() {
     const showAddLLBtns = useCallback(() => {
         setNodes(prevNodes => {
             //Obtenemos las LifeLines principales (las que están en y=100)
-            const topLifeLines = prevNodes.filter(node => node.type === 'lifeLine' && node.position.y === 100).sort((a, b) => a.position.x - b.position.x).map(node => {
-                const newNode = {...node, position: { ...node.position, x: node.position.x + 100 }}; //Ajuste debido al width de el header de la LifeLine
-                return newNode;
-            });
+            const topLifeLines = prevNodes.filter(node => node.type === 'lifeLine' && node.position.y === 100).sort((a, b) => a.position.x - b.position.x);
+            
+            const LIFELINE_WIDTH = 200; //Ancho de cada LifeLine
+            const SPACING = 100; //Espacio entre LifeLines
+            const BTN_WIDTH = 32; //Ancho del botón
 
             //Calculamos las posiciones X para los botones de agregar LifeLine
             const addLLBtnPositionsX: { x: number, y: number }[] = [];
 
             if (topLifeLines.length === 0) {
-                //Si no hay LifeLines, colocamos un botón en la posición inicial
-                addLLBtnPositionsX.push({ x: 210, y: 100 });
-                addLLBtnPositionsX.push({ x: 750, y: 100 });
+                //Si no hay LifeLines, colocamos un primer boton en la posición inicial
+                addLLBtnPositionsX.push({ x: 400, y: 100 });
             } else {
-                //Botón antes de la primera LifeLine
-                addLLBtnPositionsX.push({ x: topLifeLines[0].position.x - 290, y: 100 });
+                //Botón antes de la primera LifeLine (a la izquierda)
+                //Centrado visualmente: centro del botón a SPACING/2 del borde del LifeLine
+                addLLBtnPositionsX.push({ x: topLifeLines[0].position.x - (SPACING / 2) - (BTN_WIDTH / 2), y: 100 });
 
                 //Botones entre cada par de LifeLines consecutivas
                 for (let i = 0; i < topLifeLines.length - 1; i++) {
-                    const midX = (topLifeLines[i].position.x + topLifeLines[i + 1].position.x) / 2;
+                    // Fin de la primera LifeLine
+                    const endOfFirstLL = topLifeLines[i].position.x + LIFELINE_WIDTH;
+                    // Inicio de la segunda LifeLine
+                    const startOfSecondLL = topLifeLines[i + 1].position.x;
+                    // Punto medio del espacio entre ellas, ajustado para centrar el botón
+                    const midX = ((endOfFirstLL + startOfSecondLL) / 2) - (BTN_WIDTH / 2);
                     addLLBtnPositionsX.push({ x: midX, y: 100 });
                 }
 
-                //Botón después de la última LifeLine
-                addLLBtnPositionsX.push({ x: topLifeLines[topLifeLines.length - 1].position.x + 250, y: 100 });
+                //Botón después de la última LifeLine (a la derecha)
+                //Centrado visualmente: centro del botón a SPACING/2 del borde del LifeLine
+                const lastLLEnd = topLifeLines[topLifeLines.length - 1].position.x + LIFELINE_WIDTH;
+                addLLBtnPositionsX.push({ x: lastLLEnd + (SPACING / 2) - (BTN_WIDTH / 2), y: 100 });
             }
 
             //Filtramos los nodos que no son botones de agregar LifeLine
@@ -52,7 +60,7 @@ export function useAddLifeLinesBtns() {
         });
     }, [setNodes]);
 
-    // Crear un identificador único basado solo en las LifeLines (no en los botones)
+    //Creamos un identificador único basado solo en las LifeLines (no en los botones)
     const lifeLineSignature = useMemo(() => {
         const lifeLines = nodes
             .filter(n => n.type === 'lifeLine' && n.position.y === 100)
@@ -61,7 +69,7 @@ export function useAddLifeLinesBtns() {
         return lifeLines.map(ll => `${ll.id}_${ll.position.x}`).join('|');
     }, [nodes]);
 
-    // Actualizar botones solo cuando cambia la configuración de LifeLines
+    //Actualizamos botones solo cuando cambia la configuración de LifeLines
     useEffect(() => {
         showAddLLBtns();
     }, [lifeLineSignature, showAddLLBtns]);

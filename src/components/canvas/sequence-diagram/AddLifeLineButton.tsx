@@ -7,7 +7,7 @@ export default function AddLifeLineButton({ id, positionAbsoluteX }: NodeProps) 
     const { nodes, setNodes } = useSequenceDiagram();
 
     const addNewLifeLine = useCallback(() => {
-        // 1. Protección contra NaN: Si positionAbsoluteX falla, buscamos el nodo en el estado
+        //Si positionAbsoluteX falla, buscamos el nodo en el estado
         let currentBtnX = positionAbsoluteX;
 
         if (typeof currentBtnX !== 'number') {
@@ -19,39 +19,64 @@ export default function AddLifeLineButton({ id, positionAbsoluteX }: NodeProps) 
              }
         }
 
-        // Definimos el ancho del espacio a crear (GAP)
-        const SPACE_TO_ADD = 300; 
+        const LIFELINE_WIDTH = 200; //Ancho de cada LifeLine
+        const SPACING = 100; //Espacio entre LifeLines
+        const TOTAL_SPACE = LIFELINE_WIDTH + SPACING; //Total
 
         setNodes((prevNodes) => {
-            // 2. Identificamos qué nodos están a la derecha del botón para empujarlos
-            // (Asumimos que el botón está justo donde queremos insertar)
-            
-            return prevNodes.map(node => {
-                // Si el nodo es una LifeLine y está a la derecha de este botón...
+            // Obtenemos las LifeLines ordenadas por posición X
+            const lifeLines = prevNodes
+                .filter(n => n.type === 'lifeLine' && n.position.y === 100)
+                .sort((a, b) => a.position.x - b.position.x);
+
+            // Encontramos la LifeLine más a la izquierda que está a la derecha del botón
+            const lifeLinesOnRight = lifeLines.filter(ll => ll.position.x > currentBtnX!);
+            // Encontramos la LifeLine más a la derecha que está a la izquierda del botón
+            const lifeLinesOnLeft = lifeLines.filter(ll => ll.position.x + LIFELINE_WIDTH < currentBtnX!);
+
+            let newLifeLineX: number;
+
+            if (lifeLinesOnLeft.length === 0 && lifeLinesOnRight.length > 0) {
+                // Botón a la izquierda de todos: nueva LifeLine toma la posición de la primera
+                // y la primera se empuja a la derecha
+                newLifeLineX = lifeLinesOnRight[0].position.x;
+            } else if (lifeLinesOnRight.length === 0 && lifeLinesOnLeft.length > 0) {
+                // Botón a la derecha de todos: nueva LifeLine va después de la última
+                const lastLL = lifeLinesOnLeft[lifeLinesOnLeft.length - 1];
+                newLifeLineX = lastLL.position.x + LIFELINE_WIDTH + SPACING;
+            } else if (lifeLinesOnLeft.length > 0 && lifeLinesOnRight.length > 0) {
+                // Botón entre LifeLines: nueva LifeLine toma la posición de la siguiente
+                // y las de la derecha se empujan
+                newLifeLineX = lifeLinesOnRight[0].position.x;
+            } else {
+                // No hay LifeLines: posición inicial
+                newLifeLineX = 400;
+            }
+
+            // Empujamos las LifeLines que están a la derecha del botón
+            const updatedNodes = prevNodes.map(node => {
                 if (node.type === 'lifeLine' && node.position.x > currentBtnX!) {
-                    // ...Lo empujamos a la derecha para hacer hueco
                     return {
                         ...node,
                         position: {
                             ...node.position,
-                            x: node.position.x + SPACE_TO_ADD
+                            x: node.position.x + TOTAL_SPACE
                         }
                     };
                 }
                 return node;
-            }).concat([
-                // 3. Agregamos la nueva LifeLine en la posición del botón (ajustada para centrar)
-                {
-                    id: `lifeLine_${Date.now()}`,
-                    type: 'lifeLine',
-                    data: { label: 'Nueva LifeLine' }, // Quité 'order', no es necesario para la posición física
-                    // Usamos la X del botón menos un offset para centrar la lifeline
-                    position: { x: currentBtnX! - 80, y: 100 }, 
-                    connectable: true,
-                    zIndex: -1,
-                    style: { zIndex: -1 }
-                }
-            ]);
+            });
+
+            // Agregamos la nueva LifeLine
+            return updatedNodes.concat([{
+                id: `lifeLine_${Date.now()}`,
+                type: 'lifeLine',
+                data: { label: 'Nueva LifeLine' },
+                position: { x: newLifeLineX, y: 100 },
+                connectable: true,
+                zIndex: -1,
+                style: { zIndex: -1 }
+            }]);
         });
     }, [id, positionAbsoluteX, nodes, setNodes]);
 
