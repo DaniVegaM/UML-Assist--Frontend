@@ -6,9 +6,22 @@ export const setTokens = (accessToken: string, refreshToken: string) => {
     localStorage.setItem('refresh_token', refreshToken);
 }
 
-export const setUserData = (userData : UserData) => {
+export const setUserData = (userData: UserData) => {
     localStorage.setItem('user_data', JSON.stringify(userData));
-}
+};
+
+
+export const getLoggedUser = (): UserData | null => {
+    const userData = localStorage.getItem('user_data');
+    if (!userData) return null;
+
+    try {
+        return JSON.parse(userData) as UserData;
+    } catch (e) {
+        console.error("Error parsing user data from localStorage", e);
+        return null;
+    }
+};
 
 export const getUserData = () => {
     const userData = localStorage.getItem('user_data');

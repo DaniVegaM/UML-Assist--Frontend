@@ -2,12 +2,23 @@ import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react
 import { Link, useNavigate } from 'react-router';
 import { useTheme } from '../../hooks/useTheme';
 import './Header.css';
-import { isAuthenticated, clearStorage } from '../../helpers/auth';
+import { getLoggedUser, clearStorage } from '../../helpers/auth';
 
 export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const logedIn = isAuthenticated();
+  const logedInUser = getLoggedUser();
+  console.log("logedInUser:", logedInUser);
+
+  const isEmailProvider = logedInUser?.provider === 'email';
+  console.log("isEmailProvider:", isEmailProvider);
+
+  if (logedInUser) {
+    console.log("Usuario logueado:", logedInUser.email, "Provider:", logedInUser.provider);
+  } else {
+    console.log("No hay usuario logueado");
+  }
+
 
   return (
     <header className="bg-white dark:bg-zinc-800 shadow-md shadow-zinc-400 dark:shadow-zinc-700 md:rounded-4xl mb-4 md:my-4 md:max-w-11/12 md:mx-auto" >
@@ -82,7 +93,7 @@ export default function Header() {
                     </div>
                   </label>
 
-                  {logedIn ?
+                  {logedInUser ?
                     <div>
                       <button
                         className="cursor-pointer text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -91,12 +102,15 @@ export default function Header() {
                         Cerrar Sesión
                       </button>
 
-                      <Link
-                        to="/cambiar-contrasena"
-                        className="cursor-pointer text-gray-700 hover:text-sky-600 dark:text-white dark:hover:text-sky-600 dark:hover:bg-gray-200 px-3 py-2 rounded-md text-sm font-medium transition-colors"
-                      >
-                        Mi perfil
-                      </Link>
+                      {isEmailProvider && (
+                        <Link
+                          to="/cambiar-contrasena"
+                          className="cursor-pointer text-gray-700 dark:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors hover:text-sky-600 dark:hover:text-sky-600 dark:hover:bg-gray-200"
+                        >
+                          Mi perfil
+                        </Link>
+                      )}
+
                     </div>
                     :
                     <Link
@@ -111,7 +125,7 @@ export default function Header() {
                     to="/crear-cuenta"
                     className="uppercase bg-sky-600 text-white hover:bg-sky-700 px-4 py-2 rounded-4xl text-sm font-bold transition-colors shadow-sm"
                   >
-                    {logedIn ? 'Mis diagramas' : 'Crear Cuenta'}
+                    {logedInUser ? 'Mis diagramas' : 'Crear Cuenta'}
                   </Link>
                 </div>
 

@@ -62,6 +62,7 @@ export const handleCallback = async (provider: string, code: string) => {
     setUserData({
       email: user.email,
       username: user.username,
+      provider: user.provider,
     });
 
     return { user, success };
@@ -132,7 +133,7 @@ export const loginWithCredentials = async (email: string, password: string) => {
 
     // Guardamos tokens y datos del usuario
     setTokens(access_token, refresh_token);
-    setUserData({ email: user.email, username: user.username });
+    setUserData({ email: user.email, username: user.username, provider: user.provider, });
 
     return { user, success: true };
   } catch (error) {
@@ -156,7 +157,7 @@ export const registerWithCredentials = async (
 
     // Guardamos tokens y datos del usuario
     setTokens(access_token, refresh_token);
-    setUserData({ email: user.email, username: user.username });
+    setUserData({ email: user.email, username: user.username, provider: user.provider, });
 
     return { user, success: true };
   } catch (error) {
