@@ -1,25 +1,37 @@
-import { Position } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useHandle } from "../../../hooks/useHandle";
+import "../styles/nodeStyles.css";
 
 
 
 export default function InitialNode() {
+    // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
-    
+    const nodeRef = useRef<HTMLDivElement>(null);
+    const handleRef = useRef<HTMLDivElement>(null);
+    const { handles, magneticHandle } = useHandle({ handleRef, nodeRef, maxHandles: 1 });
+
+    // Callback ref para actualizar handleRef cuando cambie el último handle
+    const setHandleRef = useCallback((node: HTMLDivElement | null) => {
+        handleRef.current = node;
+    }, []);
+
     return (
         <div
-            className="relative w-12 h-12 bg-neutral-900 flex flex-col items-center justify-center transition-all duration-150"
-            style={{
-                clipPath: 'circle(50.0% at 50% 50%)',
-            }}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            className="bg-transparent p-4"
+            onMouseMove={(evt) => { magneticHandle(evt) }}
         >
-            <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-1" />
-            <BaseHandle id={1} position={Position.Right} showHandle={showHandles} className="!absolute !right-1" />
-            <BaseHandle id={2} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-1" />
-            <BaseHandle id={3} position={Position.Left} showHandle={showHandles} className="!absolute !left-1" />
+            <div ref={nodeRef} className="node-circle node-circle-sm"
+            style={{
+                clipPath: 'circle(50.0% at 50% 50%)',
+            }}>
+                {handles.map((handle, i) => (
+                    <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
+                ))}
+            </div>
         </div>
     )
 }

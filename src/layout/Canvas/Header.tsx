@@ -80,11 +80,11 @@ export default function Header({ diagramTitle='', diagramId, type, nodes, edges 
                 onChange = {e => setTitle(e.target.value)}
             />
             <div className="flex justify-center gap-4">
-                <button onClick={() => saveDiagram()} className="bg-white py-1 px-4 text-sky-600 font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
+                <button onClick={() => saveDiagram()} className="bg-white dark:bg-neutral-800 py-1 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
 
-                <button className="bg-white py-1 px-4 text-sky-600 font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Exportar</button>
+                <button className="bg-white py-1 dark:bg-neutral-800 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Exportar</button>
 
-                <label htmlFor="switch" className="toggle">
+                <label htmlFor="switch" className="bg-white dark:bg-neutral-800 toggle ">
                     <input
                         type="checkbox"
                         className="input"

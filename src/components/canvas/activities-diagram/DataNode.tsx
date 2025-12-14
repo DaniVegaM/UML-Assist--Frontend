@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { nodeStyles } from "../styles/nodeStyles";
 import BaseHandle from "../BaseHandle";
 import { Position, useInternalNode, useNodeId } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
+import { useHandle } from "../../../hooks/useHandle";
+import "../styles/nodeStyles.css";
 
 export default function DataNode() {
 
@@ -15,6 +16,14 @@ export default function DataNode() {
 
     const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
     const [showHandles, setShowHandles] = useState(false);
+    const nodeRef = useRef<HTMLDivElement>(null);
+    const handleRef = useRef<HTMLDivElement>(null);
+    const { handles, magneticHandle } = useHandle({ handleRef, nodeRef });
+
+    // Callback ref para actualizar handleRef cuando cambie el último handle
+    const setHandleRef = useCallback((node: HTMLDivElement | null) => {
+        handleRef.current = node;
+    }, []);
 
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -65,21 +74,16 @@ export default function DataNode() {
 
     return (
         <div
-            className={nodeStyles + 'relative'}
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
             onContextMenu={handleContextMenu}
             style={{ pointerEvents: "auto" }}
         >
-            <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-1/4" />
-            <BaseHandle id={1} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-3/4" />
-            <BaseHandle id={2} position={Position.Right} showHandle={showHandles} className="!absolute !top-1/4 right-0" />
-            <BaseHandle id={3} position={Position.Right} showHandle={showHandles} className="!absolute !top-3/4 right-0" />
-            <BaseHandle id={4} position={Position.Left} showHandle={showHandles} className="!absolute !top-1/4 left-0" />
-            <BaseHandle id={5} position={Position.Left} showHandle={showHandles} className="!absolute !top-3/4 left-0" />
-            <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-1/4" />
-            <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute bottom-0 !left-3/4" />
+            <div ref={nodeRef} className="node-rect">
+                {handles.map((handle, i) => (
+                    <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
+                ))}
 
             {/* Título */}
             <p>{`<<${node?.data?.objectVariant ?? 'datastore'}>>`}</p>

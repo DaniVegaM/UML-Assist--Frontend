@@ -1,8 +1,10 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
-import { Position } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../variables";
+import { useHandle } from "../../../hooks/useHandle";
+import { useTheme } from "../../../hooks/useTheme";
+import "../styles/nodeStyles.css";
 
 
 export default function CallBehaviorNode() {
@@ -10,7 +12,18 @@ export default function CallBehaviorNode() {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled } = useCanvas();
+
+    // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
+    const nodeRef = useRef<HTMLDivElement>(null);
+    const handleRef = useRef<HTMLDivElement>(null);
+    const { handles, magneticHandle } = useHandle({ handleRef, nodeRef });
+
+    // Callback ref para actualizar handleRef cuando cambie el último handle
+    const setHandleRef = useCallback((node: HTMLDivElement | null) => {
+        handleRef.current = node;
+    }, []);
+    const { isDarkMode } = useTheme();
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -48,37 +61,34 @@ export default function CallBehaviorNode() {
     return (
         <div
             onDoubleClick={handleDoubleClick}
-            className="relative border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            className="bg-transparent p-4"
+            onMouseMove={(evt) => { magneticHandle(evt) }}
         >
-            <BaseHandle id={0} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-1/4" />
-            <BaseHandle id={1} position={Position.Top} showHandle={showHandles} className="!absolute !top-0 !left-3/4" />
-            <BaseHandle id={2} position={Position.Right} showHandle={showHandles} className="!absolute !top-1/4 right-0" />
-            <BaseHandle id={3} position={Position.Right} showHandle={showHandles} className="!absolute !top-3/4 right-0" />
-            <BaseHandle id={4} position={Position.Left} showHandle={showHandles} className="!absolute !top-1/4 left-0" />
-            <BaseHandle id={5} position={Position.Left} showHandle={showHandles} className="!absolute !top-3/4 left-0" />
-            <BaseHandle id={6} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-0 !left-1/4" />
-            <BaseHandle id={7} position={Position.Bottom} showHandle={showHandles} className="!absolute !bottom-0 !left-3/4" />
-            <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={onChange}
-                onBlur={handleBlur}
-                onWheel={(e) => e.stopPropagation()}
-                placeholder={`(Particiones...)\nLlamada a un comportamiento`}
-                className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                    }`}
-                rows={1}
-            />
-            <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'} gap-6 w-full`}>
-                {isEditing &&
-                    <p className="w-full text-[10px] text-left text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-                }
-                <div className="bg-neutral-700 w-[20px] h-[20px]"
-                    style={{
-                        clipPath: 'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
-                    }}></div>
+            <div ref={nodeRef} className="node-rounded">
+                {handles.map((handle, i) => (
+                    <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
+                ))}
+                <textarea
+                    ref={textareaRef}
+                    value={value}
+                    onChange={onChange}
+                    onBlur={handleBlur}
+                    onWheel={(e) => e.stopPropagation()}
+                    placeholder={`(Particiones...)\nLlamada a un comportamiento`}
+                    className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+                    rows={1}
+                />
+                <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'} gap-6 w-full`}>
+                    {isEditing &&
+                        <p className="char-counter char-counter-left">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                    }
+                    <div className={`w-5 h-5 ${isDarkMode ? 'bg-neutral-300' : 'bg-neutral-700'}`}
+                        style={{
+                            clipPath: 'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
+                        }}></div>
+                </div>
             </div>
         </div>
     )

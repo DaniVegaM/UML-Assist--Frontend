@@ -125,7 +125,7 @@ function DiagramContent() {
             const sourceNode = nodes.find((node) => node.id === connection.source);
             const targetNode = nodes.find((node) => node.id === connection.target);
 
-            console.log('connection ', connection);
+            // console.log('connection ', connection);
 
             if (!sourceNode || !targetNode) {
                 return false;
@@ -339,6 +339,7 @@ function DiagramContent() {
                     isValidConnection={isValidConnection}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
+                    connectionLineComponent={SnapConnectionLine}
                     nodes={nodes}
                     edges={edges}
                     onNodesChange={onNodesChange}

@@ -36,7 +36,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             style: {
                 zIndex: -1
             }
-        },
+        }
     ]
     const [nodes, setNodes] = useState<Node<NodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>([]);
