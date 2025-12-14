@@ -13,6 +13,7 @@ import { useParams } from "react-router";
 import DataNodeContextMenu from "../../components/canvas/activities-diagram/contextMenu/DataNodeContextMenu";
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
+import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();

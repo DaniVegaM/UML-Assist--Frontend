@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
-import { Position, useInternalNode, useNodeId } from "@xyflow/react";
+import { useInternalNode, useNodeId } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
 import { useHandle } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
@@ -74,34 +74,37 @@ export default function DataNode() {
 
     return (
         <div
-            onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
             onContextMenu={handleContextMenu}
-            style={{ pointerEvents: "auto" }}
+            onMouseMove={magneticHandle}
+            className="bg-transparent p-4"
         >
-            <div ref={nodeRef} className="node-rect">
-                {handles.map((handle, i) => (
-                    <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
-                ))}
+            <div onDoubleClick={handleDoubleClick} style={{ pointerEvents: "auto" }}>
+                <div ref={nodeRef} className="node-rect">
+                    {handles.map((handle, i) => (
+                        <BaseHandle key={handle.id} id={handle.id} ref={i == handles.length - 1 ? setHandleRef : undefined} showHandle={i == handles.length - 1 ? showHandles : false} position={handle.position} />
+                    ))}
 
-            {/* Título */}
-            <p>{`<<${node?.data?.objectVariant ?? 'datastore'}>>`}</p>
+                    {/* Título */}
+                    <p>{`<<${node?.data?.objectVariant ?? 'datastore'}>>`}</p>
 
-            {/* Textarea */}
-            <textarea
-                ref={textareaRef}
-                value={value}
-                onChange={onChange}
-                onBlur={handleBlur}
-                placeholder={`(Particiones...)\n${node?.data?.objectVariant === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
-                rows={1}
-                maxLength={TEXT_AREA_MAX_LEN}
-                className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
-            />
-            {isEditing &&
-                <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-            }
+                    {/* Textarea */}
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={onChange}
+                        onBlur={handleBlur}
+                        placeholder={`(Particiones...)\n${node?.data?.objectVariant === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
+                        rows={1}
+                        maxLength={TEXT_AREA_MAX_LEN}
+                        className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                    />
+                    {isEditing &&
+                        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                    }
+                </div>
+            </div>
         </div>
     )
 }
