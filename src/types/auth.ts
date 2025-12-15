@@ -1,6 +1,7 @@
 export type UserData = {
   email: string;
   username: string;
+  provider: 'email' | 'google' | 'github';
 };
 
 export type AuthResponse = {

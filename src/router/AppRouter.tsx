@@ -12,6 +12,7 @@ import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
 import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
 import Dashboard from "../pages/Dashboard";
 import HomePage from "../pages/HomePage";
+import { getLoggedUser } from "../helpers/auth";
 
 const createAuthCallbackLoader = (provider: "google" | "github") => {
   return async ({ request }: LoaderFunctionArgs) => {
@@ -30,6 +31,14 @@ const createAuthCallbackLoader = (provider: "google" | "github") => {
       return redirect("/iniciar-sesion?error=callback_failed");
     }
   };
+};
+
+export const requireEmailProvider = () => {
+  const user = getLoggedUser();
+  if (!user || user.provider !== "email") {
+    return redirect("/");
+  }
+  return null;
 };
 
 const router = createBrowserRouter([
@@ -69,6 +78,7 @@ const router = createBrowserRouter([
   {
     path: "/cambiar-contrasena",
     element: <ChangePasswordPage />,
+    loader: requireEmailProvider
   },
   {
     path: "/crear-diagrama-de-actividades/:id?",
