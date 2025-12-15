@@ -18,7 +18,6 @@ export const getLoggedUser = (): UserData | null => {
     try {
         return JSON.parse(userData) as UserData;
     } catch (e) {
-        console.error("Error parsing user data from localStorage", e);
         return null;
     }
 };

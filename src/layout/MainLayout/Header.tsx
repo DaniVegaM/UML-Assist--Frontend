@@ -8,16 +8,9 @@ export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const logedInUser = getLoggedUser();
-  console.log("logedInUser:", logedInUser);
 
   const isEmailProvider = logedInUser?.provider === 'email';
-  console.log("isEmailProvider:", isEmailProvider);
 
-  if (logedInUser) {
-    console.log("Usuario logueado:", logedInUser.email, "Provider:", logedInUser.provider);
-  } else {
-    console.log("No hay usuario logueado");
-  }
 
 
   return (
