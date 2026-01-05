@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useRef, useState, type MouseEventHandler } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, type NodeProps } from "@xyflow/react";
 
@@ -171,7 +171,7 @@ const BaseFragment = ({ selected }: NodeProps) => {
     return (
         <div
             className="border border-gray-800 dark:border-neutral-900 bg-none dark:bg-neutral-800 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150"
-            style={{ minWidth: '300px', minHeight: '90px' }}
+            style={{ minWidth: '300px', minHeight: '90px', backgroundColor: 'rgba(255, 255, 255, 0.1)', zIndex: -1 }}
             onMouseEnter={() => setShowButtons(true)} onMouseLeave={() => setShowButtons(false)}
         >
             <NodeResizer
