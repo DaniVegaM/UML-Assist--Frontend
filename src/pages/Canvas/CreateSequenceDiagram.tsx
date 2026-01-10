@@ -13,6 +13,7 @@ import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/Sequenc
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
+import AltFragmentContextMenu from "../../components/canvas/sequence-diagram/contextMenu/AltFragmentContextMenu";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -177,6 +178,7 @@ function DiagramContent() {
                     />
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
+                <AltFragmentContextMenu />
             </section>
         </div>
     )

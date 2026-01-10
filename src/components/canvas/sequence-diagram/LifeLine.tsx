@@ -133,10 +133,13 @@ export default function LifeLine() {
     const isDestroyed = destroyPosition !== null;
 
     return (
-        <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
+        <div className="flex flex-col justify-center items-center"
+            style={{zIndex: 999}}
+        > {/*LIFELINE COMPLETA*/}
             <div
                 onDoubleClick={handleDoubleClick}
                 className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+
             > {/*HEAD DE LA LIFELINE*/}
                 <textarea
                     ref={textareaRef}
