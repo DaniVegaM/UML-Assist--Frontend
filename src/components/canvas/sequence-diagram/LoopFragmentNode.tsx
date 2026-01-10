@@ -116,8 +116,8 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
 
   return (
     <div
-      className="border-2 border-gray-800 dark:border-neutral-200 bg-white dark:bg-neutral-800 w-full h-full"
-      style={{ minWidth: "300px", minHeight: "100px", backgroundColor: 'rgba(255, 255, 255, 0.1)', zIndex: -1 }}
+      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full"
+      style={{ minWidth: "300px", minHeight: "100px" }}
     >
       <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
 
@@ -126,7 +126,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         <div
           className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-2 py-1 flex items-center gap-1"
           style={{
-            clipPath: "polygon(0 0, 100% 0, 95% 100%, 0 100%)",
+            clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
             minWidth: "120px",
             height: "25px",
           }}

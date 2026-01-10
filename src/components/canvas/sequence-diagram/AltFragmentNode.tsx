@@ -1,10 +1,16 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, type NodeProps } from "@xyflow/react";
+import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
 
 const TEXT_AREA_MAX_LEN = 30;
 
-const AltFragmentNode = ({ selected }: NodeProps) => {
+interface AltFragmentData {
+  action?: 'addSeparator' | 'removeSeparator';
+  separatorCount?: number;
+  [key: string]: unknown;
+}
+
+const AltFragmentNode = ({ id, selected, data }: NodeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const separatorTextareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
@@ -12,12 +18,79 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
   const [separatorPositions, setSeparatorPositions] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [separatorValues, setSeparatorValues] = useState<string[]>([]);
-  const [separatorGrips, setSeparatorGrips] = useState<boolean[]>([]);
   const [editingSeparatorIndex, setEditingSeparatorIndex] = useState<number | null>(null);
   const [isEditingFirstOperand, setIsEditingFirstOperand] = useState<boolean>(false);
   const [rawFirstOperand, setRawFirstOperand] = useState<string>('');
-  const { setIsZoomOnScrollEnabled } = useCanvas();
-  const [showButtons, setShowButtons] = useState<boolean>(false);
+  const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
+  const { setNodes, getZoom } = useReactFlow();
+
+  // Handler para abrir el menú contextual
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      nodeId: id
+    });
+  }, [id, openContextMenu]);
+
+  // Ref para evitar procesar la misma acción múltiples veces
+  const lastProcessedAction = useRef<string | null>(null);
+
+  // Escuchar cambios desde el menú contextual
+  useEffect(() => {
+    const nodeData = data as AltFragmentData;
+    const currentAction = nodeData?.action;
+    
+    // Si no hay acción o ya se procesó esta acción, salir
+    if (!currentAction || lastProcessedAction.current === currentAction) {
+      return;
+    }
+    
+    // Marcar la acción como procesada
+    lastProcessedAction.current = currentAction;
+    
+    if (currentAction === 'addSeparator') {
+      setSeparators(prev => [...prev, prev.length + 1]);
+      setSeparatorValues(prev => [...prev, '']);
+      setSeparatorPositions(prev => {
+        const containerHeight = containerRef.current?.clientHeight || 0;
+        const newPosition = containerHeight / (prev.length + 2) * (prev.length + 1);
+        return [...prev, newPosition];
+      });
+    } else if (currentAction === 'removeSeparator') {
+      setSeparators(prev => {
+        if (prev.length > 0) return prev.slice(0, -1);
+        return prev;
+      });
+      setSeparatorValues(prev => {
+        if (prev.length > 0) return prev.slice(0, -1);
+        return prev;
+      });
+      setSeparatorPositions(prev => {
+        if (prev.length > 0) return prev.slice(0, -1);
+        return prev;
+      });
+    }
+    
+    // Limpiar la acción después de procesar
+    setNodes(nodes => nodes.map(n => 
+      n.id === id ? { ...n, data: { ...n.data, action: undefined } } : n
+    ));
+    
+    // Resetear el tracker después de un breve delay
+    setTimeout(() => {
+      lastProcessedAction.current = null;
+    }, 100);
+  }, [data, id, setNodes]);
+
+  // Sincronizar separatorCount con el estado actual
+  useEffect(() => {
+    setNodes(nodes => nodes.map(n => 
+      n.id === id ? { ...n, data: { ...n.data, separatorCount: separators.length } } : n
+    ));
+  }, [separators.length, id, setNodes]);
 
   const onFirstOperandDoubleClick = useCallback(() => {
     setIsEditingFirstOperand(true);
@@ -55,26 +128,9 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
     }
   }, [editingSeparatorIndex]);
 
-  const addSeparator = useCallback(() => {
-    setSeparators(prev => [...prev, prev.length + 1]);
-    setSeparatorValues(prev => [...prev, '']);
-    setSeparatorGrips(prev => [...prev, false]);
-    setSeparatorPositions(prev => {
-      const containerHeight = containerRef.current?.clientHeight || 0;
-      const newPosition = containerHeight / (prev.length + 2) * (prev.length + 1);
-      return [...prev, newPosition];
-    });
-  }, []);
-
-  const removeSeparator = useCallback(() => {
-    if (separators.length > 0) {
-      setSeparators(prev => prev.slice(0, -1));
-      setSeparatorValues(prev => prev.slice(0, -1));
-      setSeparatorPositions(prev => prev.slice(0, -1));
-    }
-  }, [separators.length]);
-
   const handleMouseDown = useCallback((index: number) => (e: React.MouseEvent) => {
+    // Solo permitir arrastrar con el botón izquierdo del ratón
+    if (e.button !== 0) return;
     e.stopPropagation();
     setDraggingIndex(index);
     setIsZoomOnScrollEnabled(false);
@@ -102,8 +158,11 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (draggingIndex !== null && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      const newY = e.clientY - rect.top;
-      const containerHeight = rect.height;
+      const zoom = getZoom();
+      
+      // Ajustar la posición del mouse considerando el zoom
+      const newY = (e.clientY - rect.top) / zoom;
+      const containerHeight = rect.height / zoom;
 
       // Limitar la posición dentro del contenedor
       const clampedY = Math.max(10, Math.min(newY, containerHeight - 10));
@@ -114,12 +173,15 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
         return newPositions;
       });
     }
-  }, [draggingIndex]);
+  }, [draggingIndex, getZoom]);
 
   const handleMouseUp = useCallback(() => {
     setDraggingIndex(null);
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
+
+  // Ref para guardar la altura anterior del contenedor
+  const previousHeightRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (draggingIndex !== null) {
@@ -142,20 +204,34 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
       const entry = entries[0];
       if (entry) {
         const newHeight = entry.contentRect.height;
+        const prevHeight = previousHeightRef.current;
 
-        setSeparatorPositions(prevPositions => { //Se recalculan posiciones de los separators
-          let hasChanged = false;
+        // Inicializar la altura anterior si es la primera vez
+        if (prevHeight === null) {
+          previousHeightRef.current = newHeight;
+          return;
+        }
 
-          const clampedPositions = prevPositions.map(pos => {
-            const newPos = Math.max(padding, Math.min(pos, newHeight - padding));
-            if (newPos !== pos) {
-              hasChanged = true;
-            }
-            return newPos;
+        // Solo ajustar posiciones si el contenedor se hace más pequeño
+        // y algún separador queda fuera de los límites
+        if (newHeight < prevHeight) {
+          setSeparatorPositions(prevPositions => {
+            let hasChanged = false;
+
+            const clampedPositions = prevPositions.map(pos => {
+              const newPos = Math.max(padding, Math.min(pos, newHeight - padding));
+              if (newPos !== pos) {
+                hasChanged = true;
+              }
+              return newPos;
+            });
+
+            return hasChanged ? clampedPositions : prevPositions;
           });
+        }
 
-          return hasChanged ? clampedPositions : prevPositions;
-        });
+        // Actualizar la altura anterior
+        previousHeightRef.current = newHeight;
       }
     });
 
@@ -170,9 +246,9 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
 
   return (
     <div
-      className="border-2 border-gray-800 dark:border-neutral-200 bg-white dark:bg-neutral-800 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150"
-      style={{ minWidth: '350px', minHeight: '150px', backgroundColor: 'rgba(255, 255, 255, 0.1)', zIndex: -1 }}
-      onMouseEnter={() => setShowButtons(true)} onMouseLeave={() => setShowButtons(false)}
+      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150"
+      style={{ minWidth: '350px', minHeight: '150px', zIndex: -1 }}
+      onContextMenu={handleContextMenu}
     >
       <NodeResizer
         minWidth={350}
@@ -184,7 +260,7 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
         className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1"
         style={{
           clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
-          width: '70px',
+          width: '50px',
           height: '25px',
         }}
       >
@@ -205,26 +281,6 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
       </div>
 
       <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative">
-        {/* Botones de control */}
-        <div className={`absolute top-2 right-2 flex gap-2 z-10 `} style={{ opacity: showButtons ? 1 : 0, transition: 'opacity 0.3s' }}>
-          <button
-            onClick={addSeparator}
-            className="cursor-pointer transition-all duration-300 w-6 h-6 nodrag bg-neutral-600 hover:bg-neutral-700 text-white rounded-full p-1.5 text-xs"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-full h-full">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-            </svg>
-          </button>
-          <button
-            onClick={removeSeparator}
-            disabled={separators.length === 0}
-            className="cursor-pointer transition-all duration-300 w-6 h-6 nodrag bg-neutral-600 hover:bg-neutral-700 text-white rounded-full p-1.5 text-xs disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="currentColor" className="w-full h-full">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
 
         {/* Separadores */}
         {separators.map((_, index) => {
@@ -234,60 +290,51 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
           return (
             <div
               key={index}
-              className="absolute w-full border-t-2 border-dashed border-gray-600 dark:border-neutral-600 nodrag"
+              className="absolute w-full nodrag"
               style={{
                 top: `${separatorPositions[index]}px`,
               }}
-              onDoubleClick={(e) => {
-                e.stopPropagation();
-                handleSeparatorDoubleClick(index)();
-              }}
-
-              onMouseEnter={() => setSeparatorGrips(prevGrips => (
-                prevGrips.map((gripValue, i) => i === index ? true : gripValue)
-              ))}
-
-              onMouseLeave={() => setSeparatorGrips(prevGrips => (
-                setTimeout(() => {}, 2000),
-                prevGrips.map((gripValue, i) => i === index ? false : gripValue)
-              ))}
             >
+              {/* Área de arrastre: solo 5px arriba y 5px abajo de la línea */}
               <div
-                className="absolute left-0 w-8 h-4 bg-gray-500 dark:bg-neutral-600 rounded opacity-50 hover:opacity-100 cursor-ns-resize"
-                onMouseDown={handleMouseDown(index)}
+                className="absolute w-full cursor-ns-resize"
                 style={{
-                  display: isEditingThis ? 'none' : 'block',
-                  opacity: separatorGrips[index] ? '1' : '0'
+                  top: '-6px',
+                  height: '12px',
                 }}
-              />
-              <div
-                className="absolute right-0 w-8 h-4 bg-gray-500 dark:bg-neutral-600 rounded opacity-50 hover:opacity-100 cursor-ns-resize"
                 onMouseDown={handleMouseDown(index)}
-                style={{
-                  display: isEditingThis ? 'none' : 'block',
-                  opacity: separatorGrips[index] ? '1' : '0'
+              />
+              
+              {/* Línea punteada */}
+              <div className="w-full border-t-2 border-dashed border-gray-600 dark:border-neutral-600" />
+
+              {/* Wrapper para capturar doble clic cuando textarea tiene pointer-events-none */}
+              <div 
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleSeparatorDoubleClick(index)();
                 }}
-              />
+              >
+                <textarea
+                  ref={el => void (separatorTextareaRefs.current[index] = el)}
 
-              <textarea
-                ref={el => void (separatorTextareaRefs.current[index] = el)}
+                  value={isEditingThis
+                    ? rawValue
+                    : (rawValue ? `[${rawValue}]` : '')
+                  }
 
-                value={isEditingThis
-                  ? rawValue
-                  : (rawValue ? `[${rawValue}]` : '')
-                }
+                  onChange={handleSeparatorChange(index)}
+                  onBlur={handleSeparatorBlur}
 
-                onChange={handleSeparatorChange(index)}
-                onBlur={handleSeparatorBlur}
+                  onMouseDown={e => e.stopPropagation()}
 
-                onMouseDown={e => e.stopPropagation()}
-
-                placeholder={`[condición]`}
-                className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono
-                  ${isEditingThis ? 'pointer-events-auto' : 'pointer-events-none'}
-                `}
-                rows={1}
-              />
+                  placeholder={`[condición]`}
+                  className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono
+                    ${isEditingThis ? 'pointer-events-auto' : 'pointer-events-none'}
+                  `}
+                  rows={1}
+                />
+              </div>
             </div>
           );
         })}

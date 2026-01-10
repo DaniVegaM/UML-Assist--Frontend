@@ -51,19 +51,19 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
 
   return (
     <div
-      className="border-2 border-gray-800 dark:border-neutral-200 bg-white dark:bg-neutral-800 w-full h-full"
-      style={{ minWidth: "300px", minHeight: "100px", backgroundColor: 'rgba(255, 255, 255, 0.1)', zIndex: -1 }}
+      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full"
+      style={{ minWidth: "300px", minHeight: "100px" }}
     >
       <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
 
       {/* Pentágono con la palabra clave "opt" */}
       <div className="flex items-start">
         <div
-          className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 flex items-center justify-center"
+          className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1"
           style={{
-            clipPath: "polygon(0 0, 100% 0, 90% 100%, 0 100%)",
-            minWidth: "50px",
-            height: "25px",
+            clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
+            width: '50px',
+            height: '25px',
           }}
         >
           opt
