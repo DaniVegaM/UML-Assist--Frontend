@@ -14,6 +14,7 @@ import DataNodeContextMenu from "../../components/canvas/activities-diagram/cont
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
+import { diagramToLI } from "../../hooks/ILParser";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -47,7 +48,7 @@ function DiagramContent() {
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                // console.log('Nodos actuales:', nodes);
+                console.log('Nodos actuales:', nodes);
                 return nodes;
             });
         },
@@ -113,7 +114,7 @@ function DiagramContent() {
 
             setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
-                // console.log('Conexiones actuales:', newEdges);
+                console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
 
@@ -304,8 +305,32 @@ function DiagramContent() {
         );
     }, [isDarkMode]);
 
+    const saveToJsonFile = () => {
+        const diagramData = {
+            title: diagram?.title || 'Diagrama sin título',
+            diagramType: 'activitiesD', //activities o sequence
+            nodes: nodes,
+            edges: edges
+        };
+
+        // const blob = new Blob([JSON.stringify(diagramData, null, 2)], { type: 'application/json' });
+        // const url = URL.createObjectURL(blob);
+        // const link = document.createElement('a');
+        // link.href = url;
+        // link.download = 'diagram.json';
+        // link.click();
+        // URL.revokeObjectURL(url);
+
+        // console.log('Archivo JSON guardado: diagram.json');
+        console.log(diagramData);
+
+        const intermediateLanguage = diagramToLI(diagramData)
+        
+        console.log('Lenguaje Intermedio generado:\n', intermediateLanguage);
+    }
+
     return (
-        <div className="h-screen w-full grid grid-rows-[54px_1fr]">
+        <div className="h-screen w-full grid grid-rows-[54px_80px_1fr]">
             <Header
                 diagramId={diagramId ? parseInt(diagramId, 10) : undefined}
                 diagramTitle={diagram?.title}
@@ -313,6 +338,10 @@ function DiagramContent() {
                 nodes={useNodes()}
                 edges={useEdges()}
             />
+
+            <div className="w-full h-20 bg-purple-400 flex items-center justify-center">
+                <button onClick={() => saveToJsonFile()} className="w-32 h-20 bg-green-400 text-black font-bold hover:bg-orange-400 cursor-pointer">Guardar JSON</button>
+            </div>
 
             <section className="h-full w-full relative">
                 <ReactFlow
