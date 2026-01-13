@@ -48,6 +48,8 @@ export function useLocalValidations(nodes: Node[], edges: Edge[]) {
         [edges]
     );
 
+    
+
     //ACTIVIDADES
     
     const isValidActivityConnection = useCallback(
@@ -77,6 +79,28 @@ export function useLocalValidations(nodes: Node[], edges: Edge[]) {
 
         // Evitar loops entre 2 nodos (A → B y B → A)
         if (hasReverseEdge(sourceNodeId, targetNodeId)) return false;
+
+        // ---------- Si el source ya termina en un final, no puede tener más salidas 
+        const isFinalTarget =
+        targetNodeType === "finalNode" || targetNodeType === "finalFlowNode";
+
+        // ¿El source YA tiene alguna salida hacia algún final?
+        const sourceAlreadyEndsInFinal = edges.some((e) => {
+            if (e.source !== sourceNodeId) return false;
+            const t = findNode(e.target)?.type;
+            return t === "finalNode" || t === "finalFlowNode";
+        });
+
+        //Si intento conectar a un final, el source NO debe tener salidas previas
+        if (isFinalTarget && outgoingCount(sourceNodeId) > 0) {
+            return false;
+        }
+
+        // Si el source ya termina en final, entonces NO puede crear más salidas (a cualquier nodo)
+        if (sourceAlreadyEndsInFinal) {
+            return false;
+        }
+
 
         // ---------- GRUPO: Acciones (simpleAction/callBehavior/callOperation) ----------
         const actionTypes = ["simpleAction", "callBehavior", "callOperation"];
@@ -117,12 +141,6 @@ export function useLocalValidations(nodes: Node[], edges: Edge[]) {
             return false;
         }
 
-        // ---------- GRUPO: Parallelization Node (Fork) ----------
-        // Un fork debe tener solo 1 conexión de entrada (múltiples salidas sí se permiten)
-        if (targetNodeType === "parallelizationNode" && incomingCount(targetNodeId) >= 1) {
-            return false;
-        }
-
 
         // ---------- GRUPO: Initial Node ----------
         // Solo 1 salida
@@ -133,27 +151,28 @@ export function useLocalValidations(nodes: Node[], edges: Edge[]) {
         if (targetNodeType === "initialNode") {
             return false;
         }
+        //Initial NO puede conectar directo a Object o Data
+        if (
+            sourceNodeType === "initialNode" &&
+            (targetNodeType === "objectNode" || targetNodeType === "dataNode")
+        ) {
+            return false;
+        }
+
+
 
         // ---------- GRUPO: Final Node ----------
         // No acepta salidas
         if (sourceNodeType === "finalNode") {
             return false;
         }
-        // Solo 1 entrada
-        if (targetNodeType === "finalNode" && incomingCount(targetNodeId) > 0) {
-            return false;
-        }
-
+      
         // ---------- GRUPO: Final Flow Node ----------
         // No acepta salidas
         if (sourceNodeType === "finalFlowNode") {
             return false;
         }
-        // Solo 1 entrada
-        if (targetNodeType === "finalFlowNode" && incomingCount(targetNodeId) > 0) {
-            return false;
-        }
-
+      
         // ---------- GRUPO: Connector Node ----------
         // No múltiples conexiones salientes o entrantes (cualquier lado)
         if (sourceNodeType === "connectorNode" && (incomingCount(sourceNodeId) > 0 || outgoingCount(sourceNodeId) > 0)) {
@@ -170,12 +189,10 @@ export function useLocalValidations(nodes: Node[], edges: Edge[]) {
         }
 
         // ---------- GRUPO: Object Node ----------
-        // Solo permitir una entrada y una salida
-        if (
-            (sourceNodeType === "objectNode" && outgoingCount(sourceNodeId) > 0) ||
-            (targetNodeType === "objectNode" && incomingCount(targetNodeId) > 0)
-        ) {
-            return false;
+        // Permitir múltiples salidas.
+        // Mantener solo 1 entrada (si se requiere en la app).
+        if (targetNodeType === "objectNode" && incomingCount(targetNodeId) > 0) {
+        return false;
         }
 
         // ---------- GRUPO: Exception Handling ----------
