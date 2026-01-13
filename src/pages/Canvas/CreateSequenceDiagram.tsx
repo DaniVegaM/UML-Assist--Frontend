@@ -14,6 +14,7 @@ import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import AltFragmentContextMenu from "../../components/canvas/sequence-diagram/contextMenu/AltFragmentContextMenu";
+import MultiOperandFragmentContextMenu from "../../components/canvas/sequence-diagram/contextMenu/MultiOperandFragmentContextMenu";
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
@@ -179,6 +180,9 @@ function DiagramContent() {
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
                 <AltFragmentContextMenu />
+                <MultiOperandFragmentContextMenu fragmentType="seqFragment" fragmentLabel="Seq" />
+                <MultiOperandFragmentContextMenu fragmentType="strictFragment" fragmentLabel="Strict" />
+                <MultiOperandFragmentContextMenu fragmentType="parFragment" fragmentLabel="Par" minSeparators={1} />
             </section>
         </div>
     )

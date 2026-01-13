@@ -21,6 +21,10 @@ import AddLifeLineButton from "../components/canvas/sequence-diagram/AddLifeLine
 import AltFragmentNode from "../components/canvas/sequence-diagram/AltFragmentNode";
 import OptFragmentNode from "../components/canvas/sequence-diagram/OptFragmentNode";
 import LoopFragmentNode from "../components/canvas/sequence-diagram/LoopFragmentNode";
+import BreakFragmentNode from "../components/canvas/sequence-diagram/BreakFragmentNode";
+import SeqFragmentNode from "../components/canvas/sequence-diagram/SeqFragmentNode";
+import StrictFragmentNode from "../components/canvas/sequence-diagram/StrictFragmentNode";
+import ParFragmentNode from "../components/canvas/sequence-diagram/ParFragmentNode";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -49,4 +53,8 @@ export const sequenceNodeTypes = {
   altFragment: AltFragmentNode,
   optFragment: OptFragmentNode,
   loopFragment: LoopFragmentNode,
+  breakFragment: BreakFragmentNode,
+  seqFragment: SeqFragmentNode,
+  strictFragment: StrictFragmentNode,
+  parFragment: ParFragmentNode,
 };
