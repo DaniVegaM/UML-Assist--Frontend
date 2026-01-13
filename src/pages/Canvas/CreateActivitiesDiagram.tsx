@@ -14,6 +14,7 @@ import DataNodeContextMenu from "../../components/canvas/activities-diagram/cont
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
+import { useLocalValidations } from "../../hooks/useLocalValidations";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -23,6 +24,8 @@ function DiagramContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
+    const { isValidActivityConnection } = useLocalValidations(nodes, edges);
+
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -121,7 +124,7 @@ function DiagramContent() {
         [nodes, setEdges],
     );
 
-    const isValidConnection = useCallback(
+    /**const isValidConnection = useCallback(
         (connection: Edge | Connection) => {
             const sourceNode = nodes.find((node) => node.id === connection.source);
             const targetNode = nodes.find((node) => node.id === connection.target);
@@ -274,7 +277,7 @@ function DiagramContent() {
             return true;
         }
         , [edges, nodes]
-    )
+    )*/
 
     useEffect(() => {
         setEdges((currentEdges) =>
@@ -337,7 +340,7 @@ function DiagramContent() {
                         },
                         type: 'labeledEdge',
                     }}
-                    isValidConnection={isValidConnection}
+                    isValidConnection={isValidActivityConnection}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     connectionLineComponent={SnapConnectionLine}

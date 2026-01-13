@@ -13,12 +13,15 @@ import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/Sequenc
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
+import { useLocalValidations } from "../../hooks/useLocalValidations";
+
 
 function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
+    const { isValidSequenceConnection } = useLocalValidations(nodes, edges);
 
     useEffect(() => {
         console.log('Nodos Actuales:', nodes);
@@ -60,13 +63,20 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
+            
+            console.log("CONNECT:", {
+                source: params.source,
+                target: params.target,
+                sourceHandle: params.sourceHandle,
+                targetHandle: params.targetHandle,
+            });
 
             const isSelfMessage = params.source === params.target;
 
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
-                type: `${params.source == params.target? 'selfMessageEdge' : 'messageEdge'}`, 
+                type: params.source === params.target ? "selfMessageEdge" : "messageEdge",
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
@@ -94,8 +104,11 @@ function DiagramContent() {
                 return newEdges;
             });
 
+            
+
         },
-        [setEdges, isDarkMode],
+        [setEdges, isDarkMode]
+
     );
 
     useEffect(() => {
@@ -164,6 +177,7 @@ function DiagramContent() {
                     onEdgesChange={onEdgesChange}
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
+                    isValidConnection={isValidSequenceConnection}
                     onConnectStart={() => setIsTryingToConnect(true)}
                     onConnectEnd={() => setIsTryingToConnect(false)}
                     onConnect={onConnect}
