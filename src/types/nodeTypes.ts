@@ -44,5 +44,6 @@ export const activitiesNodeTypes = {
 export const sequenceNodeTypes = {
   lifeLine: LifeLine,
   addLifeLineBtn: AddLifeLineButton,
+  note: NoteNode,
   baseFragment: BaseFragment
 };
