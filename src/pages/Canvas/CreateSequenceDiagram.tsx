@@ -1,29 +1,47 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../layout/Canvas/Header";
 import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
+import { useParams } from "react-router";
+import { fetchDiagramById } from "../../services/diagramSerivce";
+import type { Diagram } from "../../types/diagramsModel";
 
 function DiagramContent() {
+    const { id: diagramId } = useParams();
+    const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
 
     useEffect(() => {
-        console.log('Nodos Actuales:', nodes);
-        console.log('Edges Actuales:', edges);
-    }, [nodes, edges]);
+        const loadDiagram = async () => {
+            if (diagramId) {
+                const response = await fetchDiagramById(diagramId);
+                const data = response.data;
+                setDiagram(data);
+            }
+        };
+        loadDiagram();
+    }, [diagramId]);
+
+    useEffect(() => {
+        if (diagram?.content) {
+            setNodes(diagram.content.canvas.nodes);
+            setEdges(diagram.content.canvas.edges || []);
+        }
+    }, [diagram]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -66,14 +84,14 @@ function DiagramContent() {
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
-                type: `${params.source == params.target? 'selfMessageEdge' : 'messageEdge'}`, 
+                type: `${params.source == params.target ? 'selfMessageEdge' : 'messageEdge'}`,
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
                 targetHandle: params.targetHandle || null,
                 data: {
                     edgeType: 'async',
-                    mustFillLabel: !isSelfMessage,  
+                    mustFillLabel: !isSelfMessage,
                 },
                 style: {
                     strokeWidth: 2,
@@ -129,7 +147,13 @@ function DiagramContent() {
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
-            <Header diagramTitle="Diagrama de Secuencia"/>
+            <Header
+                diagramId={diagramId ? parseInt(diagramId, 10) : undefined}
+                diagramTitle={diagram?.title}
+                type="secuencia"
+                nodes={useNodes()}
+                edges={useEdges()}
+            />
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
                 <ReactFlow

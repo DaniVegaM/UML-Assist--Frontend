@@ -37,7 +37,6 @@ function DiagramContent() {
 
     useEffect(() => {
         if (diagram?.content) {
-            console.log('Diagrama cargado:', diagram);
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
