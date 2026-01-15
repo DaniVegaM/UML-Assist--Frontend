@@ -64,12 +64,12 @@ function DiagramContent() {
     const onConnect = useCallback(
         (params: Connection) => {
             
-            console.log("CONNECT:", {
-                source: params.source,
-                target: params.target,
-                sourceHandle: params.sourceHandle,
-                targetHandle: params.targetHandle,
-            });
+            // console.log("CONNECT:", {
+            //     source: params.source,
+            //     target: params.target,
+            //     sourceHandle: params.sourceHandle,
+            //     targetHandle: params.targetHandle,
+            // });
 
             const isSelfMessage = params.source === params.target;
 
