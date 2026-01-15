@@ -1,6 +1,8 @@
 import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState } from "react"
 
+export type HandleData = { id: number; position: Position; left?: number; top?: number };
+
 type useHandleProps = {
     handleRef: React.RefObject<HTMLDivElement | null>;
     nodeRef: React.RefObject<HTMLDivElement | null>;
@@ -11,16 +13,14 @@ type useHandleProps = {
     disableBottom?: boolean;
     disableLeft?: boolean;
     allowSelfConnection?: boolean;
+    initialHandles?: HandleData[];
 }
 
-export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft, maxHandles, allowSelfConnection = false }: useHandleProps) {
-    const [handles, setHandles] = useState<{ id: number; position: Position, left?: number, top?: number }[]>(
-        [
-            {
-                id: 0,
-                position: Position.Top
-            },
-        ]
+const defaultHandles: HandleData[] = [{ id: 0, position: Position.Top }];
+
+export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft, maxHandles, allowSelfConnection = false, initialHandles }: useHandleProps) {
+    const [handles, setHandles] = useState<HandleData[]>(
+        initialHandles && initialHandles.length > 0 ? initialHandles : defaultHandles
     );
 
     const nodeId = useNodeId();

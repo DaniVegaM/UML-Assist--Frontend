@@ -30,6 +30,8 @@ export interface BaseHandleProps {
     id: number | string;
     ref?: React.Ref<HTMLDivElement | null>;
     position?: Position;
+    left?: number;
+    top?: number;
     className?: string;
     showHandle?: boolean;
     onContextMenu?: (e: React.MouseEvent<Element, MouseEvent>) => void;
