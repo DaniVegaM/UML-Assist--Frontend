@@ -67,13 +67,24 @@ export default function LifeLine({ data }: NodeProps) {
 
     // Sincronizamos destroyHandleIndex con node.data cuando cambie
     useEffect(() => {
-        if (!nodeId) return;
+        if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
                 ? { ...n, data: { ...n.data, destroyHandleIndex } }
                 : n
         ));
     }, [destroyHandleIndex, nodeId, setNodes]);
+
+    // Sincronizar destroyHandleIndex cuando data.destroyHandleIndex cambie (al cargar diagrama)
+    useEffect(() => {
+        if (data?.destroyHandleIndex !== undefined && data.destroyHandleIndex !== destroyHandleIndex) {
+            isSyncingFromData.current = true;
+            setDestroyHandleIndex(data.destroyHandleIndex);
+            setTimeout(() => {
+                isSyncingFromData.current = false;
+            }, 0);
+        }
+    }, [data?.destroyHandleIndex]);
 
     // Forzar actualización de handles cuando se cargan datos con handles
     useEffect(() => {
