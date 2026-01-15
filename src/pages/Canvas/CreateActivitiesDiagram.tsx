@@ -91,6 +91,12 @@ function DiagramContent() {
             else if (targetNode?.type === 'exceptionHandling') {
                 edgeType = 'exceptionHandlingEdge';
             }
+            else if (
+                sourceNode?.type === 'note' ||
+                targetNode?.type === 'note'
+            ) {
+                edgeType = 'noteEdge';
+            }
             else {
                 edgeType = 'labeledEdge'; // tipo por defecto
             }
@@ -284,12 +290,15 @@ function DiagramContent() {
                     ...edge.style,
                     stroke: isDarkMode ? '#FFFFFF' : '#171717',
                 },
-                markerEnd: {
-                    type: 'arrow',
-                    width: 15,
-                    height: 15,
-                    color: isDarkMode ? '#A1A1AA' : '#52525B'
-                },
+                markerEnd:
+                    edge.type === 'noteEdge'
+                        ? undefined // 🔹 SIN flecha
+                        : {
+                            type: 'arrow',
+                            width: 15,
+                            height: 15,
+                            color: isDarkMode ? '#A1A1AA' : '#52525B'
+                        },
                 labelStyle: {
                     fill: isDarkMode ? '#FFFFFF' : '#171717', // Color del texto
                     fontWeight: 600,
