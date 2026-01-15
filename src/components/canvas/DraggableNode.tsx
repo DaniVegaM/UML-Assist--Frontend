@@ -9,8 +9,20 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
-    let id = 0;
-    const getId = () => `${nodeType}_${id++}`;
+    const getId = () => {
+        const nodes = getNodes();
+        // Encontramos el ID más alto para este tipo de nodo y continuamos desde ahí
+        const existingIds = nodes
+            .filter(n => n.id.startsWith(`${nodeType}_`))
+            .map(n => {
+                const match = n.id.match(new RegExp(`^${nodeType}_(\\d+)$`));
+                return match ? parseInt(match[1], 10) : -1;
+            })
+            .filter(id => id >= 0);
+        
+        const nextId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 0;
+        return `${nodeType}_${nextId}`;
+    };
 
     useDraggable(draggableRef as React.RefObject<HTMLElement>, {
         position: position,
