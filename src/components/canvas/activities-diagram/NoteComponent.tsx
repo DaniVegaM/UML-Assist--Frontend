@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
-import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
+import { TEXT_AREA_MAX_LEN } from "../variables";
 import { useHandle } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
 
@@ -12,7 +12,6 @@ export default function NoteNode() {
     const [value, setValue] = useState("");
     const { setIsZoomOnScrollEnabled } = useCanvas();
 
-    // 🔹 Handles (MISMO patrón que ObjectNode)
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
@@ -64,7 +63,7 @@ export default function NoteNode() {
         >
             <div ref={nodeRef} className="node-note">
 
-                {/* 🔹 HANDLES (idéntico comportamiento a ObjectNode) */}
+                { }
                 {handles.map((handle, i) => (
                     <BaseHandle
                         key={handle.id}

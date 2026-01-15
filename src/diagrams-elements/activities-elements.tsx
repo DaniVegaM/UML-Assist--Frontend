@@ -242,7 +242,7 @@ export const ACTIVITY_NODES = [
         grouped: true
     },
     {
-        separator: 'Anotaciones',
+        separator: 'Otros',
         svg: '',
         nodeType: '',
         label: ''
@@ -263,13 +263,16 @@ export const ACTIVITY_NODES = [
                     width="46"
                     height="40"
                     rx="2"
-                    className="fill-yellow-100 dark:fill-neutral-700 stroke-neutral-800 dark:stroke-white"
+                    fill="none"
+                    className="stroke-neutral-800 dark:stroke-white"
                     strokeWidth="2"
                 />
+
                 {/* esquina doblada */}
                 <path
                     d="M47 1 L59 13 L47 13 Z"
-                    className="fill-yellow-200 dark:fill-neutral-600 stroke-neutral-800 dark:stroke-white"
+                    fill="none"
+                    className="stroke-neutral-800 dark:stroke-white"
                     strokeWidth="2"
                 />
             </svg>
