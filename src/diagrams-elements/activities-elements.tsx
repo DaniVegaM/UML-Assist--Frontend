@@ -268,7 +268,6 @@ export const ACTIVITY_NODES = [
                     strokeWidth="2"
                 />
 
-                {/* esquina doblada */}
                 <path
                     d="M47 1 L59 13 L47 13 Z"
                     fill="none"

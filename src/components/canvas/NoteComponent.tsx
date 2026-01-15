@@ -1,11 +1,11 @@
 import { useCallback, useRef, useState, useEffect } from "react";
-import { useCanvas } from "../../../hooks/useCanvas";
-import BaseHandle from "../BaseHandle";
-import { TEXT_AREA_MAX_LEN } from "../variables";
-import { useHandle } from "../../../hooks/useHandle";
-import "../styles/nodeStyles.css";
+import { useCanvas } from "../../hooks/useCanvas";
+import BaseHandle from "./BaseHandle";
+import { TEXT_AREA_MAX_LEN } from "./variables";
+import { useHandle } from "../../hooks/useHandle";
+import "./styles/nodeStyles.css";
 
-export default function NoteNode() {
+export default function NoteComponent() {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -53,6 +53,7 @@ export default function NoteNode() {
         setValue(v => v.trim());
     }, [setIsZoomOnScrollEnabled]);
 
+
     return (
         <div
             onDoubleClick={handleDoubleClick}
@@ -61,9 +62,25 @@ export default function NoteNode() {
             className="bg-transparent p-4"
             onMouseMove={magneticHandle}
         >
-            <div ref={nodeRef} className="node-note">
+            <div
+                ref={nodeRef}
+                className="
+        node-note
+        relative
+        min-w-[200px]
+        p-2
+        text-[12px]
+        border border-neutral-800
+        bg-gray-100
+        hover:bg-gray-200
+        dark:bg-neutral-800
+        dark:border-white
+        dark:hover:bg-zinc-600
+        transition-colors
+        duration-150
+      "
+            >
 
-                { }
                 {handles.map((handle, i) => (
                     <BaseHandle
                         key={handle.id}
@@ -74,12 +91,12 @@ export default function NoteNode() {
                     />
                 ))}
 
-                {/* Título UML */}
                 {!isEditing && (
-                    <div className="node-note-title">«note»</div>
+                    <div className="italic text-[11px] mb-1 select-none text-center">
+                        «note»
+                    </div>
                 )}
 
-                {/* Contenido */}
                 <textarea
                     ref={textareaRef}
                     value={value}
@@ -88,7 +105,9 @@ export default function NoteNode() {
                     onWheel={(e) => e.stopPropagation()}
                     placeholder="Nota"
                     rows={1}
-                    className={`node-textarea nowheel ${isEditing ? "node-textarea-editing" : "node-textarea-readonly"
+                    className={`node-textarea nowheel ${isEditing
+                        ? "node-textarea-editing"
+                        : "node-textarea-readonly"
                         }`}
                 />
 
@@ -100,4 +119,5 @@ export default function NoteNode() {
             </div>
         </div>
     );
+
 }

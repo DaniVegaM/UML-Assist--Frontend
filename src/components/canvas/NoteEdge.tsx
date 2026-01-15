@@ -17,7 +17,6 @@ export function NoteEdge({
     let finalTargetX = targetX;
     let finalTargetY = targetY;
 
-    // 🔹 alineación tipo UML
     if (Math.abs(targetY - sourceY) < SNAP_THRESHOLD) {
         finalTargetY = sourceY;
     }
@@ -33,7 +32,7 @@ export function NoteEdge({
         targetX: finalTargetX,
         targetY: finalTargetY,
         targetPosition,
-        borderRadius: 0, // 🔹 más UML, menos curva
+        borderRadius: 0,
     });
 
     return (
@@ -43,7 +42,7 @@ export function NoteEdge({
             style={{
                 stroke: "#555",
                 strokeWidth: 1.5,
-                strokeDasharray: "6 4", // punteada UML
+                strokeDasharray: "6 4",
                 ...style,
             }}
         />

@@ -18,7 +18,8 @@ import ExceptionHandling from "../components/canvas/activities-diagram/Exception
 import LifeLine from "../components/canvas/sequence-diagram/LifeLine";
 import BaseFragment from "../components/canvas/sequence-diagram/BaseFragment";
 import AddLifeLineButton from "../components/canvas/sequence-diagram/AddLifeLineButton";
-import NoteNode from "../components/canvas/activities-diagram/NoteComponent";
+import NoteNode from "../components/canvas/NoteComponent";
+import NoteComponent from "../components/canvas/NoteComponent";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -44,6 +45,6 @@ export const activitiesNodeTypes = {
 export const sequenceNodeTypes = {
   lifeLine: LifeLine,
   addLifeLineBtn: AddLifeLineButton,
-  note: NoteNode,
+  note: NoteComponent,
   baseFragment: BaseFragment
 };
