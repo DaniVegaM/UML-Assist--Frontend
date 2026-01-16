@@ -1,10 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { deleteDiagram, fetchDiagrams, patchDiagram } from "../services/diagramSerivce";
 import { useNavigate } from "react-router";
-import Header from "../layout/MainLayout/Header";
+import Header from "../components/layout/MainLayout/Header";
 import type { Diagram } from "../types/diagramsModel";
 import MenuWithOptions from "../components/ui/MenuWithOptions";
-import '../layout/Canvas/Header.css';
+import '../components/layout/MainLayout/Header.css';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -30,7 +30,7 @@ export default function Dashboard() {
                 const response = await fetchDiagrams();
                 const data: Diagram[] = response.data;
                 setDiagrams(data || []);
-            } catch (err) {
+            } catch {
                 setError("Error al cargar los diagramas.");
                 setDiagrams([]);
             } finally {

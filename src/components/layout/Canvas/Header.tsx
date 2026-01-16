@@ -1,10 +1,10 @@
 
 import { Link } from 'react-router'
-import { useTheme } from '../../hooks/useTheme';
-import type { HeaderProps } from '../../types/canvas';
+import { useTheme } from '../../../hooks/useTheme';
+import type { HeaderProps } from '../../../types/canvas';
 import { useEffect, useState } from 'react';
-import { createDiagram, updateDiagram } from '../../services/diagramSerivce';
-import type { Diagram } from '../../types/diagramsModel';
+import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
+import type { Diagram } from '../../../types/diagramsModel';
 import './Header.css';
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
@@ -70,7 +70,10 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         <>
             <section className="h-full bg-sky-600 grid grid-cols-3 gap-4 p-1 items-center">
                 <div className="flex items-center justify-start gap-2 pl-2">
-                    <Link to="/" className="flex items-center justify-center">
+                    <Link to="/dashboard" className="mr-4 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+                    </Link>
+                    <Link to="/" className="flex items-center justify-center gap-3">
                         <svg
                             className="h-8 w-8 text-white"
                             viewBox="0 0 24 24"
@@ -89,17 +92,20 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                             <line x1="6.5" y1="10" x2="6.5" y2="14" />
                             <line x1="17.5" y1="10" x2="17.5" y2="14" />
                         </svg>
+                        <p className="text-center text-white font-bold uppercase">UML Assist</p>
                     </Link>
-                    <p className="text-center text-white font-bold uppercase">{title}</p>
                 </div>
-                <input
-                    className="text-xl min-w-64 text-white focus-visible: outline-none hover:border-b border-white bg-sky-600 text-center col-span-1 placeholder-white"
-                    type="text"
-                    placeholder={title || "Diagrama sin título"}
-                    value={title || ""}
-                    onClick={e => e.currentTarget.select()}
-                    onChange={e => setTitle(e.target.value)}
-                />
+                <div>
+                    <input
+                        className="max-w-92 min-w-52 w-full bg-zinc-200 text-zinc-600 ring-1 ring-zinc-200 focus:ring-2 focus:ring-sky-800 outline-none duration-300 placeholder:text-zinc-600 placeholder:opacity-50 rounded-lg px-4 py-1"
+                        autoComplete="off"
+                        placeholder="Diagrama sin título"
+                        value={title || ""}
+                        onClick={e => e.currentTarget.select()}
+                        onChange={e => setTitle(e.target.value)}
+                        type="text"
+                    />
+                </div>
                 <div className="flex justify-center gap-4">
                     <button onClick={() => saveDiagram()} className="bg-white dark:bg-neutral-800 py-1 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
 
