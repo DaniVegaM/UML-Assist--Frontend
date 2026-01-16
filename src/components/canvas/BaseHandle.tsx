@@ -1,7 +1,7 @@
 import { Handle, Position, useNodeId } from "@xyflow/react";
 import type { BaseHandleProps } from "../../types/canvas";
 
-export default function BaseHandle({ id, ref, position, className, showHandle, onContextMenu }: BaseHandleProps) {
+export default function BaseHandle({ id, ref, position, left, top, className, showHandle, onContextMenu }: BaseHandleProps) {
     const nodeId = useNodeId();
     
     return (
@@ -19,6 +19,8 @@ export default function BaseHandle({ id, ref, position, className, showHandle, o
                 height: '8px',
                 backgroundColor: '#9F9FA9',
                 position: 'absolute',
+                ...(left !== undefined && { left: `${left}px` }),
+                ...(top !== undefined && { top: `${top}px` }),
             }}
             isConnectable={showHandle}
             isConnectableStart={showHandle}

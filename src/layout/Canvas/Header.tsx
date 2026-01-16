@@ -35,14 +35,11 @@ export default function Header({ diagramTitle='', diagramId, type, nodes, edges 
                 }
             }
         }
-        console.log('Guardando diagrama:', diagramData);
-        let response;
         if(!diagramId) {
-            response = await createDiagram(diagramData)
+            await createDiagram(diagramData)
         } else{
-            response = await updateDiagram(diagramData)
+            await updateDiagram(diagramData)
         }
-        console.log('Diagrama guardado:', response.data);
         setSaving(false);
     }
 
