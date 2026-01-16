@@ -2,7 +2,7 @@ import { useTheme } from "../../hooks/useTheme";
 import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
-import Header from "../../layout/Canvas/Header";
+import Header from "../../components/layout/Canvas/Header";
 import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";

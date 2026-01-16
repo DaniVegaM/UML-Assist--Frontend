@@ -1,8 +1,8 @@
 import { Disclosure, DisclosureButton, DisclosurePanel } from '@headlessui/react';
 import { Link, useNavigate } from 'react-router';
-import { useTheme } from '../../hooks/useTheme';
+import { useTheme } from '../../../hooks/useTheme';
 import './Header.css';
-import { getLoggedUser, clearStorage } from '../../helpers/auth';
+import { getLoggedUser, clearStorage } from '../../../helpers/auth';
 
 export default function Header() {
   const { isDarkMode, toggleTheme } = useTheme();
@@ -22,24 +22,7 @@ export default function Header() {
               <div className="flex h-16 justify-between items-center">
                 <div className="flex items-center">
                   <Link to="/" className="flex items-center space-x-2">
-                    <svg
-                      className="h-8 w-8 text-sky-600"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect x="3" y="3" width="7" height="7" />
-                      <rect x="14" y="3" width="7" height="7" />
-                      <rect x="14" y="14" width="7" height="7" />
-                      <rect x="3" y="14" width="7" height="7" />
-                      <line x1="10" y1="6.5" x2="14" y2="6.5" />
-                      <line x1="10" y1="17.5" x2="14" y2="17.5" />
-                      <line x1="6.5" y1="10" x2="6.5" y2="14" />
-                      <line x1="17.5" y1="10" x2="17.5" y2="14" />
-                    </svg>
+                    <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-8 w-8 text-sky-600" viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zm0 11h7v7h-7zM3 14h7v7H3zm7-7.5h4m-4 11h4M6.5 10v4m11-4v4"/></svg>
                     <span className="text-xl font-bold text-gray-900 dark:text-white">
                       UML Assist
                     </span>

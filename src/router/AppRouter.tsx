@@ -4,7 +4,7 @@ import { handleCallback } from "../services/authService";
 
 import type { LoaderFunctionArgs } from "react-router";
 import SignupPage from "../pages/Auth/signup/SignupPage";
-import MainLayout from "../layout/MainLayout/MainLayout";
+import MainLayout from "../components/layout/MainLayout/MainLayout";
 import ResetPasswordPage from "../pages/Auth/forgottenpassword/ResetPasswordPage";
 import ForgotPasswordPage from "../pages/Auth/forgottenpassword/ForgotPasswordPage";
 import ChangePasswordPage from "../pages/Auth/changepassword/ChangePasswordPage";
