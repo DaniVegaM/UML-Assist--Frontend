@@ -35,7 +35,7 @@ export default function LifeLine() {
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
     const { isDarkMode } = useTheme();
     const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
-    
+
     // Estado para el evento de destrucción (guarda el índice del handle que tiene la destrucción)
     const [destroyHandleIndex, setDestroyHandleIndex] = useState<number | null>(null);
 
@@ -98,7 +98,7 @@ export default function LifeLine() {
         if (action === 'destroy' && selectedHandleIndex !== null) {
             // Guardar el índice del handle con destrucción
             setDestroyHandleIndex(selectedHandleIndex);
-            
+
             // Si el handle con destrucción es el último, crear un nuevo handle para que sea el magnético
             if (selectedHandleIndex === handles.length - 1) {
                 setHandles(prev => [...prev, {
@@ -136,7 +136,7 @@ export default function LifeLine() {
         <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
             <div
                 onDoubleClick={handleDoubleClick}
-                className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+                className=" relative border border-neutral-600 dark:border-neutral-300 p-2 min-w-[200px] hover:bg-gray-200 dark:hover:bg-zinc-600 flex flex-col items-center justify-center transition-all duration-150"
             > {/*HEAD DE LA LIFELINE*/}
                 <textarea
                     ref={textareaRef}
@@ -154,11 +154,11 @@ export default function LifeLine() {
                 }
             </div>
             {/*DASHED LINE DE LA LIFELINE*/}
-            <div 
-                className="bg-transparent px-4 w-6" 
-                style={{ height: `${lifeLineHeight}px` }} 
-                onMouseMove={(evt) => { magneticHandle(evt) }} 
-                onMouseEnter={() => { setShowHandles(true) }} 
+            <div
+                className="bg-transparent px-4 w-6"
+                style={{ height: `${lifeLineHeight}px` }}
+                onMouseMove={(evt) => { magneticHandle(evt) }}
+                onMouseEnter={() => { setShowHandles(true) }}
                 onMouseLeave={() => setShowHandles(false)}
             >
                 <div className={`relative w-[1px] h-full`}
@@ -170,36 +170,36 @@ export default function LifeLine() {
                         aria-hidden="true"
                     > {/* Aspecto de dashed line */}
                     </div>
-                    
+
                     {handles.map((handle, i) => {
                         const isLastHandle = i === handles.length - 1;
                         const hasDestruction = i === destroyHandleIndex;
-                        
+
                         return (
-                            <BaseHandle 
-                                key={handle.id} 
-                                id={handle.id} 
-                                ref={isLastHandle ? setHandleRef : undefined} 
-                                showHandle={isLastHandle ? showHandles : false} 
-                                position={handle.position} 
+                            <BaseHandle
+                                key={handle.id}
+                                id={handle.id}
+                                ref={isLastHandle ? setHandleRef : undefined}
+                                showHandle={isLastHandle ? showHandles : false}
+                                position={handle.position}
                                 className={`!w-3 !h-3 ${hasDestruction ? '!opacity-0' : ''}`}
                                 onContextMenu={isLastHandle && !hasDestruction ? (e) => handleContextMenu(e, handle.id.toString(), i) : undefined}
                             />
                         );
                     })}
-                    
+
                     {isDestroyed && destroyHandleIndex !== null && handles[destroyHandleIndex] && (
-                        <div 
+                        <div
                             className="absolute left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform z-10"
                             style={{ top: `${destroyPosition! - 12}px` }}
                             onContextMenu={(e) => handleContextMenu(e, handles[destroyHandleIndex].id.toString(), destroyHandleIndex)}
                         >
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                fill="none" 
-                                viewBox="0 0 24 24" 
-                                strokeWidth="2" 
-                                stroke="currentColor" 
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="currentColor"
                                 className="w-6 h-6 text-neutral-600 dark:text-neutral-300"
                             >
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
