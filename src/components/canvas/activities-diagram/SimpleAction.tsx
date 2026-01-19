@@ -6,6 +6,16 @@ import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 
+function sameHandles(a: HandleData[], b: HandleData[]) {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (Number(a[i].id) !== Number(b[i].id)) return false;
+    if (a[i].position !== b[i].position) return false;
+  }
+  return true;
+}
+
+
 export default function SimpleAction({ data }: NodeProps) {
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
@@ -30,15 +40,24 @@ export default function SimpleAction({ data }: NodeProps) {
     handleRef.current = node;
   }, []);
 
-  // Sincronizamos handles con node.data cuando cambien
   useEffect(() => {
-    if (!nodeId) return;
-    setNodes(nodes => nodes.map(n => 
-      n.id === nodeId 
-        ? { ...n, data: { ...n.data, handles } }
-        : n
-    ));
-  }, [handles, nodeId, setNodes]);
+  if (!nodeId) return;
+
+  const next = handles.map(h => ({ id: h.id, position: h.position })) as HandleData[];
+
+  setNodes((nodes) =>
+    nodes.map((n) => {
+      if (n.id !== nodeId) return n;
+
+      const current = (n.data?.handles ?? []) as HandleData[];
+
+      if (sameHandles(current, next)) return n;
+
+      return { ...n, data: { ...n.data, handles: next } };
+    })
+  );
+}, [handles, nodeId, setNodes]);
+
 
 
   // Manejo del textarea

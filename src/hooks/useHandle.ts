@@ -1,7 +1,7 @@
 import { Position, useConnection, useNodeConnections, useNodeId, useUpdateNodeInternals, useViewport } from "@xyflow/react";
 import { useCallback, useEffect, useRef, useState } from "react"
 
-export type HandleData = { id: number; position: Position; left?: number; top?: number };
+export type HandleData = { id: number | string; position: Position; left?: number; top?: number };
 
 type useHandleProps = {
     handleRef: React.RefObject<HTMLDivElement | null>;
@@ -18,13 +18,23 @@ type useHandleProps = {
 
 const defaultHandles: HandleData[] = [{ id: 0, position: Position.Top }];
 
+function sameHandles(a: HandleData[], b: HandleData[]) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) {
+        if (Number(a[i].id) !== Number(b[i].id)) return false;
+        if (a[i].position !== b[i].position) return false;
+    }
+    return true;
+}
+
+
 export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, disableTop, disableRight, disableBottom, disableLeft, maxHandles, allowSelfConnection = false, initialHandles }: useHandleProps) {
     const [handles, setHandles] = useState<HandleData[]>(
         initialHandles && initialHandles.length > 0 ? initialHandles : defaultHandles
     );
 
     const nodeId = useNodeId();
-    const lastHandleId = handles.length - 1;
+    const lastHandleId = Number(handles[handles.length - 1]?.id ?? 0);
     const updateNodeInternals = useUpdateNodeInternals();
     const { zoom } = useViewport();
     const connection = useConnection();
@@ -35,12 +45,25 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
     // Ref para rastrear si ya creamos el handle target para self-connection
     const selfConnectionHandleCreated = useRef(false);
 
-    // Detectar cuando termina una conexión para resetear el flag
+
+    //Detectar cuando termina una conexión para resetear el flag
     useEffect(() => {
         if (!connection.inProgress) {
             selfConnectionHandleCreated.current = false;
         }
     }, [connection.inProgress]);
+
+    useEffect(() => {
+    if (!initialHandles || initialHandles.length === 0) return;
+
+    setHandles((prev) => {
+        if (sameHandles(prev, initialHandles)) return prev;
+        return initialHandles;
+    });
+    }, [initialHandles]);
+
+
+
 
     const magneticHandle = useCallback((evt: React.MouseEvent) => {
         // Si allowSelfConnection es true, permitir que el handle aparezca incluso cuando la conexión viene del mismo nodo
@@ -53,20 +76,26 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
         if (isSelfConnectionInProgress && !selfConnectionHandleCreated.current) {
             // Crear un nuevo handle para el target de la self-connection
             selfConnectionHandleCreated.current = true;
-            setHandles(handles => [...handles, {
-                id: handles.length,
-                position: Position.Right
-            }]);
+            setHandles((handles) => {
+            const maxId = handles.length ? Math.max(...handles.map(h => Number(h.id))) : -1;
+            const nextId = maxId + 1;
+            return [...handles, { id: nextId, position: Position.Right }];
+            });
+
+
             updateNodeInternals(nodeId ? nodeId : '');
             return; // Retornamos para que se actualice el handleRef al nuevo handle creado
         }
         
         if (connections.length > 0 && ((maxHandles && handles.length < maxHandles) || !maxHandles) && !isSelfConnectionInProgress) {
             // Si el ultimo handle ya tiene una conexión, se crea un nuevo handle en la posición por defecto
-            setHandles(handles => [...handles, {
-                id: handles.length,
-                position: Position.Top
-            }]);
+            setHandles((handles) => {
+            const maxId = handles.length ? Math.max(...handles.map(h => Number(h.id))) : -1;
+            const nextId = maxId + 1;
+            return [...handles, { id: nextId, position: Position.Top }];
+            });
+
+
 
             updateNodeInternals(nodeId ? nodeId : '');
             return;
@@ -144,7 +173,8 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
 
         //Actualizamos la información de la posición del handle
         setHandles(handles => handles.map(handle => {
-            if (handle.id === handles.length - 1) {
+            if (Number(handle.id) === Number(handles[handles.length - 1]?.id)) {
+
                 return {
                     ...handle,
                     position: newPos,
@@ -156,7 +186,7 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
         }));
 
         updateNodeInternals(nodeId ? nodeId : '');
-    }, [zoom, nodeId, updateNodeInternals, connection, connections, handleRef, handles.length, allowSelfConnection]);
+    }, [zoom, nodeId, updateNodeInternals, connection, connections.length, handleRef, handles.length, allowSelfConnection, maxHandles, totalConnections]);
 
     return {
         handles,
