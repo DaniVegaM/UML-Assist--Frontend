@@ -13,22 +13,41 @@ type CompactResult = { nodes: Node[]; edges: Edge[] };
 
 function getHandleIndexFromEdgeHandleId(nodeId: string, handleId?: string | null): number | null {
     if (!handleId) return null;
+
+    // debe pertenecer al nodo
     if (!handleId.startsWith(nodeId)) return null;
 
-    const pos = handleId.lastIndexOf("Handle-");
+    // soporta: _Handle-  _sourceHandle-  _targetHandle-
+    const pos =
+        handleId.lastIndexOf("_Handle-") !== -1
+        ? handleId.lastIndexOf("_Handle-") + "_Handle-".length
+        : handleId.lastIndexOf("_sourceHandle-") !== -1
+        ? handleId.lastIndexOf("_sourceHandle-") + "_sourceHandle-".length
+        : handleId.lastIndexOf("_targetHandle-") !== -1
+        ? handleId.lastIndexOf("_targetHandle-") + "_targetHandle-".length
+        : -1;
+
     if (pos === -1) return null;
 
-    const nStr = handleId.slice(pos + "Handle-".length);
+    const nStr = handleId.slice(pos);
     const n = Number(nStr);
     return Number.isFinite(n) ? n : null;
 }
 
-function replaceHandleIndex(handleId: string, newIndex: number): string {
-    const pos = handleId.lastIndexOf("Handle-");
-    if (pos === -1) return handleId;
 
-    return handleId.slice(0, pos + "Handle-".length) + String(newIndex);
+function replaceHandleIndex(handleId: string, newIndex: number): string {
+    const markers = ["_Handle-", "_sourceHandle-", "_targetHandle-"];
+
+    for (const m of markers) {
+        const pos = handleId.lastIndexOf(m);
+        if (pos !== -1) {
+        return handleId.slice(0, pos + m.length) + String(newIndex);
+        }
+    }
+
+    return handleId;
 }
+
 
 
 function ensureAtLeastOneFreeHandle(handles: HandleDataLike[], usedNew: Set<number>): HandleDataLike[] {

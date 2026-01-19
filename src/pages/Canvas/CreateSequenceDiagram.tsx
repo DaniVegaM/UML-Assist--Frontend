@@ -17,6 +17,7 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -43,7 +44,7 @@ function DiagramContent() {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
+    }, [diagram, setNodes, setEdges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -71,23 +72,33 @@ function DiagramContent() {
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
-            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
+            console.log("[SECUENCIA] onEdgesChange", changes);
+
+            setEdges((edgesSnapshot) => {
+            const nextEdges = applyEdgeChanges(changes, edgesSnapshot);
+
+            const hasRemoval = changes.some((c) => c.type === "remove");
+            if (!hasRemoval) return nextEdges;
+
+            console.log("[SECUENCIA] Edge eliminado -> compactando handles...");
+
+            let compactedEdges = nextEdges;
+
+            setNodes((nodesSnapshot) => {
+                const res = compactHandlesAfterEdgeRemoval(nodesSnapshot, nextEdges);
+                compactedEdges = res.edges;
+                return res.nodes;
+            });
+
+            return compactedEdges;
+            });
         },
-        [setEdges],
+        [setEdges, setNodes]
     );
-
-
 
     const onConnect = useCallback(
         (params: Connection) => {
             
-            // console.log("CONNECT:", {
-            //     source: params.source,
-            //     target: params.target,
-            //     sourceHandle: params.sourceHandle,
-            //     targetHandle: params.targetHandle,
-            // });
-
             const isSelfMessage = params.source === params.target;
 
             const newEdge: Edge = {
