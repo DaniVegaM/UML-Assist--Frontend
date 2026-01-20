@@ -70,7 +70,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     type: nodeType,
                     position: flowPosition,
                     data: {
-                        label: `${nodeType} node`,
+                        label: "",
                         incomingEdge: incomingEdge,
                         outgoingEdge: outgoingEdge
                     },

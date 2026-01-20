@@ -3,16 +3,17 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../variables";
 import { useHandle, type HandleData } from "../../../hooks/useHandle";
-import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
+import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
+import type { DataProps } from "../../../types/canvas";
 
-export default function CallOperation({ data }: NodeProps) {
+export default function CallOperation({ data }: DataProps) {
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(data.label || "");
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
   // Manejo de handles
@@ -35,10 +36,10 @@ export default function CallOperation({ data }: NodeProps) {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n => 
       n.id === nodeId 
-        ? { ...n, data: { ...n.data, handles } }
+        ? { ...n, data: { ...n.data, handles, label: value } }
         : n
     ));
-  }, [handles, nodeId, setNodes]);
+  }, [handles, nodeId, setNodes, value]);
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
