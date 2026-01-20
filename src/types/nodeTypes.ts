@@ -16,7 +16,6 @@ import CallBehaviorNode from "../components/canvas/activities-diagram/CallBehavi
 import Activity from "../components/canvas/activities-diagram/Activity";
 import ExceptionHandling from "../components/canvas/activities-diagram/ExceptionHandling";
 import LifeLine from "../components/canvas/sequence-diagram/LifeLine";
-import BaseFragment from "../components/canvas/sequence-diagram/BaseFragment";
 import AddLifeLineButton from "../components/canvas/sequence-diagram/AddLifeLineButton";
 import AltFragmentNode from "../components/canvas/sequence-diagram/AltFragmentNode";
 import OptFragmentNode from "../components/canvas/sequence-diagram/OptFragmentNode";
@@ -49,7 +48,6 @@ export const activitiesNodeTypes = {
 export const sequenceNodeTypes = {
   lifeLine: LifeLine,
   addLifeLineBtn: AddLifeLineButton,
-  baseFragment: BaseFragment,
   altFragment: AltFragmentNode,
   optFragment: OptFragmentNode,
   loopFragment: LoopFragmentNode,
