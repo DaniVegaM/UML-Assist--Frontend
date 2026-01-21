@@ -136,7 +136,7 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
             return;
         }
 
-        const HEADER_HEIGHT = 60; // Altura aproximada del header de la lifeline
+        const HEADER_HEIGHT = 24; // Altura aproximada del header de la lifeline
         
         // Calcular la posición de la nueva lifeline (a la derecha de la actual)
         const newLifeLineId = `lifeLine_created_${generateUniqueId()}`;
