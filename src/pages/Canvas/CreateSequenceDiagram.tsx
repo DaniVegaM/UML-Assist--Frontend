@@ -57,13 +57,18 @@ function DiagramContent() {
                 const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
 
                 //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
-                return updatedNodes.map(node => ({
-                    ...node,
-                    position: {
-                        ...node.position,
-                        y: originalYPositions.get(node.id) ?? node.position.y
+                return updatedNodes.map(node => {
+                    if (node.type === 'note') {
+                        return node;
                     }
-                }));
+                    return {
+                        ...node,
+                        position: {
+                            ...node.position,
+                            y: originalYPositions.get(node.id) ?? node.position.y
+                        }
+                    };
+                });
             });
         },
         [setNodes],
@@ -80,39 +85,38 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
-            
-            // console.log("CONNECT:", {
-            //     source: params.source,
-            //     target: params.target,
-            //     sourceHandle: params.sourceHandle,
-            //     targetHandle: params.targetHandle,
-            // });
-
+            const sourceNode = nodes.find(n => n.id === params.source);
+            const targetNode = nodes.find(n => n.id === params.target);
             const isSelfMessage = params.source === params.target;
-
+            const isNoteConnection =
+                sourceNode?.type === 'note' || targetNode?.type === 'note';
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
-                type: params.source === params.target ? "selfMessageEdge" : "messageEdge",
+                type: isNoteConnection
+                    ? 'noteEdge'
+                    : (isSelfMessage ? 'selfMessageEdge' : 'messageEdge'),
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
                 targetHandle: params.targetHandle || null,
                 data: {
                     edgeType: 'async',
-                    mustFillLabel: !isSelfMessage,
+                    mustFillLabel: !isSelfMessage && !isNoteConnection,
                 },
                 style: {
-                    strokeWidth: 2,
+                    strokeWidth: isNoteConnection ? 1.5 : 2,
                     stroke: isDarkMode ? '#FFFFFF' : '#171717',
-                    strokeDasharray: 'none'
+                    strokeDasharray: isNoteConnection ? '6 4' : 'none',
                 },
-                markerEnd: {
-                    type: MarkerType.Arrow,
-                    width: 20,
-                    height: 20,
-                    color: isDarkMode ? '#FFFFFF' : '#171717'
-                }
+                markerEnd: isNoteConnection
+                    ? undefined
+                    : {
+                        type: MarkerType.Arrow,
+                        width: 20,
+                        height: 20,
+                        color: isDarkMode ? '#FFFFFF' : '#171717'
+                    }
             };
 
             setEdges((edgesSnapshot) => {
@@ -124,8 +128,7 @@ function DiagramContent() {
             
 
         },
-        [setEdges, isDarkMode]
-
+        [setEdges, isDarkMode, nodes],
     );
 
     useEffect(() => {
