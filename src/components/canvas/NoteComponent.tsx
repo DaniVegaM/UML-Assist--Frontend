@@ -64,23 +64,8 @@ export default function NoteComponent() {
         >
             <div
                 ref={nodeRef}
-                className="
-        node-note
-        relative
-        min-w-[200px]
-        p-2
-        text-[12px]
-        border border-neutral-800
-        bg-gray-100
-        hover:bg-gray-200
-        dark:bg-neutral-800
-        dark:border-white
-        dark:hover:bg-zinc-600
-        transition-colors
-        duration-150
-      "
+                className="node-note relative min-w-[200px] p-2 text-[12px] border border-neutral-800 bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:border-white dark:hover:bg-zinc-600 transition-colors duration-150"
             >
-
                 {handles.map((handle, i) => (
                     <BaseHandle
                         key={handle.id}
