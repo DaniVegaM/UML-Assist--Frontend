@@ -15,6 +15,7 @@ import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -25,7 +26,6 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
-
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -49,7 +49,6 @@ function DiagramContent() {
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                // console.log('Nodos actuales:', nodes);
                 return nodes;
             });
         },
@@ -210,6 +209,7 @@ function DiagramContent() {
                     <DataNodeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
+                <AIChatBar type="actividades"/>
             </section>
         </div>
     )

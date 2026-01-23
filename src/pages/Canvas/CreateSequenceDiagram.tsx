@@ -17,6 +17,7 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -214,6 +215,7 @@ function DiagramContent() {
                     />
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
+                <AIChatBar type="secuencia"/>
             </section>
         </div>
     )
