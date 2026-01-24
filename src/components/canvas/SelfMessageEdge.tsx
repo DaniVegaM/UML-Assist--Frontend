@@ -85,7 +85,7 @@ export function SelfMessageEdge({
             setEdges((eds) =>
                 eds.map((e) =>
                     e.id === id
-                        ? { ...e, label: '', data: { ...(e.data || {}), labelError: null } }
+                        ? { ...e, label: '', data: { ...(e.data || {}), labelError: null, y: sourceY } }
                         : e
                 )
             );
@@ -103,7 +103,7 @@ export function SelfMessageEdge({
                         ? {
                             ...e,
                             label: trimmed, 
-                            data: { ...(e.data || {}), labelError: 'No cumple con la estructura de un mensaje válido' },
+                            data: { ...(e.data || {}), labelError: 'No cumple con la estructura de un mensaje válido', y: sourceY },
                             }
                         : e
                 )
@@ -115,7 +115,7 @@ export function SelfMessageEdge({
         setEdges((eds) =>
             eds.map((e) =>
                 e.id === id
-                    ? { ...e, label: trimmed, data: { ...(e.data || {}), labelError: null } }
+                    ? { ...e, label: trimmed, data: { ...(e.data || {}), labelError: null, y: sourceY } }
                     : e
             )
         );

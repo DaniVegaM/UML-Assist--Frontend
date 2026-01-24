@@ -71,6 +71,13 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
         const edgeId = `lost-${lifeLineId}-${handleId}-${generateUniqueId()}`;
         const sourceHandleId = `${lifeLineId}_Handle-${handleIndex}`;
 
+        // Obtener la posición Y del handle
+        const handleElement = document.querySelector(`[data-handleid="${sourceHandleId}"]`);
+        const sourceNodeElement = document.querySelector(`[data-id="${lifeLineId}"]`);
+        const handleY = handleElement && sourceNodeElement 
+            ? handleElement.getBoundingClientRect().top - sourceNodeElement.getBoundingClientRect().top + sourceNode.position.y
+            : sourceNode.position.y;
+
         const newEdge = {
             id: edgeId,
             type: 'lostMessageEdge',
@@ -78,7 +85,7 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
             target: lifeLineId, // Self-reference para que funcione
             sourceHandle: sourceHandleId,
             targetHandle: null,
-            data: { edgeType: 'lost' },
+            data: { edgeType: 'lost', y: Math.round(handleY) },
             style: {
                 strokeWidth: 2,
                 stroke: isDarkMode ? '#FFFFFF' : '#171717',
@@ -105,6 +112,13 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
         const edgeId = `found-${lifeLineId}-${handleId}-${generateUniqueId()}`;
         const targetHandleId = `${lifeLineId}_Handle-${handleIndex}`;
 
+        // Obtener la posición Y del handle
+        const handleElement = document.querySelector(`[data-handleid="${targetHandleId}"]`);
+        const targetNodeElement = document.querySelector(`[data-id="${lifeLineId}"]`);
+        const handleY = handleElement && targetNodeElement 
+            ? handleElement.getBoundingClientRect().top - targetNodeElement.getBoundingClientRect().top + targetNode.position.y
+            : targetNode.position.y;
+
         const newEdge = {
             id: edgeId,
             type: 'foundMessageEdge',
@@ -112,7 +126,7 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
             target: lifeLineId,
             sourceHandle: null,
             targetHandle: targetHandleId,
-            data: { edgeType: 'found' },
+            data: { edgeType: 'found', y: Math.round(handleY) },
             style: {
                 strokeWidth: 2,
                 stroke: isDarkMode ? '#FFFFFF' : '#171717',
@@ -183,7 +197,8 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
             target: newLifeLineId,
             sourceHandle: sourceHandleId,
             targetHandle: null,
-            data: { edgeType: 'create' },
+            label: 'new',
+            data: { edgeType: 'create', y: sourceNode.position.y + (handleElement ? (handleElement.getBoundingClientRect().top - sourceNodeElement!.getBoundingClientRect().top) : 0) },
             style: {
                 strokeWidth: 2,
                 stroke: isDarkMode ? '#FFFFFF' : '#171717',

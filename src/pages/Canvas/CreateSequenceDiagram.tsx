@@ -91,6 +91,18 @@ function DiagramContent() {
 
             const isSelfMessage = params.source === params.target;
 
+            // Obtener la posición Y del handle de origen
+            let handleY = 0;
+            if (params.sourceHandle) {
+                const sourceHandleElement = document.querySelector(`[data-handleid="${params.sourceHandle}"]`);
+                const sourceNodeElement = document.querySelector(`[data-id="${params.source}"]`);
+                if (sourceHandleElement && sourceNodeElement) {
+                    const handleRect = sourceHandleElement.getBoundingClientRect();
+                    const nodeRect = sourceNodeElement.getBoundingClientRect();
+                    handleY = handleRect.top - nodeRect.top;
+                }
+            }
+
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
@@ -102,6 +114,7 @@ function DiagramContent() {
                 data: {
                     edgeType: 'async',
                     mustFillLabel: !isSelfMessage,
+                    y: Math.round(handleY),
                 },
                 style: {
                     strokeWidth: 2,

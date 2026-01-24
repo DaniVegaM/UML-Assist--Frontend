@@ -66,12 +66,12 @@ export default function LifeLine({ data }: DataProps) {
         }
     }, [data?.handles]);
 
-    // Sincronizamos destroyHandleIndex con node.data cuando cambie
+    // Sincronizamos destroyHandleIndex y hasDestruction con node.data cuando cambie
     useEffect(() => {
         if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
-                ? { ...n, data: { ...n.data, destroyHandleIndex } }
+                ? { ...n, data: { ...n.data, destroyHandleIndex, hasDestruction: destroyHandleIndex !== null } }
                 : n
         ));
     }, [destroyHandleIndex, nodeId, setNodes]);
