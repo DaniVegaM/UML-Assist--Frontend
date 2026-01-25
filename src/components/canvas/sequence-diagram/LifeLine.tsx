@@ -2,18 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { LIFE_LINE_MAX_LEN_TEXT, LIFE_LINE_BASE_HEIGHT, LIFE_LINE_HEIGHT_PER_HANDLE } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
-import { Position, useNodeId, useReactFlow, useUpdateNodeInternals, type NodeProps } from "@xyflow/react";
+import { Position, useNodeId, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
+import type { DataProps } from "../../../types/canvas";
 
 
-export default function LifeLine({ data }: NodeProps) {
+export default function LifeLine({ data }: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const { nodes } = useSequenceDiagram();
     const nodeId = useNodeId();
@@ -43,10 +44,10 @@ export default function LifeLine({ data }: NodeProps) {
         if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
-                ? { ...n, data: { ...n.data, handles } }
+                ? { ...n, data: { ...n.data, handles, label: value } }
                 : n
         ));
-    }, [handles, nodeId, setNodes]);
+    }, [handles, nodeId, setNodes, value]);
 
     // Sincronizar handles cuando data.handles cambie (al cargar diagrama)
     useEffect(() => {
@@ -65,12 +66,12 @@ export default function LifeLine({ data }: NodeProps) {
         }
     }, [data?.handles]);
 
-    // Sincronizamos destroyHandleIndex con node.data cuando cambie
+    // Sincronizamos destroyHandleIndex y hasDestruction con node.data cuando cambie
     useEffect(() => {
         if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
-                ? { ...n, data: { ...n.data, destroyHandleIndex } }
+                ? { ...n, data: { ...n.data, destroyHandleIndex, hasDestruction: destroyHandleIndex !== null } }
                 : n
         ));
     }, [destroyHandleIndex, nodeId, setNodes]);
@@ -85,6 +86,13 @@ export default function LifeLine({ data }: NodeProps) {
             }, 0);
         }
     }, [data?.destroyHandleIndex]);
+
+    // Sincronizar label cuando data.label cambie (al cargar diagrama)
+    useEffect(() => {
+        if (data?.label !== undefined && data.label !== value && !isEditing) {
+            setValue(data.label);
+        }
+    }, [data?.label, isEditing]);
 
     // Forzar actualización de handles cuando se cargan datos con handles
     useEffect(() => {

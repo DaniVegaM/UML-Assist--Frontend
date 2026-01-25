@@ -17,6 +17,7 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -88,8 +89,20 @@ function DiagramContent() {
             const sourceNode = nodes.find(n => n.id === params.source);
             const targetNode = nodes.find(n => n.id === params.target);
             const isSelfMessage = params.source === params.target;
-            const isNoteConnection =
-                sourceNode?.type === 'note' || targetNode?.type === 'note';
+
+            // Obtener la posición Y del handle de origen
+            let handleY = 0;
+            if (params.sourceHandle) {
+                const sourceHandleElement = document.querySelector(`[data-handleid="${params.sourceHandle}"]`);
+                const sourceNodeElement = document.querySelector(`[data-id="${params.source}"]`);
+                if (sourceHandleElement && sourceNodeElement) {
+                    const handleRect = sourceHandleElement.getBoundingClientRect();
+                    const nodeRect = sourceNodeElement.getBoundingClientRect();
+                    handleY = handleRect.top - nodeRect.top;
+                }
+            }
+
+            const isNoteConnection = sourceNode?.type === 'note' || targetNode?.type === 'note';
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
@@ -103,6 +116,7 @@ function DiagramContent() {
                 data: {
                     edgeType: 'async',
                     mustFillLabel: !isSelfMessage && !isNoteConnection,
+                    y: Math.round(handleY),
                 },
                 style: {
                     strokeWidth: isNoteConnection ? 1.5 : 2,
@@ -217,6 +231,7 @@ function DiagramContent() {
                     />
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
+                <AIChatBar type="secuencia"/>
             </section>
         </div>
     )

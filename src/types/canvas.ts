@@ -52,3 +52,15 @@ export interface HeaderProps {
     nodes: Node[];
     edges: Edge[];
 }
+
+export interface DataProps{
+    data:{
+        handles: {id: number, left?: number, top?: number, position: Position}[], 
+        incomingEdge?: string, 
+        outgoingEdge?: string,
+        label?: string
+        destroyHandleIndex?: number,
+        isCreatedLifeLine?: boolean,
+        orderedHandles?: {id: string, order: number}[]
+    }
+}
