@@ -3,14 +3,6 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 
-/**
- * SeqFragmentNode - Fragmento de orden débil UML
- * 
- * Semántica: Es el orden predeterminado. Representa que los eventos en diferentes
- * líneas de vida pueden ocurrir en cualquier orden si están en operandos distintos.
- * 
- * Estructura: Múltiples operandos separados por líneas discontinuas (sin guardas obligatorias)
- */
 
 const SeqFragmentNode = ({ selected }: NodeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);

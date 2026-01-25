@@ -4,14 +4,6 @@ import { NodeResizer, type NodeProps, useReactFlow } from "@xyflow/react";
 
 const TEXT_AREA_MAX_LEN = 30;
 
-/**
- * BreakFragmentNode - Fragmento de interrupción UML
- * 
- * Semántica: Funciona como una excepción. Si la guarda es verdadera,
- * se ejecutan sus interacciones y se omite el resto del fragmento circundante.
- * 
- * Estructura: Un solo operando con una guarda (igual que opt)
- */
 const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { setNodes } = useReactFlow();

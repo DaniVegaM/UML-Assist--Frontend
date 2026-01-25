@@ -3,14 +3,6 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 
-/**
- * ParFragmentNode - Fragmento de interacción concurrente UML
- * 
- * Semántica: Define que el orden de los eventos en diferentes operandos es irrelevante
- * (pueden entrelazarse). Debe tener al menos dos operandos.
- * 
- * Estructura: Múltiples operandos separados por líneas discontinuas (sin guardas obligatorias)
- */
 
 const ParFragmentNode = ({ selected }: NodeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);

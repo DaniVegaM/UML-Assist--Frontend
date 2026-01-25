@@ -3,14 +3,6 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 
-/**
- * StrictFragmentNode - Fragmento de orden estricto UML
- * 
- * Semántica: Describe una secuencia donde el orden de los operandos en el eje vertical
- * es significativo, incluso entre diferentes líneas de vida sin intercambio de mensajes.
- * 
- * Estructura: Múltiples operandos separados por líneas discontinuas (sin guardas obligatorias)
- */
 
 const StrictFragmentNode = ({ selected }: NodeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
