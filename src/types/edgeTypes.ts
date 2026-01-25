@@ -7,6 +7,7 @@ import { SelfMessageEdge } from "../components/canvas/SelfMessageEdge";
 import { LostMessageEdge } from "../components/canvas/LostMessageEdge";
 import { FoundMessageEdge } from "../components/canvas/FoundMessageEdge";
 import { CreateLifeLineEdge } from "../components/canvas/CreateLifeLineEdge";
+import { NoteEdge } from "../components/canvas/NoteEdge";
 
 
 export const edgeTypes = {
@@ -19,4 +20,5 @@ export const edgeTypes = {
   'dataIncomingEdge': DataIncomingEdge,
   'dataOutgoingEdge': DataOutgoingEdge,
   'exceptionHandlingEdge': ExceptionHandlingEdge,
+  'noteEdge': NoteEdge,
 };

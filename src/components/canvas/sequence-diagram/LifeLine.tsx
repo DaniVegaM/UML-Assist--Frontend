@@ -202,7 +202,7 @@ export default function LifeLine({ data }: DataProps) {
         <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
             <div
                 onDoubleClick={handleDoubleClick}
-                className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+                className=" relative border border-neutral-600 dark:border-neutral-300 p-2 min-w-[200px] hover:bg-gray-200 dark:hover:bg-zinc-600 flex flex-col items-center justify-center transition-all duration-150"
             > {/*HEAD DE LA LIFELINE*/}
                 <textarea
                     ref={textareaRef}
