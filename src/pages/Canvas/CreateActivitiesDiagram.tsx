@@ -83,7 +83,19 @@ function DiagramContent() {
             let defaultLabel = '';
 
             // Definir el tipo de edge según el tipo de nodo conectado
-            if (targetNode?.type === 'dataNode') {
+            if (
+                (sourceNode?.type === 'acceptEvent' &&
+                    nodes.find(
+                        n => n.id === sourceNode.parentId && n.type === 'InterruptActivityRegion'
+                    )) ||
+                (targetNode?.type === 'acceptEvent' &&
+                    nodes.find(
+                        n => n.id === targetNode.parentId && n.type === 'InterruptActivityRegion'
+                    ))
+            ) {
+                edgeType = 'exceptionHandlingEdge';
+            }
+            else if (targetNode?.type === 'dataNode') {
                 edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
             }
             else if (sourceNode?.type === 'dataNode') {

@@ -2,6 +2,7 @@ import { useDraggable } from "@neodrag/react";
 import { useReactFlow, type XYPosition } from "@xyflow/react";
 import { useRef, useState } from "react";
 import type { DraggableNodeProps } from "../../types/canvas";
+import type { Node } from "@xyflow/react";
 
 
 export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
@@ -19,7 +20,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 return match ? parseInt(match[1], 10) : -1;
             })
             .filter(id => id >= 0);
-        
+
         const nextId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 0;
         return `${nodeType}_${nextId}`;
     };
@@ -76,10 +77,37 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     },
                     draggable: true,
                     connectable: true,
+                    style: nodeType === 'InterruptActivityRegion'
+                        ? {
+                            width: 420,
+                            height: 260,
+                        }
+                        : undefined,
                     zIndex: nodeType !== 'activity' ? 1 : -1,
                 };
 
-                await setNodes((nds) => nds.concat(newNode));
+                await setNodes((nds) => {
+                    const nodesToAdd: Node[] = [newNode as Node];
+                    if (nodeType === 'InterruptActivityRegion') {
+                        const acceptEventNode: Node = {
+                            id: `accept_${newNode.id}`,
+                            type: 'acceptEvent',
+                            parentId: newNode.id,
+                            extent: 'parent',
+                            position: { x: 260, y: 180 },
+                            data: {},
+                            draggable: true,
+                            connectable: true,
+                            zIndex: 2,
+                        };
+
+
+                        nodesToAdd.push(acceptEventNode);
+                    }
+
+                    return nds.concat(nodesToAdd);
+                });
+
 
                 // Si se esta soltando sobre un activity node, hacer que sea hijo de este 
                 await new Promise(resolve => setTimeout(resolve, 50));
@@ -88,19 +116,27 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 if (!currentNode) return;
                 const intersections = getIntersectingNodes(currentNode).map((n) => n.id);
 
-                if (currentNode.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
-                    setNodes((nds) => nds.map(node => {
-                        if (node.id === currentNode.id) {
-                            return {
-                                ...node,
-                                parentId: intersections.find(nodeId => nodeId.startsWith('activity')) || undefined,
-                                extent: 'parent',
+                const parentRegionId = intersections.find(nodeId =>
+                    nodeId.startsWith('activity') ||
+                    nodeId.startsWith('InterruptActivityRegion')
+                );
+                if (
+                    currentNode.type !== 'activity' &&
+                    currentNode.type !== 'InterruptActivityRegion' &&
+                    parentRegionId
+                ) {
+                    setNodes((nds) =>
+                        nds.map((node) => {
+                            if (node.id === currentNode.id) {
+                                return {
+                                    ...node,
+                                    parentId: parentRegionId,
+                                    extent: 'parent',
+                                };
                             }
-                        }
-                        else {
                             return node;
-                        }
-                    }));
+                        })
+                    );
                 }
             }
         },

@@ -214,6 +214,44 @@ export const ACTIVITY_NODES = [
         grouped: true,
     },
     {
+        svg: (
+            <svg
+                className="w-full h-full text-neutral-800 dark:text-white"
+                width="48"
+                height="48"
+                viewBox="0 0 50 50"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <rect
+                    x="1"
+                    y="1"
+                    width="48"
+                    height="48"
+                    rx="2"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeDasharray="2 2"
+                    vectorEffect="non-scaling-stroke"
+                />
+
+                <path
+                    d="M29.7928 44.0334L33.9561 38.0484L29.6149 32.191L43.222 31.9866C43.6731 31.9798 44.1084 32.1516 44.4321 32.4641C44.7559 32.7765 44.9415 33.2041 44.9483 33.6528L45.0754 42.1117C45.0821 42.5604 44.9094 42.9934 44.5951 43.3154C44.2809 43.6375 43.851 43.8222 43.3999 43.829L29.7928 44.0334Z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    fill="none"
+                    vectorEffect="non-scaling-stroke"
+                />
+            </svg>
+
+        ),
+        nodeType: 'InterruptActivityRegion',
+        label: 'Región interrumpible',
+    },
+    {
         separator: 'Flujo de objetos',
         svg: '',
         nodeType: '',
