@@ -1,6 +1,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
+import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 
 /**
  * StrictFragmentNode - Fragmento de orden estricto UML
@@ -11,78 +12,50 @@ import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
  * Estructura: Múltiples operandos separados por líneas discontinuas (sin guardas obligatorias)
  */
 
-interface StrictFragmentData {
-  action?: 'addSeparator' | 'removeSeparator';
-  separatorCount?: number;
-  [key: string]: unknown;
-}
-
-const StrictFragmentNode = ({ id, selected, data }: NodeProps) => {
+const StrictFragmentNode = ({ selected }: NodeProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [separators, setSeparators] = useState<number[]>([]);
   const [separatorPositions, setSeparatorPositions] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
-  const { setNodes, getZoom } = useReactFlow();
+  const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+  const { setIsZoomOnScrollEnabled } = useCanvas();
+  const { getZoom } = useReactFlow();
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    openContextMenu({
-      x: e.clientX,
-      y: e.clientY,
-      nodeId: id
+    setContextMenuEvent(e.nativeEvent);
+  }, []);
+
+  // Handler para cerrar el menú contextual
+  const closeContextMenu = useCallback(() => {
+    setContextMenuEvent(null);
+  }, []);
+
+  // Handler para agregar separador
+  const addSeparator = useCallback(() => {
+    setSeparators(prev => [...prev, prev.length + 1]);
+    setSeparatorPositions(prev => {
+      const containerHeight = containerRef.current?.clientHeight || 0;
+      const newPosition = containerHeight / (prev.length + 2) * (prev.length + 1);
+      return [...prev, newPosition];
     });
-  }, [id, openContextMenu]);
+    closeContextMenu();
+  }, [closeContextMenu]);
 
-  // Ref para evitar procesar la misma acción múltiples veces
-  const lastProcessedAction = useRef<string | null>(null);
-
-  // Escuchar cambios desde el menú contextual
-  useEffect(() => {
-    const nodeData = data as StrictFragmentData;
-    const currentAction = nodeData?.action;
-    
-    if (!currentAction || lastProcessedAction.current === currentAction) {
-      return;
-    }
-    
-    lastProcessedAction.current = currentAction;
-    
-    if (currentAction === 'addSeparator') {
-      setSeparators(prev => [...prev, prev.length + 1]);
-      setSeparatorPositions(prev => {
-        const containerHeight = containerRef.current?.clientHeight || 0;
-        const newPosition = containerHeight / (prev.length + 2) * (prev.length + 1);
-        return [...prev, newPosition];
-      });
-    } else if (currentAction === 'removeSeparator') {
-      setSeparators(prev => {
-        if (prev.length > 0) return prev.slice(0, -1);
-        return prev;
-      });
-      setSeparatorPositions(prev => {
-        if (prev.length > 0) return prev.slice(0, -1);
-        return prev;
-      });
-    }
-    
-    setNodes(nodes => nodes.map(n => 
-      n.id === id ? { ...n, data: { ...n.data, action: undefined } } : n
-    ));
-    
-    setTimeout(() => {
-      lastProcessedAction.current = null;
-    }, 100);
-  }, [data, id, setNodes]);
-
-  // Sincronizar separatorCount con el estado actual
-  useEffect(() => {
-    setNodes(nodes => nodes.map(n => 
-      n.id === id ? { ...n, data: { ...n.data, separatorCount: separators.length } } : n
-    ));
-  }, [separators.length, id, setNodes]);
+  // Handler para eliminar separador
+  const removeSeparator = useCallback(() => {
+    setSeparators(prev => {
+      if (prev.length > 0) return prev.slice(0, -1);
+      return prev;
+    });
+    setSeparatorPositions(prev => {
+      if (prev.length > 0) return prev.slice(0, -1);
+      return prev;
+    });
+    closeContextMenu();
+  }, [closeContextMenu]);
 
   const handleMouseDown = useCallback((index: number) => (e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -223,6 +196,50 @@ const StrictFragmentNode = ({ id, selected, data }: NodeProps) => {
           </div>
         ))}
       </div>
+
+      {/* Menú contextual */}
+      {contextMenuEvent && (
+        <ContextMenuPortal event={contextMenuEvent} onClose={closeContextMenu}>
+          <div
+            className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[180px] overflow-hidden"
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-neutral-700">
+              Fragmento Strict
+            </div>
+            <div className="flex flex-col">
+              <div
+                onClick={addSeparator}
+                className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-sky-100 dark:hover:bg-sky-700 transition-colors flex items-center gap-2"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                </svg>
+                Agregar operando
+              </div>
+              <div className="border-t border-gray-200 dark:border-neutral-700"></div>
+              <div
+                onClick={separators.length > 0 ? removeSeparator : undefined}
+                className={`px-4 py-2 text-sm flex items-center gap-2 transition-colors ${
+                  separators.length > 0
+                    ? 'cursor-pointer dark:text-white hover:bg-sky-100 dark:hover:bg-sky-700'
+                    : 'cursor-not-allowed text-gray-400 dark:text-gray-600'
+                }`}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+                Eliminar operando
+                {separators.length > 0 && (
+                  <span className="ml-auto text-xs text-gray-500 dark:text-gray-400">
+                    ({separators.length})
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </ContextMenuPortal>
+      )}
     </div>
   )
 }
