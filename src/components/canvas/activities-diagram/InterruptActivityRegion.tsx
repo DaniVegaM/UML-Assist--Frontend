@@ -1,5 +1,5 @@
 import { NodeResizer, useNodeId, useReactFlow } from "@xyflow/react";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import "../styles/nodeStyles.css";
 
@@ -7,9 +7,12 @@ export default function InterruptActivityRegion() {
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const nodeId = useNodeId();
     const { getNode } = useReactFlow();
-
+    const [isHovered, setIsHovered] = useState(false);
+    
     const node = getNode(nodeId!);
     const isSelected = node?.selected ?? false;
+    
+    const showResizer = isSelected || isHovered;
 
     const onMouseDown = useCallback(() => {
         setIsZoomOnScrollEnabled(false);
@@ -21,6 +24,8 @@ export default function InterruptActivityRegion() {
 
     return (
         <div
+            onMouseEnter={() => setIsHovered(true)} 
+            onMouseLeave={() => setIsHovered(false)}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
             className="interruptible-region"
@@ -34,7 +39,8 @@ export default function InterruptActivityRegion() {
             <NodeResizer
                 minWidth={200}
                 minHeight={150}
-                isVisible={isSelected}
+                isVisible={showResizer}
+                shouldResize={() => true}
                 handleStyle={{
                     width: 36,
                     height: 36,
