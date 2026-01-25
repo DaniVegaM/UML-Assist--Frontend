@@ -20,6 +20,7 @@ import BaseFragment from "../components/canvas/sequence-diagram/BaseFragment";
 import AddLifeLineButton from "../components/canvas/sequence-diagram/AddLifeLineButton";
 import NoteNode from "../components/canvas/NoteComponent";
 import NoteComponent from "../components/canvas/NoteComponent";
+import InterruptActivityRegion from "../components/canvas/activities-diagram/InterruptActivityRegion";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -39,7 +40,8 @@ export const activitiesNodeTypes = {
   connectorNode: ConnectorNode,
   callBehavior: CallBehaviorNode,
   exceptionHandling: ExceptionHandling,
-  note: NoteNode
+  note: NoteNode,
+  InterruptActivityRegion: InterruptActivityRegion
 };
 
 export const sequenceNodeTypes = {
