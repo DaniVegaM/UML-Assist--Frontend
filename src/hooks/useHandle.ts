@@ -23,6 +23,9 @@ export function sameHandles(a: HandleData[], b: HandleData[]) {
     for (let i = 0; i < a.length; i++) {
         if (Number(a[i].id) !== Number(b[i].id)) return false;
         if (a[i].position !== b[i].position) return false;
+
+        if ((a[i].left ?? null) !== (b[i].left ?? null)) return false;
+        if ((a[i].top ?? null) !== (b[i].top ?? null)) return false;
     }
     return true;
 }
@@ -178,8 +181,8 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
                 return {
                     ...handle,
                     position: newPos,
-                    left: parseFloat(newX) || undefined,
-                    top: parseFloat(newY) || undefined,
+                    left: Number.isFinite(parseFloat(newX)) ? parseFloat(newX) : undefined,
+                    top: Number.isFinite(parseFloat(newY)) ? parseFloat(newY) : undefined,  
                 };
             }
             return handle;

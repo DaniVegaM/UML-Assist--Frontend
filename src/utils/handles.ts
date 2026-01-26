@@ -35,21 +35,6 @@ function getHandleIndexFromEdgeHandleId(nodeId: string, handleId?: string | null
 }
 
 
-function replaceHandleIndex(handleId: string, newIndex: number): string {
-    const markers = ["_Handle-", "_sourceHandle-", "_targetHandle-"];
-
-    for (const m of markers) {
-        const pos = handleId.lastIndexOf(m);
-        if (pos !== -1) {
-        return handleId.slice(0, pos + m.length) + String(newIndex);
-        }
-    }
-
-    return handleId;
-}
-
-
-
 function ensureAtLeastOneFreeHandle(handles: HandleDataLike[], usedNew: Set<number>): HandleDataLike[] {
     const allUsed = handles.every(h => usedNew.has(Number(h.id)));
     if (!allUsed) return handles;
@@ -58,7 +43,7 @@ function ensureAtLeastOneFreeHandle(handles: HandleDataLike[], usedNew: Set<numb
     const nextId = String((Number.isFinite(maxId) ? maxId : handles.length - 1) + 1);
 
     const last = handles[handles.length - 1];
-    return [...handles, { ...last, id: nextId }];
+    return [...handles, { ...last, id: nextId, left: undefined, top: undefined }];
 }
 
 
@@ -67,7 +52,7 @@ export function compactHandlesAfterEdgeRemoval(nodes: Node[], edges: Edge[]): Co
     console.log("Nodos antes:", nodes);
     console.log("Edges antes:", edges);
 
-    let nextEdges = [...edges];
+    const nextEdges = edges;
     const nextNodes = nodes.map((node) => {
         const nodeId = node.id;
         const handles: HandleDataLike[] | undefined = node.data?.handles;
@@ -87,71 +72,45 @@ export function compactHandlesAfterEdgeRemoval(nodes: Node[], edges: Edge[]): Co
             }
         }
 
-        //Filtrar handles: conservamos los usados y (por seguridad) el 0
+        //indices usados (ya lo tienes en usedOld)
+
+        //Conserva los usados y el 0, pero NO cambies ids
         const indexed = handles
         .map((h) => ({ h, oldIndex: Number(h.id) }))
         .filter((x) => Number.isFinite(x.oldIndex));
 
         const kept = indexed
         .filter(({ oldIndex }) => usedOld.has(oldIndex) || oldIndex === 0)
-        .sort((a, b) => a.oldIndex - b.oldIndex);
+        .sort((a, b) => a.oldIndex - b.oldIndex)
+        .map(({ h }) => h);
 
-        // Si por alguna razón se quedó vacío, dejamos el primero original
-        const safeKept = kept.length > 0 ? kept : indexed.slice(0, 1);
+        //Si por alguna razón quedó vacío, deja el primero
+        const safeKept = kept.length > 0 ? kept : [handles[0]];
 
-        //Reindexar consecutivo y construir mapa old->new
-        const oldToNew = new Map<number, number>();
-        const reindexed: HandleDataLike[] = safeKept.map(({ h, oldIndex }, newIndex) => {
-            oldToNew.set(oldIndex, newIndex);
-            return { ...h, id: String(newIndex) };
-        });
-
-        //Remapear edges que apunten a este nodeId
-        nextEdges = nextEdges.map((e) => {
-            let changed = false;
-            const upd: Edge = { ...e };
-
-            if (upd.source === nodeId) {
-                const oldIdx = getHandleIndexFromEdgeHandleId(nodeId, upd.sourceHandle);
-                if (oldIdx !== null && oldToNew.has(oldIdx) && upd.sourceHandle) {
-                    upd.sourceHandle = replaceHandleIndex(upd.sourceHandle, oldToNew.get(oldIdx)!);
-                    changed = true;
-                }
-            }
-
-            if (upd.target === nodeId) {
-                const oldIdx = getHandleIndexFromEdgeHandleId(nodeId, upd.targetHandle);
-                if (oldIdx !== null && oldToNew.has(oldIdx) && upd.targetHandle) {
-                    upd.targetHandle = replaceHandleIndex(upd.targetHandle, oldToNew.get(oldIdx)!);
-                    changed = true;
-                }
-            }
-
-        return changed ? upd : e;
-        });
-
-        //asegurar que exista un handle libre al final
-        const usedNew = new Set<number>();
+        // Asegura que exista un handle libre (sin reindexar)
+        const usedIds = new Set<number>();
         for (const e of nextEdges) {
-            if (e.source === nodeId) {
-                const idx = getHandleIndexFromEdgeHandleId(nodeId, e.sourceHandle);
-                if (idx !== null) usedNew.add(idx);
-            }
-            if (e.target === nodeId) {
-                const idx = getHandleIndexFromEdgeHandleId(nodeId, e.targetHandle);
-                if (idx !== null) usedNew.add(idx);
-            }
+        if (e.source === nodeId) {
+            const idx = getHandleIndexFromEdgeHandleId(nodeId, e.sourceHandle);
+            if (idx !== null) usedIds.add(idx);
+        }
+        if (e.target === nodeId) {
+            const idx = getHandleIndexFromEdgeHandleId(nodeId, e.targetHandle);
+            if (idx !== null) usedIds.add(idx);
+        }
         }
 
-        const finalHandles = ensureAtLeastOneFreeHandle(reindexed, usedNew);
+        //reutiliza el helper pero ajustado a ids reales
+        const finalHandles = ensureAtLeastOneFreeHandle(safeKept, usedIds);
 
         return {
-            ...node,
-            data: {
-                ...node.data,
-                handles: finalHandles,
-            },
+        ...node,
+        data: {
+            ...node.data,
+            handles: finalHandles,
+        },
         };
+
     });
 
     console.log("Nodos después:", nextNodes);

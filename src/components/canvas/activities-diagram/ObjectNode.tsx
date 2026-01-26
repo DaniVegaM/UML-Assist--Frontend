@@ -32,17 +32,30 @@ export default function ObjectNode({ data }: NodeProps) {
 
     useEffect(() => {
         if (!nodeId) return;
-        const next = handles.map(h => ({ id: h.id, position: h.position }));
+        const next: HandleData[] = handles.map(h => ({
+            id: h.id,
+            position: h.position,
+            left: h.left,
+            top: h.top,
+        }));
 
         setNodes(nodes =>
             nodes.map(n => {
                 if (n.id !== nodeId) return n;
-                const current = (n.data?.handles ?? []) as { id: any; position: any }[];
+                const current = (n.data?.handles ?? []) as HandleData[];
                 if (sameHandles(current, next)) return n;
                 return { ...n, data: { ...n.data, handles: next } };
             })
         );
-    }, [handles, nodeId, setNodes]);
+    }, [
+        handles.length,
+        handles[handles.length - 1]?.position,
+        handles[handles.length - 1]?.left,
+        handles[handles.length - 1]?.top,
+        nodeId,
+        setNodes
+        ]);
+
 
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {

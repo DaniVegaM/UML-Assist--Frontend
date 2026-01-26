@@ -35,7 +35,13 @@ export default function SimpleAction({ data }: NodeProps) {
   useEffect(() => {
   if (!nodeId) return;
 
-  const next = handles.map(h => ({ id: h.id, position: h.position })) as HandleData[];
+  const next: HandleData[] = handles.map(h => ({
+    id: h.id,
+    position: h.position,
+    left: h.left,
+    top: h.top,
+  }));
+
 
   setNodes((nodes) =>
     nodes.map((n) => {
@@ -48,7 +54,15 @@ export default function SimpleAction({ data }: NodeProps) {
       return { ...n, data: { ...n.data, handles: next } };
     })
   );
-}, [handles, nodeId, setNodes]);
+}, [
+  handles.length,
+  handles[handles.length - 1]?.position,
+  handles[handles.length - 1]?.left,
+  handles[handles.length - 1]?.top,
+  nodeId,
+  setNodes
+]);
+
 
 
 
