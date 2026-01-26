@@ -2,18 +2,9 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
-import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
 import "../styles/nodeStyles.css";
-
-function sameHandles(a: { id: any; position: any }[], b: { id: any; position: any }[]) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) {
-        if (Number(a[i].id) !== Number(b[i].id)) return false;
-        if (a[i].position !== b[i].position) return false;
-    }
-    return true;
-}
+import { useHandle, sameHandles, type HandleData } from "../../../hooks/useHandle";
 
 
 export default function ObjectNode({ data }: NodeProps) {
@@ -51,7 +42,7 @@ export default function ObjectNode({ data }: NodeProps) {
                 return { ...n, data: { ...n.data, handles: next } };
             })
         );
-    }, [handles.length, nodeId, setNodes]);
+    }, [handles, nodeId, setNodes]);
 
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {

@@ -2,18 +2,10 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../variables";
-import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
 import "../styles/nodeStyles.css";
+import { useHandle, sameHandles, type HandleData } from "../../../hooks/useHandle";
 
-function sameHandles(a: HandleData[], b: HandleData[]) {
-  if (a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (Number(a[i].id) !== Number(b[i].id)) return false;
-    if (a[i].position !== b[i].position) return false;
-  }
-  return true;
-}
 
 
 export default function SimpleAction({ data }: NodeProps) {

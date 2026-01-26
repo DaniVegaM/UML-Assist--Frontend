@@ -18,7 +18,7 @@ type useHandleProps = {
 
 const defaultHandles: HandleData[] = [{ id: 0, position: Position.Top }];
 
-function sameHandles(a: HandleData[], b: HandleData[]) {
+export function sameHandles(a: HandleData[], b: HandleData[]) {
     if (a.length !== b.length) return false;
     for (let i = 0; i < a.length; i++) {
         if (Number(a[i].id) !== Number(b[i].id)) return false;
