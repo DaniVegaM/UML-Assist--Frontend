@@ -17,6 +17,7 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
@@ -44,7 +45,7 @@ function DiagramContent() {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
+    }, [diagram, setNodes, setEdges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -77,17 +78,36 @@ function DiagramContent() {
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
-            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
+            console.log("[SECUENCIA] onEdgesChange", changes);
+
+            setEdges((edgesSnapshot) => {
+            const nextEdges = applyEdgeChanges(changes, edgesSnapshot);
+
+            const hasRemoval = changes.some((c) => c.type === "remove");
+            if (!hasRemoval) return nextEdges;
+
+            console.log("[SECUENCIA] Edge eliminado -> compactando handles...");
+
+            let compactedEdges = nextEdges;
+
+            setNodes((nodesSnapshot) => {
+                const res = compactHandlesAfterEdgeRemoval(nodesSnapshot, nextEdges);
+                compactedEdges = res.edges;
+                return res.nodes;
+            });
+
+            return compactedEdges;
+            });
         },
-        [setEdges],
+        [setEdges, setNodes]
     );
-
-
 
     const onConnect = useCallback(
         (params: Connection) => {
+
             const sourceNode = nodes.find(n => n.id === params.source);
             const targetNode = nodes.find(n => n.id === params.target);
+
             const isSelfMessage = params.source === params.target;
 
             // Obtener la posición Y del handle de origen

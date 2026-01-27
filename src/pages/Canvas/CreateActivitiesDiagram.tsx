@@ -15,7 +15,9 @@ import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
+
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -57,9 +59,25 @@ function DiagramContent() {
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
-            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
+            console.log("onEdgesChange", changes);
+
+            setEdges((edgesSnapshot) => {
+                let nextEdges = applyEdgeChanges(changes, edgesSnapshot);
+
+                const hasRemoval = changes.some((c) => c.type === "remove");
+                if (hasRemoval) {
+                    console.log("Edge eliminado, compactando handles...");
+
+                    setNodes((nodesSnapshot) => {
+                        const res = compactHandlesAfterEdgeRemoval(nodesSnapshot, nextEdges);
+                        nextEdges = res.edges;
+                        return res.nodes;
+                    });
+                }
+                return nextEdges;
+            });
         },
-        [],
+        []
     );
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {

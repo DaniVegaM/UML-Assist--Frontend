@@ -6,7 +6,7 @@ import { Position, useNodeId, useReactFlow, useUpdateNodeInternals } from "@xyfl
 import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
-import { useHandle, type HandleData } from "../../../hooks/useHandle";
+import { useHandle, sameHandles, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 
@@ -39,42 +39,57 @@ export default function LifeLine({ data }: DataProps) {
         handleRef.current = node;
     }, []);
 
-    // Sincronizamos handles con node.data cuando cambien (solo si no estamos sincronizando desde data)
     useEffect(() => {
         if (!nodeId || isSyncingFromData.current) return;
-        setNodes(nodes => nodes.map(n =>
-            n.id === nodeId
-                ? { ...n, data: { ...n.data, handles, label: value } }
-                : n
-        ));
+
+        const next: HandleData[] = handles.map(h => ({
+            id: h.id,
+            position: h.position,
+            left: h.left,
+            top: h.top,
+        }));
+
+        setNodes(prev =>
+            prev.map(n => {
+            if (n.id !== nodeId) return n;
+
+            const current = (n.data?.handles ?? []) as HandleData[];
+
+            // si no cambió nada (handles + label), no actualizamos
+            if (sameHandles(current, next) && n.data?.label === value) return n;
+
+            return { ...n, data: { ...n.data, handles: next, label: value } };
+            })
+        );
     }, [handles, nodeId, setNodes, value]);
 
-    // Sincronizar handles cuando data.handles cambie (al cargar diagrama)
-    useEffect(() => {
-        if (data?.handles && data.handles.length > 0) {
-            // Comparar si los handles son diferentes antes de actualizar
-            const currentHandlesStr = JSON.stringify(handles);
-            const dataHandlesStr = JSON.stringify(data.handles);
-            if (currentHandlesStr !== dataHandlesStr) {
-                isSyncingFromData.current = true;
-                setHandles(data.handles as HandleData[]);
-                // Reset flag después de un ciclo de renderizado
-                setTimeout(() => {
-                    isSyncingFromData.current = false;
-                }, 0);
-            }
-        }
-    }, [data?.handles]);
 
-    // Sincronizamos destroyHandleIndex y hasDestruction con node.data cuando cambie
+    useEffect(() => {
+        const incoming = (data?.handles ?? []) as HandleData[];
+        if (!incoming.length) return;
+
+        const a = JSON.stringify(handles);
+        const b = JSON.stringify(incoming);
+        if (a === b) return;
+
+        isSyncingFromData.current = true;
+        setHandles(incoming);
+
+        setTimeout(() => {
+            isSyncingFromData.current = false;
+        }, 0);
+    }, [data?.handles, handles, setHandles]);
+
+
     useEffect(() => {
         if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
-                ? { ...n, data: { ...n.data, destroyHandleIndex, hasDestruction: destroyHandleIndex !== null } }
-                : n
+            ? { ...n, data: { ...n.data, destroyHandleIndex, hasDestruction: destroyHandleIndex !== null } }
+            : n
         ));
     }, [destroyHandleIndex, nodeId, setNodes]);
+
 
     // Sincronizar destroyHandleIndex cuando data.destroyHandleIndex cambie (al cargar diagrama)
     useEffect(() => {
@@ -173,6 +188,7 @@ export default function LifeLine({ data }: DataProps) {
                     top: undefined,
                     left: undefined
                 }]);
+
                 updateNodeInternals(nodeId || '');
             }
         } else if (action === 'default') {
