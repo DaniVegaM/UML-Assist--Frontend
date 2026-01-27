@@ -34,7 +34,7 @@ export function FoundMessageEdge({
         setEdges((currentEdges) =>
             currentEdges.map((e) => {
                 if (e.id === id) {
-                    return { ...e, label: trimmedLabel };
+                    return { ...e, label: trimmedLabel, data: { ...(e.data || {}), y: targetY } };
                 }
                 return e;
             })

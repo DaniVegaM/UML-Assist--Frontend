@@ -1,16 +1,17 @@
 import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
-import { useInternalNode, useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
+import { useInternalNode, useNodeId, useReactFlow } from "@xyflow/react";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
 import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
+import type { DataProps } from "../../../types/canvas";
 
-export default function DataNode({ data }: NodeProps) {
+export default function DataNode({ data }: DataProps) {
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(data.label || "");
     const nodeId = useNodeId();
     const node = useInternalNode(nodeId ? nodeId : '');
     const { setNodes } = useReactFlow();
@@ -35,10 +36,10 @@ export default function DataNode({ data }: NodeProps) {
         if (!nodeId) return;
         setNodes(nodes => nodes.map(n => 
             n.id === nodeId 
-                ? { ...n, data: { ...n.data, handles } }
+                ? { ...n, data: { ...n.data, handles, label: value } }
                 : n
         ));
-    }, [handles, nodeId, setNodes]);
+    }, [handles, nodeId, setNodes, value]);
 
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {

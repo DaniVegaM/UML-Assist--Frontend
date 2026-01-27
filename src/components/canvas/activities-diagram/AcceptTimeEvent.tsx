@@ -1,19 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Position } from "@xyflow/react";
+import { Position, useNodeId, useReactFlow } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../variables";
 import { useTheme } from "../../../hooks/useTheme";
 import "../styles/nodeStyles.css";
+import type { DataProps } from "../../../types/canvas";
 
 
-export default function AcceptTimeEvent() {
+export default function AcceptTimeEvent({data}: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(data.label || '');
     const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
     const [showSourceHandle, setShowSourceHandle] = useState(true);
     const { isDarkMode } = useTheme();
+    const { setNodes } = useReactFlow();
+    const nodeId = useNodeId();
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -29,6 +32,15 @@ export default function AcceptTimeEvent() {
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     }, [value]);
+
+    useEffect(() => {
+        if (!nodeId) return;
+        setNodes(nodes => nodes.map(n =>
+            n.id === nodeId
+                ? { ...n, data: { ...n.data, label: value } }
+                : n
+        ));
+    }, [nodeId, setNodes, value]);
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {

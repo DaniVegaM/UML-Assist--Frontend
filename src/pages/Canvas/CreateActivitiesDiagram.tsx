@@ -16,6 +16,7 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
+import AIChatBar from "../../components/canvas/AIChatBar";
 
 
 function DiagramContent() {
@@ -27,7 +28,6 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
-
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -51,7 +51,6 @@ function DiagramContent() {
         (changes: NodeChange[]) => {
             setNodes((nodesSnapshot) => {
                 const nodes = applyNodeChanges(changes, nodesSnapshot)
-                // console.log('Nodos actuales:', nodes);
                 return nodes;
             });
         },
@@ -102,7 +101,19 @@ function DiagramContent() {
             let defaultLabel = '';
 
             // Definir el tipo de edge según el tipo de nodo conectado
-            if (targetNode?.type === 'dataNode') {
+            if (
+                (sourceNode?.type === 'acceptEvent' &&
+                    nodes.find(
+                        n => n.id === sourceNode.parentId && n.type === 'InterruptActivityRegion'
+                    )) ||
+                (targetNode?.type === 'acceptEvent' &&
+                    nodes.find(
+                        n => n.id === targetNode.parentId && n.type === 'InterruptActivityRegion'
+                    ))
+            ) {
+                edgeType = 'exceptionHandlingEdge';
+            }
+            else if (targetNode?.type === 'dataNode') {
                 edgeType = targetNode?.data?.incomingEdge || 'dataIncomingEdge';
             }
             else if (sourceNode?.type === 'dataNode') {
@@ -110,6 +121,12 @@ function DiagramContent() {
             }
             else if (targetNode?.type === 'exceptionHandling') {
                 edgeType = 'exceptionHandlingEdge';
+            }
+            else if (
+                sourceNode?.type === 'note' ||
+                targetNode?.type === 'note'
+            ) {
+                edgeType = 'noteEdge';
             }
             else {
                 edgeType = 'labeledEdge'; // tipo por defecto
@@ -149,18 +166,21 @@ function DiagramContent() {
                     ...edge.style,
                     stroke: isDarkMode ? '#FFFFFF' : '#171717',
                 },
-                markerEnd: {
-                    type: 'arrow',
-                    width: 15,
-                    height: 15,
-                    color: isDarkMode ? '#A1A1AA' : '#52525B'
-                },
+                markerEnd:
+                    edge.type === 'noteEdge'
+                        ? undefined
+                        : {
+                            type: 'arrow',
+                            width: 15,
+                            height: 15,
+                            color: isDarkMode ? '#A1A1AA' : '#52525B'
+                        },
                 labelStyle: {
-                    fill: isDarkMode ? '#FFFFFF' : '#171717', // Color del texto
+                    fill: isDarkMode ? '#FFFFFF' : '#171717',
                     fontWeight: 600,
                 },
                 labelBgStyle: {
-                    fill: isDarkMode ? '#18181B' : '#F3F4F6', // Color del fondo
+                    fill: isDarkMode ? '#18181B' : '#F3F4F6',
                     fillOpacity: 0.8,
                 },
                 labelBgPadding: [4, 4],
@@ -228,6 +248,7 @@ function DiagramContent() {
                     <DataNodeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
+                <AIChatBar type="actividades"/>
             </section>
         </div>
     )

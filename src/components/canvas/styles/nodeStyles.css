@@ -149,3 +149,84 @@
 .char-counter-left {
   @apply text-left;
 }
+
+
+.node-note {
+  clip-path: polygon(0 0,
+      calc(100% - 14px) 0,
+      100% 14px,
+      100% 100%,
+      0 100%);
+}
+
+.node-note:hover {
+  background: #e5e7eb;
+}
+
+.dark .node-note:hover {
+  background: #52525b;
+}
+
+.node-note::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 14px;
+  height: 14px;
+
+  border-left: 1px solid #262626;
+  border-bottom: 1px solid #262626;
+
+  pointer-events: none;
+}
+
+.dark .node-note::before {
+  border-color: #ffffff;
+}
+
+.node-note::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 14px;
+  height: 14px;
+
+  background: linear-gradient(225deg,
+      transparent 40%,
+      #262626 40%,
+      #262626 53%,
+      transparent 0%);
+
+  clip-path: polygon(100% 0, 0 0, 100% 100%);
+  pointer-events: none;
+}
+
+.dark .node-note::after {
+  background: linear-gradient(225deg,
+      transparent 40%,
+      #ffffff 40%,
+      #ffffff 53%,
+      transparent 0%);
+}
+
+.interruptible-region {
+  border: 2px dashed #52525b;
+  background: transparent;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.dark .interruptible-region {
+  border-color: #d4d4d8;
+}
+
+.interruptible-region.selected {
+  box-shadow: 0 0 0 1px #71717a;
+}
+
+.dark .interruptible-region.selected {
+  box-shadow: 0 0 0 1px #e4e4e7;
+}

@@ -67,3 +67,13 @@ export const deleteDiagram = async (id: number) => {
     }
 };
 
+export const reviewDiagramWithAI = async (intermediateLanguage: string) => {
+    try {
+        const response = await api.post(`api/ai/review-diagram/`, intermediateLanguage);
+        return response;
+    } catch (error) {
+        console.error("Error al revisar el diagrama:", error);
+        throw error;
+    }
+};
+

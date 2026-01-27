@@ -18,6 +18,9 @@ import ExceptionHandling from "../components/canvas/activities-diagram/Exception
 import LifeLine from "../components/canvas/sequence-diagram/LifeLine";
 import BaseFragment from "../components/canvas/sequence-diagram/BaseFragment";
 import AddLifeLineButton from "../components/canvas/sequence-diagram/AddLifeLineButton";
+import NoteNode from "../components/canvas/NoteComponent";
+import NoteComponent from "../components/canvas/NoteComponent";
+import InterruptActivityRegion from "../components/canvas/activities-diagram/InterruptActivityRegion";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -27,7 +30,7 @@ export const activitiesNodeTypes = {
   acceptEvent: AcceptEvent,
   acceptTimeEvent: AcceptTimeEvent,
   sendSignal: SendSignal,
-  callOperation : CallOperation,
+  callOperation: CallOperation,
   initialNode: InitialNode,
   finalNode: FinalNode,
   finalFlowNode: FinalFlowNode,
@@ -37,10 +40,13 @@ export const activitiesNodeTypes = {
   connectorNode: ConnectorNode,
   callBehavior: CallBehaviorNode,
   exceptionHandling: ExceptionHandling,
+  note: NoteNode,
+  InterruptActivityRegion: InterruptActivityRegion
 };
 
 export const sequenceNodeTypes = {
   lifeLine: LifeLine,
   addLifeLineBtn: AddLifeLineButton,
+  note: NoteComponent,
   baseFragment: BaseFragment
 };

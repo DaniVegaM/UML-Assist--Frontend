@@ -2,17 +2,17 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../../canvas/variables";
-import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
+import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import { useHandle, sameHandles, type HandleData } from "../../../hooks/useHandle";
+import type { DataProps } from "../../../types/canvas";
 
-
-export default function ObjectNode({ data }: NodeProps) {
+export default function ObjectNode({ data }: DataProps) {
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
 
     // Manejo de handles
@@ -30,8 +30,10 @@ export default function ObjectNode({ data }: NodeProps) {
         handleRef.current = node;
     }, []);
 
+    
     useEffect(() => {
         if (!nodeId) return;
+
         const next: HandleData[] = handles.map(h => ({
             id: h.id,
             position: h.position,
@@ -41,22 +43,18 @@ export default function ObjectNode({ data }: NodeProps) {
 
         setNodes(nodes =>
             nodes.map(n => {
-                if (n.id !== nodeId) return n;
-                const current = (n.data?.handles ?? []) as HandleData[];
-                if (sameHandles(current, next)) return n;
-                return { ...n, data: { ...n.data, handles: next } };
+            if (n.id !== nodeId) return n;
+
+            const current = (n.data?.handles ?? []) as HandleData[];
+
+            // si no cambió nada (incluye left/top), no actualizamos
+            if (sameHandles(current, next) && n.data?.label === value) return n;
+
+            return { ...n, data: { ...n.data, handles: next, label: value } };
             })
         );
-    }, [
-        handles.length,
-        handles[handles.length - 1]?.position,
-        handles[handles.length - 1]?.left,
-        handles[handles.length - 1]?.top,
-        nodeId,
-        setNodes
-        ]);
-
-
+    }, [handles, nodeId, setNodes, value]);
+        
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {

@@ -30,7 +30,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             id: 'lifeLine_0', 
             type: 'lifeLine', 
             position: { x: 400, y: 100 }, 
-            data: { label: 'Primera LifeLine' },
+            data: { label: "" },
             connectable: true,
             zIndex: -1,
             style: {

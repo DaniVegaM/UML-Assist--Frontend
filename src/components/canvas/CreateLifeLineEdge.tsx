@@ -9,13 +9,14 @@ export function CreateLifeLineEdge({
     sourceX,
     sourceY,
     targetX,
+    targetY,
     style,
     markerEnd,
 }: EdgeProps) {
     // El ancho del header de la lifeline es 200px, así que restamos 100 para llegar al borde izquierdo
     const adjustedTargetX = targetX - 100;
     
-    // Usamos sourceY para mantener la línea horizontal
+    // Mantener la línea horizontal usando sourceY para ambos puntos
     const edgePath = `M ${sourceX} ${sourceY} L ${adjustedTargetX} ${sourceY}`;
 
     // Posición del label en el centro del edge

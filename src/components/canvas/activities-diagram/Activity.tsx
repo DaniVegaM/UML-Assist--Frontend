@@ -4,18 +4,19 @@ import { NodeResizer, Position, useNodeId, useReactFlow, useUpdateNodeInternals 
 import { TEXT_AREA_MAX_LEN } from "../variables";
 import ActivityHandle from "../ActivityHandle";
 import "../styles/nodeStyles.css";
+import type { DataProps } from "../../../types/canvas";
 
-export default function Activity() {
+export default function Activity({ data } : DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const [sourceHandlesIds, setSourceHandlesIds] = useState<string[] | null>(null);
     const [targetHandlesIds, setTargetHandlesIds] = useState<string[] | null>(null);
     const updateNodeInternals = useUpdateNodeInternals();
 
     // Obtener el estado del nodo
-    const { getNode } = useReactFlow();
+    const { setNodes, getNode } = useReactFlow();
     const nodeId = useNodeId();
     const node = getNode(nodeId!);
     const isSelected = node?.selected ?? false;
@@ -34,6 +35,15 @@ export default function Activity() {
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
         }
     }, [value]);
+
+    useEffect(() => {
+        if (!nodeId) return;
+        setNodes(nodes => nodes.map(n =>
+            n.id === nodeId
+                ? { ...n, data: { ...n.data, label: value } }
+                : n
+        ));
+    }, [nodeId, setNodes, value]);
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {

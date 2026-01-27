@@ -2,19 +2,19 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import BaseHandle from "../BaseHandle";
 import { TEXT_AREA_MAX_LEN } from "../variables";
-import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
+import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import { useHandle, sameHandles, type HandleData } from "../../../hooks/useHandle";
+import type { DataProps } from "../../../types/canvas";
 
+export default function SimpleAction({ data }: DataProps) {
 
-
-export default function SimpleAction({ data }: NodeProps) {
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(data.label || "");
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
   // Manejo de handles
@@ -33,37 +33,28 @@ export default function SimpleAction({ data }: NodeProps) {
   }, []);
 
   useEffect(() => {
-  if (!nodeId) return;
+    if (!nodeId) return;
 
-  const next: HandleData[] = handles.map(h => ({
-    id: h.id,
-    position: h.position,
-    left: h.left,
-    top: h.top,
-  }));
+    const next: HandleData[] = handles.map(h => ({
+      id: h.id,
+      position: h.position,
+      left: h.left,
+      top: h.top,
+    }));
 
+    setNodes(nodes =>
+      nodes.map(n => {
+        if (n.id !== nodeId) return n;
 
-  setNodes((nodes) =>
-    nodes.map((n) => {
-      if (n.id !== nodeId) return n;
+        const current = (n.data?.handles ?? []) as HandleData[];
 
-      const current = (n.data?.handles ?? []) as HandleData[];
+        // si no cambió nada, no actualizamos
+        if (sameHandles(current, next) && n.data?.label === value) return n;
 
-      if (sameHandles(current, next)) return n;
-
-      return { ...n, data: { ...n.data, handles: next } };
-    })
-  );
-}, [
-  handles.length,
-  handles[handles.length - 1]?.position,
-  handles[handles.length - 1]?.left,
-  handles[handles.length - 1]?.top,
-  nodeId,
-  setNodes
-]);
-
-
+        return { ...n, data: { ...n.data, handles: next, label: value } };
+      })
+    );
+  }, [handles, nodeId, setNodes, value]);
 
 
   // Manejo del textarea

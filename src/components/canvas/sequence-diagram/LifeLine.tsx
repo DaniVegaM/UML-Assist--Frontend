@@ -2,18 +2,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { LIFE_LINE_MAX_LEN_TEXT, LIFE_LINE_BASE_HEIGHT, LIFE_LINE_HEIGHT_PER_HANDLE } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
-import { Position, useNodeId, useReactFlow, useUpdateNodeInternals, type NodeProps } from "@xyflow/react";
+import { Position, useNodeId, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
-import { useHandle, type HandleData } from "../../../hooks/useHandle";
+import { useHandle, sameHandles, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
+import type { DataProps } from "../../../types/canvas";
 
 
-export default function LifeLine({ data }: NodeProps) {
+export default function LifeLine({ data }: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState("");
+    const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const { nodes } = useSequenceDiagram();
     const nodeId = useNodeId();
@@ -41,12 +42,26 @@ export default function LifeLine({ data }: NodeProps) {
     useEffect(() => {
         if (!nodeId || isSyncingFromData.current) return;
 
-        setNodes((prev) =>
-            prev.map((n) =>
-            n.id === nodeId ? { ...n, data: { ...n.data, handles } } : n
-            )
+        const next: HandleData[] = handles.map(h => ({
+            id: h.id,
+            position: h.position,
+            left: h.left,
+            top: h.top,
+        }));
+
+        setNodes(prev =>
+            prev.map(n => {
+            if (n.id !== nodeId) return n;
+
+            const current = (n.data?.handles ?? []) as HandleData[];
+
+            // si no cambió nada (handles + label), no actualizamos
+            if (sameHandles(current, next) && n.data?.label === value) return n;
+
+            return { ...n, data: { ...n.data, handles: next, label: value } };
+            })
         );
-    }, [handles, nodeId, setNodes]);
+    }, [handles, nodeId, setNodes, value]);
 
 
     useEffect(() => {
@@ -63,7 +78,17 @@ export default function LifeLine({ data }: NodeProps) {
         setTimeout(() => {
             isSyncingFromData.current = false;
         }, 0);
-    }, [data?.handles]);
+    }, [data?.handles, handles, setHandles]);
+
+
+    useEffect(() => {
+        if (!nodeId || isSyncingFromData.current) return;
+        setNodes(nodes => nodes.map(n =>
+            n.id === nodeId
+            ? { ...n, data: { ...n.data, destroyHandleIndex, hasDestruction: destroyHandleIndex !== null } }
+            : n
+        ));
+    }, [destroyHandleIndex, nodeId, setNodes]);
 
 
     // Sincronizar destroyHandleIndex cuando data.destroyHandleIndex cambie (al cargar diagrama)
@@ -76,6 +101,13 @@ export default function LifeLine({ data }: NodeProps) {
             }, 0);
         }
     }, [data?.destroyHandleIndex]);
+
+    // Sincronizar label cuando data.label cambie (al cargar diagrama)
+    useEffect(() => {
+        if (data?.label !== undefined && data.label !== value && !isEditing) {
+            setValue(data.label);
+        }
+    }, [data?.label, isEditing]);
 
     // Forzar actualización de handles cuando se cargan datos con handles
     useEffect(() => {
@@ -186,7 +218,7 @@ export default function LifeLine({ data }: NodeProps) {
         <div className="flex flex-col justify-center items-center"> {/*LIFELINE COMPLETA*/}
             <div
                 onDoubleClick={handleDoubleClick}
-                className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+                className=" relative border border-neutral-600 dark:border-neutral-300 p-2 min-w-[200px] hover:bg-gray-200 dark:hover:bg-zinc-600 flex flex-col items-center justify-center transition-all duration-150"
             > {/*HEAD DE LA LIFELINE*/}
                 <textarea
                     ref={textareaRef}
