@@ -32,9 +32,9 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             position: { x: 400, y: 100 }, 
             data: { orderedHandles: [] },
             connectable: true,
-            zIndex: -1,
+            zIndex: 999,
             style: {
-                zIndex: -1
+                zIndex: 999
             }
         }
     ]

@@ -75,8 +75,8 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
                 data: { label: 'Nueva LifeLine' },
                 position: { x: newLifeLineX, y: 100 },
                 connectable: true,
-                zIndex: -1,
-                style: { zIndex: -1 }
+                zIndex: 999,
+                style: { zIndex: 999 }
             }]);
         });
     }, [id, positionAbsoluteX, nodes, setNodes]);

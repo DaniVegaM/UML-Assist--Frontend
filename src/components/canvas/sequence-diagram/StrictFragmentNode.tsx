@@ -139,7 +139,7 @@ const StrictFragmentNode = ({ selected }: NodeProps) => {
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150"
-      style={{ minWidth: '350px', minHeight: '150px', zIndex: -1 }}
+      style={{ minWidth: '350px', minHeight: '150px', zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
       onContextMenu={handleContextMenu}
     >
       <NodeResizer

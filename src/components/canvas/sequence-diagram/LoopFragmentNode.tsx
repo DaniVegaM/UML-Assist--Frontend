@@ -115,7 +115,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full"
-      style={{ minWidth: "300px", minHeight: "100px" }}
+      style={{ minWidth: "300px", minHeight: "100px", pointerEvents: selected ? 'auto' : 'none' }}
     >
       <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
 
@@ -131,7 +131,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         >
           <span>loop</span>
           <span className="text-white dark:text-neutral-800">(</span>
-          <div onDoubleClick={onMinDoubleClick} className="cursor-pointer">
+          <div onDoubleClick={onMinDoubleClick} className="cursor-text">
             <input
               ref={minInputRef}
               type="text"
@@ -148,7 +148,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
             />
           </div>
           <span className="text-white dark:text-neutral-800">..</span>
-          <div onDoubleClick={onMaxDoubleClick} className="cursor-pointer">
+          <div onDoubleClick={onMaxDoubleClick} className="cursor-text">
             <input
               ref={maxInputRef}
               type="text"
@@ -168,7 +168,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         </div>
 
         {/* Guard del fragmento loop */}
-        <div className="flex-1" onDoubleClick={onGuardDoubleClick}>
+        <div className="flex-1 cursor-text" onDoubleClick={onGuardDoubleClick}>
           <textarea
             ref={guardTextareaRef}
             placeholder="[condición]"

@@ -52,7 +52,7 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full"
-      style={{ minWidth: "300px", minHeight: "100px" }}
+      style={{ minWidth: "300px", minHeight: "100px", pointerEvents: selected ? 'auto' : 'none' }}
     >
       <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
 
@@ -70,7 +70,7 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
         </div>
 
         {/* Guard del fragmento opcional */}
-        <div className="flex-1" onDoubleClick={onGuardDoubleClick}>
+        <div className="flex-1 cursor-text" onDoubleClick={onGuardDoubleClick}>
           <textarea
             ref={textareaRef}
             placeholder="[condición]"
