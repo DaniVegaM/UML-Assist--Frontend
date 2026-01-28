@@ -36,14 +36,32 @@ function DiagramContent() {
                 //Aplicamos los cambios a los nodos
                 const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
 
-                //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
-                return updatedNodes.map(node => ({
-                    ...node,
-                    position: {
-                        ...node.position,
-                        y: originalYPositions.get(node.id) ?? node.position.y
+                // Tipos de nodos que pueden moverse libremente en ambas dimensiones
+                const freeMovementNodeTypes = [
+                    'altFragment',
+                    'optFragment',
+                    'loopFragment',
+                    'breakFragment',
+                    'seqFragment',
+                    'strictFragment',
+                    'parFragment'
+                ];
+
+                //Restaurar las posiciones Y originales solo para nodos que NO son fragmentos
+                return updatedNodes.map(node => {
+                    // Si es un fragmento, permitir movimiento libre
+                    if (freeMovementNodeTypes.includes(node.type || '')) {
+                        return node;
                     }
-                }));
+                    // Para otros nodos (lifelines, etc.), mantener la posición Y fija
+                    return {
+                        ...node,
+                        position: {
+                            ...node.position,
+                            y: originalYPositions.get(node.id) ?? node.position.y
+                        }
+                    };
+                });
             });
         },
         [setNodes],
