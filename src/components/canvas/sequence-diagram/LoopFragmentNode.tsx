@@ -56,10 +56,10 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
 
-  const onMinClick = useCallback(() => {
+  const onMinDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsEditingMin(true);
     setIsZoomOnScrollEnabled(false);
-
     setTimeout(() => {
       if (minInputRef.current) {
         minInputRef.current.focus();
@@ -79,16 +79,15 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   const onMinBlur = useCallback(() => {
     setIsEditingMin(false);
     setIsZoomOnScrollEnabled(true);
-    // Si está vacío, establecer en 0
     if (minIterations === "") {
       setMinIterations("0");
     }
   }, [setIsZoomOnScrollEnabled, minIterations]);
 
-  const onMaxClick = useCallback(() => {
+  const onMaxDoubleClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsEditingMax(true);
     setIsZoomOnScrollEnabled(false);
-
     setTimeout(() => {
       if (maxInputRef.current) {
         maxInputRef.current.focus();
@@ -108,7 +107,6 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   const onMaxBlur = useCallback(() => {
     setIsEditingMax(false);
     setIsZoomOnScrollEnabled(true);
-    // Si está vacío, establecer en *
     if (maxIterations === "") {
       setMaxIterations("*");
     }
@@ -133,33 +131,39 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         >
           <span>loop</span>
           <span className="text-white dark:text-neutral-800">(</span>
-          <input
-            ref={minInputRef}
-            type="text"
-            value={minIterations}
-            onChange={onMinChange}
-            onBlur={onMinBlur}
-            onClick={onMinClick}
-            onMouseDown={(e) => e.stopPropagation()}
-            className={`nodrag bg-transparent border-none outline-none text-center font-mono font-bold w-8 ${
-              isEditingMin ? "pointer-events-auto" : "pointer-events-none cursor-pointer"
-            }`}
-            placeholder="0"
-          />
+          <div onDoubleClick={onMinDoubleClick} className="cursor-pointer">
+            <input
+              ref={minInputRef}
+              type="text"
+              value={minIterations}
+              onChange={onMinChange}
+              onBlur={onMinBlur}
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`nodrag bg-transparent border-none outline-none text-center font-mono font-bold w-8 text-white dark:text-neutral-800 ${
+                isEditingMin 
+                  ? "pointer-events-auto bg-white/20 dark:bg-neutral-800/40 rounded ring-2 ring-sky-500" 
+                  : "pointer-events-none"
+              }`}
+              placeholder="0"
+            />
+          </div>
           <span className="text-white dark:text-neutral-800">..</span>
-          <input
-            ref={maxInputRef}
-            type="text"
-            value={maxIterations}
-            onChange={onMaxChange}
-            onBlur={onMaxBlur}
-            onClick={onMaxClick}
-            onMouseDown={(e) => e.stopPropagation()}
-            className={`nodrag bg-transparent border-none outline-none text-center font-mono font-bold w-8 ${
-              isEditingMax ? "pointer-events-auto" : "pointer-events-none cursor-pointer"
-            }`}
-            placeholder="*"
-          />
+          <div onDoubleClick={onMaxDoubleClick} className="cursor-pointer">
+            <input
+              ref={maxInputRef}
+              type="text"
+              value={maxIterations}
+              onChange={onMaxChange}
+              onBlur={onMaxBlur}
+              onMouseDown={(e) => e.stopPropagation()}
+              className={`nodrag bg-transparent border-none outline-none text-center font-mono font-bold w-8 text-white dark:text-neutral-800 ${
+                isEditingMax 
+                  ? "pointer-events-auto bg-white/20 dark:bg-neutral-800/40 rounded ring-2 ring-sky-500" 
+                  : "pointer-events-none"
+              }`}
+              placeholder="*"
+            />
+          </div>
           <span className="text-white dark:text-neutral-800">)</span>
         </div>
 
