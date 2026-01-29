@@ -61,5 +61,4 @@ export const sequenceNodeTypes = {
   strictFragment: StrictFragmentNode,
   parFragment: ParFragmentNode,
   note: NoteComponent,
-  baseFragment: BaseFragment
 };

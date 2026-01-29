@@ -77,7 +77,7 @@ export const SEQUENCE_NODES = [
         nodeType: 'parFragment',
         label: 'Par (Concurrente)',
     },
-];
+    {
         separator: 'Otros',
         svg: '',
         nodeType: '',
