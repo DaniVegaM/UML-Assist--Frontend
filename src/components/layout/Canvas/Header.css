@@ -1,0 +1,368 @@
+.header-loader {
+  width: 80px;
+  aspect-ratio: 1;
+  padding: 8px;
+  box-sizing: border-box;
+  display: grid;
+  background: #fff;
+  filter: blur(5px) contrast(10) hue-rotate(300deg);
+  mix-blend-mode: darken;
+}
+.header-loader:before,
+.header-loader:after{ 
+  content: "";
+  grid-area: 1/1; 
+  width: 32px;
+  height: 32px;
+  background: #ffff00;
+  animation: header-l7 2s infinite;
+}
+.header-loader:after{ 
+  animation-delay: -1s;
+}
+@keyframes header-l7{
+  0%   {transform: translate(   0,0)}
+  25%  {transform: translate(100%,0)}
+  50%  {transform: translate(100%,100%)}
+  75%  {transform: translate(   0,100%)}
+  100% {transform: translate(   0,0)}
+}
+
+.header-dummy-positioning {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-success-icon {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 4px solid #7ddb75;
+  background-color: #fff;
+  position: relative;
+  overflow: hidden;
+  transform-origin: center;
+  animation: header-showSuccess 180ms ease-in-out;
+  transform: scale(1);
+}
+
+.header-success-icon__tip,
+.header-success-icon__long {
+  display: block;
+  position: absolute;
+  height: 4px;
+  background-color: #7ddb75;
+  border-radius: 10px;
+}
+
+.header-success-icon__tip {
+  width: 24px;
+  top: 43px;
+  left: 14px;
+  transform: rotate(45deg);
+  animation: header-tipInPlace 300ms ease-in-out;
+  animation-fill-mode: forwards;
+  animation-delay: 180ms;
+  visibility: hidden;
+}
+
+.header-success-icon__long {
+  width: 40px;
+  transform: rotate(-45deg);
+  top: 37px;
+  left: 27.5px;
+  animation: header-longInPlace 140ms ease-in-out;
+  animation-fill-mode: forwards;
+  visibility: hidden;
+  animation-delay: 440ms;
+}
+
+@keyframes header-showSuccess {
+    from {
+        transform: scale(0);
+    }
+    to {
+        transform: scale(1);
+    }
+}
+
+@keyframes header-tipInPlace {
+    from {
+        width: 0px;
+        top: 0px;
+        left: -16px;
+    }
+    to {
+        width: 24px;
+        top: 43px;
+        left: 14px;
+        visibility: visible;
+    }
+}
+
+@keyframes header-longInPlace {
+    from {
+        width: 0px;
+        top: 51px;
+        left: 32px;
+    }
+    to {
+        width: 40px;
+        top: 37px;
+        left: 27.5px;
+        visibility: visible;
+    }
+}
+
+
+.header-lds-ring,
+.header-lds-ring div {
+  box-sizing: border-box;
+}
+.header-lds-ring {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.header-lds-ring div {
+  box-sizing: border-box;
+  display: block;
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border: 8px solid #0084D1;
+  border-radius: 50%;
+  animation: header-lds-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+  border-color: #0084D1 transparent transparent transparent;
+}
+.header-lds-ring div:nth-child(1) {
+  animation-delay: -0.45s;
+}
+.header-lds-ring div:nth-child(2) {
+  animation-delay: -0.3s;
+}
+.header-lds-ring div:nth-child(3) {
+  animation-delay: -0.15s;
+}
+@keyframes header-lds-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.header-icon {
+    width: 80px;
+    height: 80px;
+    border: 4px solid gray;
+    border-radius: 50%;
+    margin: 20px auto;
+    padding: 0;
+    position: relative;
+    box-sizing: content-box;
+    transform: scale(1);
+}
+.header-icon.header-error {
+    border-color: #F27474
+}
+.header-icon.header-error .header-x-mark {
+    position: relative;
+    display: block
+}
+.header-icon.header-error .header-errorLine {
+    position: absolute;
+    height: 5px;
+    width: 47px;
+    background-color: #F27474;
+    display: block;
+    top: 37px;
+    border-radius: 2px
+}
+.header-icon.header-error .header-errorLine.left {
+    transform: rotate(45deg);
+    left: 17px
+}
+.header-icon.header-error .header-errorLine.right {
+    transform: rotate(-45deg);
+    right: 16px
+}
+.icon.warning {
+    border-color: #F8BB86
+}
+.icon.warning .body {
+    position: absolute;
+    width: 5px;
+    height: 36px;
+    left: 50%;
+    top: 16px;
+    border-radius: 2px;
+    margin-left: -2px;
+    background-color: #F8BB86
+}
+.icon.warning .dot {
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-left: -3px;
+    left: 50%;
+    bottom: 16px;
+    background-color: #F8BB86
+}
+.icon.info {
+    border-color: #C9DAE1
+}
+.icon.info::before {
+    content: "";
+    position: absolute;
+    width: 5px;
+    height: 29px;
+    left: 50%;
+    bottom: 17px;
+    border-radius: 2px;
+    margin-left: -2px;
+    background-color: #C9DAE1
+}
+.icon.info::after {
+    content: "";
+    position: absolute;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    margin-left: -3px;
+    top: 19px;
+    background-color: #C9DAE1;
+    left: 50%;
+}
+.icon.success {
+    border-color: #A5DC86
+}
+.icon.success::after,
+.icon.success::before {
+    content: '';
+    position: absolute;
+    width: 60px;
+    height: 120px;
+    background: #fff;
+    transform: rotate(45deg)
+}
+.icon.success::before {
+    border-radius: 120px 0 0 120px;
+    top: -7px;
+    left: -33px;
+    transform: rotate(-45deg);
+    transform-origin: 60px 60px
+}
+.icon.success::after {
+    border-radius: 0 120px 120px 0;
+    top: -11px;
+    left: 30px;
+    transform: rotate(-45deg);
+    transform-origin: 0 60px
+}
+.icon.success .placeholder {
+    width: 80px;
+    height: 80px;
+    border: 4px solid rgba(165, 220, 134, .2);
+    border-radius: 50%;
+    box-sizing: content-box;
+    position: absolute;
+    left: -4px;
+    top: -4px;
+    z-index: 2
+}
+.icon.success .fix {
+    width: 5px;
+    height: 90px;
+    background-color: #fff;
+    position: absolute;
+    left: 28px;
+    top: 8px;
+    z-index: 1;
+    transform: rotate(-45deg)
+}
+.icon.success .successLine {
+    height: 5px;
+    background-color: #A5DC86;
+    display: block;
+    border-radius: 2px;
+    position: absolute;
+    z-index: 2
+}
+.icon.success .successLine.tip {
+    width: 25px;
+    left: 14px;
+    top: 46px;
+    transform: rotate(45deg)
+}
+.icon.success .successLine.long {
+    width: 47px;
+    right: 8px;
+    top: 38px;
+    transform: rotate(-45deg)
+}
+@keyframes animateSuccessTip {
+    0%, 54% {
+        width: 0;
+        left: 1px;
+        top: 19px
+    }
+    70% {
+        width: 50px;
+        left: -8px;
+        top: 37px
+    }
+    84% {
+        width: 17px;
+        left: 21px;
+        top: 48px
+    }
+    100% {
+        width: 25px;
+        left: 14px;
+        top: 45px
+    }
+}
+
+@keyframes animateSuccessLong {
+    0%, 65% {
+        width: 0;
+        right: 46px;
+        top: 54px
+    }
+    84% {
+        width: 55px;
+        right: 0;
+        top: 35px
+    }
+    100% {
+        width: 47px;
+        right: 8px;
+        top: 38px
+    }
+}
+@keyframes rotatePlaceholder {
+    0%, 5% {
+        transform: rotate(-45deg);
+    }
+    100%,
+    12% {
+        transform: rotate(-405deg);
+    }
+}
+.animateSuccessTip {
+    animation: animateSuccessTip .75s
+}
+.animateSuccessLong {
+    animation: animateSuccessLong .75s
+}
+.icon.success.animate::after {
+    animation: rotatePlaceholder 4.25s ease-in
+}

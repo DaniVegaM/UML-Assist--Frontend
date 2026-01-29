@@ -2,6 +2,7 @@ import { useDraggable } from "@neodrag/react";
 import { useReactFlow, type XYPosition } from "@xyflow/react";
 import { useRef, useState } from "react";
 import type { DraggableNodeProps } from "../../types/canvas";
+import type { Node } from "@xyflow/react";
 
 
 export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
@@ -9,8 +10,20 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
-    let id = 0;
-    const getId = () => `${nodeType}_${id++}`;
+    const getId = () => {
+        const nodes = getNodes();
+        // Encontramos el ID más alto para este tipo de nodo y continuamos desde ahí
+        const existingIds = nodes
+            .filter(n => n.id.startsWith(`${nodeType}_`))
+            .map(n => {
+                const match = n.id.match(new RegExp(`^${nodeType}_(\\d+)$`));
+                return match ? parseInt(match[1], 10) : -1;
+            })
+            .filter(id => id >= 0);
+
+        const nextId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 0;
+        return `${nodeType}_${nextId}`;
+    };
 
     useDraggable(draggableRef as React.RefObject<HTMLElement>, {
         position: position,
@@ -58,17 +71,44 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     type: nodeType,
                     position: flowPosition,
                     data: {
-                        label: `${nodeType} node`,
+                        label: "",
                         incomingEdge: incomingEdge,
                         outgoingEdge: outgoingEdge
                     },
                     draggable: true,
                     connectable: true,
+                    style: nodeType === 'InterruptActivityRegion'
+                        ? {
+                            width: 420,
+                            height: 260,
+                        }
+                        : undefined,
                     // Fragmentos y activities tienen zIndex bajo para quedar detrás de otros nodos
                     zIndex: ['activity', 'baseFragment', 'altFragment', 'optFragment', 'loopFragment'].includes(nodeType) ? -1 : 1,
                 };
 
-                await setNodes((nds) => nds.concat(newNode));
+                await setNodes((nds) => {
+                    const nodesToAdd: Node[] = [newNode as Node];
+                    if (nodeType === 'InterruptActivityRegion') {
+                        const acceptEventNode: Node = {
+                            id: `accept_${newNode.id}`,
+                            type: 'acceptEvent',
+                            parentId: newNode.id,
+                            extent: 'parent',
+                            position: { x: 260, y: 180 },
+                            data: {},
+                            draggable: true,
+                            connectable: true,
+                            zIndex: 2,
+                        };
+
+
+                        nodesToAdd.push(acceptEventNode);
+                    }
+
+                    return nds.concat(nodesToAdd);
+                });
+
 
                 // Si se esta soltando sobre un activity node, hacer que sea hijo de este 
                 await new Promise(resolve => setTimeout(resolve, 50));
@@ -77,19 +117,27 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 if (!currentNode) return;
                 const intersections = getIntersectingNodes(currentNode).map((n) => n.id);
 
-                if (currentNode.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
-                    setNodes((nds) => nds.map(node => {
-                        if (node.id === currentNode.id) {
-                            return {
-                                ...node,
-                                parentId: intersections.find(nodeId => nodeId.startsWith('activity')) || undefined,
-                                extent: 'parent',
+                const parentRegionId = intersections.find(nodeId =>
+                    nodeId.startsWith('activity') ||
+                    nodeId.startsWith('InterruptActivityRegion')
+                );
+                if (
+                    currentNode.type !== 'activity' &&
+                    currentNode.type !== 'InterruptActivityRegion' &&
+                    parentRegionId
+                ) {
+                    setNodes((nds) =>
+                        nds.map((node) => {
+                            if (node.id === currentNode.id) {
+                                return {
+                                    ...node,
+                                    parentId: parentRegionId,
+                                    extent: 'parent',
+                                };
                             }
-                        }
-                        else {
                             return node;
-                        }
-                    }));
+                        })
+                    );
                 }
             }
         },

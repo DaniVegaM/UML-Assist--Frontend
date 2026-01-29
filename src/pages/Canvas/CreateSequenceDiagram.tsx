@@ -1,29 +1,50 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
-import Header from "../../layout/Canvas/Header";
+import Header from "../../components/layout/Canvas/Header";
 import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
 import { useSequenceDiagram } from "../../hooks/useSequenceDiagram";
 import { useAddLifeLinesBtns } from "../../hooks/useAddLifeLinesBtns";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
+import { useParams } from "react-router";
+import { fetchDiagramById } from "../../services/diagramSerivce";
+import type { Diagram } from "../../types/diagramsModel";
+import { useLocalValidations } from "../../hooks/useLocalValidations";
+import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
+    const { id: diagramId } = useParams();
+    const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
+    const { isValidSequenceConnection } = useLocalValidations(nodes, edges);
 
     useEffect(() => {
-        console.log('Nodos Actuales:', nodes);
-        console.log('Edges Actuales:', edges);
-    }, [nodes, edges]);
+        const loadDiagram = async () => {
+            if (diagramId) {
+                const response = await fetchDiagramById(diagramId);
+                const data = response.data;
+                setDiagram(data);
+            }
+        };
+        loadDiagram();
+    }, [diagramId]);
+
+    useEffect(() => {
+        if (diagram?.content) {
+            setNodes(diagram.content.canvas.nodes);
+            setEdges(diagram.content.canvas.edges || []);
+        }
+    }, [diagram]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -44,7 +65,8 @@ function DiagramContent() {
                     'breakFragment',
                     'seqFragment',
                     'strictFragment',
-                    'parFragment'
+                    'parFragment',
+                    'note'
                 ];
 
                 //Restaurar las posiciones Y originales solo para nodos que NO son fragmentos
@@ -78,32 +100,51 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
-
+            const sourceNode = nodes.find(n => n.id === params.source);
+            const targetNode = nodes.find(n => n.id === params.target);
             const isSelfMessage = params.source === params.target;
 
+            // Obtener la posición Y del handle de origen
+            let handleY = 0;
+            if (params.sourceHandle) {
+                const sourceHandleElement = document.querySelector(`[data-handleid="${params.sourceHandle}"]`);
+                const sourceNodeElement = document.querySelector(`[data-id="${params.source}"]`);
+                if (sourceHandleElement && sourceNodeElement) {
+                    const handleRect = sourceHandleElement.getBoundingClientRect();
+                    const nodeRect = sourceNodeElement.getBoundingClientRect();
+                    handleY = handleRect.top - nodeRect.top;
+                }
+            }
+
+            const isNoteConnection = sourceNode?.type === 'note' || targetNode?.type === 'note';
             const newEdge: Edge = {
                 ...params,
                 id: `edge-${params.sourceHandle}-${params.targetHandle}`,
-                type: `${params.source == params.target? 'selfMessageEdge' : 'messageEdge'}`, 
+                type: isNoteConnection
+                    ? 'noteEdge'
+                    : (isSelfMessage ? 'selfMessageEdge' : 'messageEdge'),
                 source: params.source!,
                 target: params.target!,
                 sourceHandle: params.sourceHandle || null,
                 targetHandle: params.targetHandle || null,
                 data: {
                     edgeType: 'async',
-                    mustFillLabel: !isSelfMessage,  
+                    mustFillLabel: !isSelfMessage && !isNoteConnection,
+                    y: Math.round(handleY),
                 },
                 style: {
-                    strokeWidth: 2,
+                    strokeWidth: isNoteConnection ? 1.5 : 2,
                     stroke: isDarkMode ? '#FFFFFF' : '#171717',
-                    strokeDasharray: 'none'
+                    strokeDasharray: isNoteConnection ? '6 4' : 'none',
                 },
-                markerEnd: {
-                    type: MarkerType.Arrow,
-                    width: 20,
-                    height: 20,
-                    color: isDarkMode ? '#FFFFFF' : '#171717'
-                }
+                markerEnd: isNoteConnection
+                    ? undefined
+                    : {
+                        type: MarkerType.Arrow,
+                        width: 20,
+                        height: 20,
+                        color: isDarkMode ? '#FFFFFF' : '#171717'
+                    }
             };
 
             setEdges((edgesSnapshot) => {
@@ -112,8 +153,10 @@ function DiagramContent() {
                 return newEdges;
             });
 
+            
+
         },
-        [setEdges, isDarkMode],
+        [setEdges, isDarkMode, nodes],
     );
 
     useEffect(() => {
@@ -147,7 +190,13 @@ function DiagramContent() {
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
-            <Header diagramTitle="Diagrama de Secuencia"/>
+            <Header
+                diagramId={diagramId ? parseInt(diagramId, 10) : undefined}
+                diagramTitle={diagram?.title}
+                type="secuencia"
+                nodes={useNodes()}
+                edges={useEdges()}
+            />
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
                 <ReactFlow
@@ -182,6 +231,7 @@ function DiagramContent() {
                     onEdgesChange={onEdgesChange}
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
+                    isValidConnection={isValidSequenceConnection}
                     onConnectStart={() => setIsTryingToConnect(true)}
                     onConnectEnd={() => setIsTryingToConnect(false)}
                     onConnect={onConnect}
@@ -195,6 +245,7 @@ function DiagramContent() {
                     />
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
+                <AIChatBar type="secuencia"/>
             </section>
         </div>
     )

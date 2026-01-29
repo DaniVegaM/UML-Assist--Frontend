@@ -1,9 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import { deleteDiagram, fetchDiagrams, patchDiagram } from "../services/diagramSerivce";
 import { useNavigate } from "react-router";
-import Header from "../layout/MainLayout/Header";
+import Header from "../components/layout/MainLayout/Header";
 import type { Diagram } from "../types/diagramsModel";
 import MenuWithOptions from "../components/ui/MenuWithOptions";
+import '../components/layout/MainLayout/Header.css';
 
 export default function Dashboard() {
     const navigate = useNavigate();
@@ -13,7 +14,7 @@ export default function Dashboard() {
     const [error, setError] = useState<string | null>(null);
     const [showModal, setShowModal] = useState<boolean>(false);
     const [selectedDiagramCard, setSelectedDiagramCard] = useState<Diagram | null>(null);
-    const [showDeleteConfirm, setShowDeleteConfirm] = useState<boolean>(false);
+    const [deleteModal, setDeleteModal] = useState({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
     const [showMenu, setShowMenu] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
@@ -29,7 +30,7 @@ export default function Dashboard() {
                 const response = await fetchDiagrams();
                 const data: Diagram[] = response.data;
                 setDiagrams(data || []);
-            } catch (err) {
+            } catch {
                 setError("Error al cargar los diagramas.");
                 setDiagrams([]);
             } finally {
@@ -134,25 +135,46 @@ export default function Dashboard() {
 
     const handleDeleteClick = () => {
         if (selectedDiagramCard) {
-            setShowDeleteConfirm(true);
+            setDeleteModal({ showConfirm: true, showLoading: false, showSuccess: false, showError: false });
         }
     };
 
     const confirmDelete = async () => {
         if (!selectedDiagramCard?.id) return;
 
+        setDeleteModal({ showConfirm: false, showLoading: true, showSuccess: false, showError: false });
+
+        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
+
         try {
-            await deleteDiagram(selectedDiagramCard.id);
+            const deletePromise = deleteDiagram(selectedDiagramCard.id);
+            await Promise.all([deletePromise, minLoadingTime]);
+
             setDiagrams(diagrams.filter(d => d.id !== selectedDiagramCard.id));
-            setShowDeleteConfirm(false);
-            setSelectedDiagramCard(null);
+            setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: true, showError: false });
+            
+            setTimeout(() => {
+                setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
+                setSelectedDiagramCard(null);
+            }, 3000);
         } catch (err) {
+            await minLoadingTime;
             console.error('Error al eliminar el diagrama:', err);
+            setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: true });
+            
+            setTimeout(() => {
+                setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
+            }, 3000);
         }
     };
 
     const cancelDelete = () => {
-        setShowDeleteConfirm(false);
+        setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
+        setSelectedDiagramCard(null);
+    };
+
+    const closeDeleteModal = () => {
+        setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
         setSelectedDiagramCard(null);
     };
 
@@ -367,43 +389,90 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {showDeleteConfirm && selectedDiagramCard && (
+            {(deleteModal.showConfirm || deleteModal.showLoading || deleteModal.showSuccess || deleteModal.showError) && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white dark:bg-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold dark:text-white">
-                                    ¿Eliminar diagrama?
-                                </h3>
-                                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                    Esta acción no se puede deshacer
+                        {deleteModal.showConfirm && selectedDiagramCard && (
+                            <>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                                        <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold dark:text-white">
+                                            ¿Eliminar diagrama?
+                                        </h3>
+                                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                                            Esta acción no se puede deshacer
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <p className="text-zinc-700 dark:text-zinc-300 mb-6">
+                                    ¿Estás seguro de que deseas eliminar <span className="font-semibold">"{selectedDiagramCard.title}"</span>?
                                 </p>
+
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={cancelDelete}
+                                        className="cursor-pointer flex-1 py-2 px-4 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        onClick={confirmDelete}
+                                        className="cursor-pointer flex-1 py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-all"
+                                    >
+                                        Eliminar
+                                    </button>
+                                </div>
+                            </>
+                        )}
+
+                        {deleteModal.showLoading && (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="header-lds-ring"><div></div><div></div><div></div><div></div></div>
+                                <p className="text-gray-700 dark:text-gray-300 text-2xl">Eliminando...</p>
                             </div>
-                        </div>
+                        )}
 
-                        <p className="text-zinc-700 dark:text-zinc-300 mb-6">
-                            ¿Estás seguro de que deseas eliminar <span className="font-semibold">"{selectedDiagramCard.title}"</span>?
-                        </p>
+                        {deleteModal.showSuccess && (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="header-dummy-positioning">
+                                    <div className="header-success-icon">
+                                        <div className="header-success-icon__tip"></div>
+                                        <div className="header-success-icon__long"></div>
+                                    </div>
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 font-medium text-2xl">¡Eliminado exitosamente!</p>
+                                <button
+                                    onClick={closeDeleteModal}
+                                    className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-full transition-all duration-200 cursor-pointer"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        )}
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={cancelDelete}
-                                className="cursor-pointer flex-1 py-2 px-4 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={confirmDelete}
-                                className="cursor-pointer flex-1 py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-all"
-                            >
-                                Eliminar
-                            </button>
-                        </div>
+                        {deleteModal.showError && (
+                            <div className="flex flex-col items-center gap-4">
+                                <div className="header-icon header-error">
+                                    <span className="header-x-mark">
+                                        <span className="header-errorLine left"></span>
+                                        <span className="header-errorLine right"></span>
+                                    </span>
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 font-medium text-2xl">Error al eliminar</p>
+                                <button
+                                    onClick={closeDeleteModal}
+                                    className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-full transition-all duration-200 cursor-pointer"
+                                >
+                                    OK
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

@@ -30,6 +30,8 @@ export interface BaseHandleProps {
     id: number | string;
     ref?: React.Ref<HTMLDivElement | null>;
     position?: Position;
+    left?: number;
+    top?: number;
     className?: string;
     showHandle?: boolean;
     onContextMenu?: (e: React.MouseEvent<Element, MouseEvent>) => void;
@@ -49,4 +51,16 @@ export interface HeaderProps {
     type: string;
     nodes: Node[];
     edges: Edge[];
+}
+
+export interface DataProps{
+    data:{
+        handles: {id: number, left?: number, top?: number, position: Position}[], 
+        incomingEdge?: string, 
+        outgoingEdge?: string,
+        label?: string
+        destroyHandleIndex?: number,
+        isCreatedLifeLine?: boolean,
+        orderedHandles?: {id: string, order: number}[]
+    }
 }

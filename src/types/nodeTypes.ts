@@ -24,6 +24,9 @@ import BreakFragmentNode from "../components/canvas/sequence-diagram/BreakFragme
 import SeqFragmentNode from "../components/canvas/sequence-diagram/SeqFragmentNode";
 import StrictFragmentNode from "../components/canvas/sequence-diagram/StrictFragmentNode";
 import ParFragmentNode from "../components/canvas/sequence-diagram/ParFragmentNode";
+import NoteNode from "../components/canvas/NoteComponent";
+import NoteComponent from "../components/canvas/NoteComponent";
+import InterruptActivityRegion from "../components/canvas/activities-diagram/InterruptActivityRegion";
 
 export const activitiesNodeTypes = {
   activity: Activity,
@@ -33,7 +36,7 @@ export const activitiesNodeTypes = {
   acceptEvent: AcceptEvent,
   acceptTimeEvent: AcceptTimeEvent,
   sendSignal: SendSignal,
-  callOperation : CallOperation,
+  callOperation: CallOperation,
   initialNode: InitialNode,
   finalNode: FinalNode,
   finalFlowNode: FinalFlowNode,
@@ -43,6 +46,8 @@ export const activitiesNodeTypes = {
   connectorNode: ConnectorNode,
   callBehavior: CallBehaviorNode,
   exceptionHandling: ExceptionHandling,
+  note: NoteNode,
+  InterruptActivityRegion: InterruptActivityRegion
 };
 
 export const sequenceNodeTypes = {
@@ -55,4 +60,6 @@ export const sequenceNodeTypes = {
   seqFragment: SeqFragmentNode,
   strictFragment: StrictFragmentNode,
   parFragment: ParFragmentNode,
+  note: NoteComponent,
+  baseFragment: BaseFragment
 };

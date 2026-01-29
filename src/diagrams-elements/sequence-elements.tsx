@@ -78,3 +78,75 @@ export const SEQUENCE_NODES = [
         label: 'Par (Concurrente)',
     },
 ];
+        separator: 'Otros',
+        svg: '',
+        nodeType: '',
+        label: ''
+    },
+    {
+        svg: (
+            <svg
+                className="w-full h-full"
+                width="67"
+                height="38"
+                viewBox="0 0 67 38"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+            >
+                <path
+                    d="M1 38H0L0 1H1L1 38Z"
+                    fill="none"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+
+                <path
+                    d="M65 37V38L0 38L0 37L65 37Z"
+                    fill="none"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+
+                <path
+                    d="M54 0V1H0V0H54Z"
+                    fill="none"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+
+                <path
+                    d="M65 12H66V38H65V12Z"
+                    fill="none"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+
+                <path
+                    d="M54 12H53V0L54 0V12Z"
+                    fill="none"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+
+                <path
+                    d="M65 12V13H53V12H65Z"
+                    fill="none"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+
+                <line
+                    x1="53.3536"
+                    y1="0.646447"
+                    x2="65.3536"
+                    y2="12.6464"
+                    className="stroke-black dark:stroke-white"
+                    strokeWidth="2"
+                />
+            </svg>
+        ),
+        nodeType: 'note',
+        label: 'Nota UML',
+        grouped: true
+    }
+];

@@ -176,6 +176,7 @@ export function MessageEdge({
                     data: {
                     ...(e.data || {}),
                     labelError: 'El mensaje no puede estar vacío.',
+                    y: sourceY,
                     },
                 }
                 : e
@@ -195,7 +196,7 @@ export function MessageEdge({
                 ? {
                     ...e,
                     label: formattedLabel,
-                    data: { ...(e.data || {}), labelError: null },
+                    data: { ...(e.data || {}), labelError: null, y: sourceY },
                 }
                 : e
             )
@@ -214,6 +215,7 @@ export function MessageEdge({
                 data: {
                     ...(e.data || {}),
                     labelError: 'No cumple con la estructura de un mensaje válido',
+                    y: sourceY,
                 },
                 }
             : e
