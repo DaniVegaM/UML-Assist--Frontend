@@ -16,8 +16,14 @@ import CallBehaviorNode from "../components/canvas/activities-diagram/CallBehavi
 import Activity from "../components/canvas/activities-diagram/Activity";
 import ExceptionHandling from "../components/canvas/activities-diagram/ExceptionHandling";
 import LifeLine from "../components/canvas/sequence-diagram/LifeLine";
-import BaseFragment from "../components/canvas/sequence-diagram/BaseFragment";
 import AddLifeLineButton from "../components/canvas/sequence-diagram/AddLifeLineButton";
+import AltFragmentNode from "../components/canvas/sequence-diagram/AltFragmentNode";
+import OptFragmentNode from "../components/canvas/sequence-diagram/OptFragmentNode";
+import LoopFragmentNode from "../components/canvas/sequence-diagram/LoopFragmentNode";
+import BreakFragmentNode from "../components/canvas/sequence-diagram/BreakFragmentNode";
+import SeqFragmentNode from "../components/canvas/sequence-diagram/SeqFragmentNode";
+import StrictFragmentNode from "../components/canvas/sequence-diagram/StrictFragmentNode";
+import ParFragmentNode from "../components/canvas/sequence-diagram/ParFragmentNode";
 import NoteNode from "../components/canvas/NoteComponent";
 import NoteComponent from "../components/canvas/NoteComponent";
 import InterruptActivityRegion from "../components/canvas/activities-diagram/InterruptActivityRegion";
@@ -47,6 +53,13 @@ export const activitiesNodeTypes = {
 export const sequenceNodeTypes = {
   lifeLine: LifeLine,
   addLifeLineBtn: AddLifeLineButton,
+  altFragment: AltFragmentNode,
+  optFragment: OptFragmentNode,
+  loopFragment: LoopFragmentNode,
+  breakFragment: BreakFragmentNode,
+  seqFragment: SeqFragmentNode,
+  strictFragment: StrictFragmentNode,
+  parFragment: ParFragmentNode,
   note: NoteComponent,
   baseFragment: BaseFragment
 };
