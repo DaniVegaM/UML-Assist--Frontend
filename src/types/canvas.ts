@@ -64,3 +64,15 @@ export interface DataProps{
         orderedHandles?: {id: string, order: number}[]
     }
 }
+
+export interface AltFragmentData {
+    firstOperand?: string;
+    separatorValues?: string[];
+    separatorPositions?: number[];
+    [key: string]: unknown;
+}
+
+export interface ParFragmentData {
+    separatorPositions?: number[];
+    [key: string]: unknown;
+}
