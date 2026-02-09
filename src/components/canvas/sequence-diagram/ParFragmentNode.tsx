@@ -1,18 +1,20 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useNodeId, type NodeProps, type Node } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import type { ParFragmentData } from "../../../types/canvas";
 
-
-const ParFragmentNode = ({ selected }: NodeProps) => {
+const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) => {
+  const nodeId = useNodeId();
   const containerRef = useRef<HTMLDivElement>(null);
-  // Inicializar con 1 separador para tener al menos 2 operandos
-  const [separators, setSeparators] = useState<number[]>([1]);
-  const [separatorPositions, setSeparatorPositions] = useState<number[]>([75]); // Posición inicial
+  // Inicializar con 1 separador para tener al menos 2 operandos, o cargar desde data
+  const initialPositions = data?.separatorPositions || [75];
+  const [separators, setSeparators] = useState<number[]>(initialPositions.map((_, i) => i + 1));
+  const [separatorPositions, setSeparatorPositions] = useState<number[]>(initialPositions);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { getZoom } = useReactFlow();
+  const { getZoom, setNodes } = useReactFlow();
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -79,6 +81,22 @@ const ParFragmentNode = ({ selected }: NodeProps) => {
     setDraggingIndex(null);
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
+
+  // Sincronizar datos con node.data
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId
+        ? {
+            ...n,
+            data: {
+              ...n.data,
+              separatorPositions
+            }
+          }
+        : n
+    ));
+  }, [nodeId, separatorPositions, setNodes]);
 
   const previousHeightRef = useRef<number | null>(null);
 

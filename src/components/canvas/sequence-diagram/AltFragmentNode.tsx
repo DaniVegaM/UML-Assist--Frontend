@@ -1,24 +1,26 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useNodeId, type NodeProps, type Node } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import type { AltFragmentData } from "../../../types/canvas";
 
 const TEXT_AREA_MAX_LEN = 30;
 
-const AltFragmentNode = ({ selected }: NodeProps) => {
+const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) => {
+  const nodeId = useNodeId();
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const separatorTextareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
-  const [separators, setSeparators] = useState<number[]>([]);
-  const [separatorPositions, setSeparatorPositions] = useState<number[]>([]);
+  const [separators, setSeparators] = useState<number[]>(data?.separatorValues?.map((_, i) => i) || []);
+  const [separatorPositions, setSeparatorPositions] = useState<number[]>(data?.separatorPositions || []);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [separatorValues, setSeparatorValues] = useState<string[]>([]);
+  const [separatorValues, setSeparatorValues] = useState<string[]>(data?.separatorValues || []);
   const [editingSeparatorIndex, setEditingSeparatorIndex] = useState<number | null>(null);
   const [isEditingFirstOperand, setIsEditingFirstOperand] = useState<boolean>(false);
-  const [rawFirstOperand, setRawFirstOperand] = useState<string>('');
+  const [rawFirstOperand, setRawFirstOperand] = useState<string>(data?.firstOperand || '');
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { getZoom } = useReactFlow();
+  const { getZoom, setNodes } = useReactFlow();
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -148,6 +150,24 @@ const AltFragmentNode = ({ selected }: NodeProps) => {
     setDraggingIndex(null);
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
+
+  // Sincronizar datos con node.data
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId
+        ? {
+            ...n,
+            data: {
+              ...n.data,
+              firstOperand: rawFirstOperand,
+              separatorValues,
+              separatorPositions
+            }
+          }
+        : n
+    ));
+  }, [nodeId, rawFirstOperand, separatorValues, separatorPositions, setNodes]);
 
   // Ref para guardar la altura anterior del contenedor
   const previousHeightRef = useRef<number | null>(null);
