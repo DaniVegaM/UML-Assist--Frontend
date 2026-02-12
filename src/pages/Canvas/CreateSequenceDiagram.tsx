@@ -17,6 +17,7 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
+import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
@@ -25,6 +26,21 @@ function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+
+
+    useEffect(() => {
+  (window as any).__SEQ_NODES__ = nodes;
+  (window as any).__SEQ_EDGES__ = edges;
+}, [nodes, edges]);
+
+
+    useEffect(() => {
+        console.log("🧩 NODES ACTUALES:");
+        nodes.forEach(n => {
+            console.log(`NODE → id: ${n.id} | type: ${n.type}`);
+        });
+    }, [nodes]);
+
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { isValidSequenceConnection } = useLocalValidations(nodes, edges);
 
@@ -44,7 +60,7 @@ function DiagramContent() {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
+    }, [diagram, setNodes, setEdges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -57,25 +73,11 @@ function DiagramContent() {
                 //Aplicamos los cambios a los nodos
                 const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
 
-                // Tipos de nodos que pueden moverse libremente en ambas dimensiones
-                const freeMovementNodeTypes = [
-                    'altFragment',
-                    'optFragment',
-                    'loopFragment',
-                    'breakFragment',
-                    'seqFragment',
-                    'strictFragment',
-                    'parFragment',
-                    'note'
-                ];
-
-                //Restaurar las posiciones Y originales solo para nodos que NO son fragmentos
+                //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
                 return updatedNodes.map(node => {
-                    // Si es un fragmento, permitir movimiento libre
-                    if (freeMovementNodeTypes.includes(node.type || '')) {
+                    if (node.type === 'note') {
                         return node;
                     }
-                    // Para otros nodos (lifelines, etc.), mantener la posición Y fija
                     return {
                         ...node,
                         position: {
@@ -91,17 +93,36 @@ function DiagramContent() {
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
-            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
+            //console.log("[SECUENCIA] onEdgesChange", changes);
+
+            setEdges((edgesSnapshot) => {
+            const nextEdges = applyEdgeChanges(changes, edgesSnapshot);
+
+            const hasRemoval = changes.some((c) => c.type === "remove");
+            if (!hasRemoval) return nextEdges;
+
+            console.log("[SECUENCIA] Edge eliminado -> compactando handles...");
+
+            let compactedEdges = nextEdges;
+
+            setNodes((nodesSnapshot) => {
+                const res = compactHandlesAfterEdgeRemoval(nodesSnapshot, nextEdges);
+                compactedEdges = res.edges;
+                return res.nodes;
+            });
+
+            return compactedEdges;
+            });
         },
-        [setEdges],
+        [setEdges, setNodes]
     );
-
-
 
     const onConnect = useCallback(
         (params: Connection) => {
+
             const sourceNode = nodes.find(n => n.id === params.source);
             const targetNode = nodes.find(n => n.id === params.target);
+
             const isSelfMessage = params.source === params.target;
 
             // Obtener la posición Y del handle de origen
@@ -149,7 +170,7 @@ function DiagramContent() {
 
             setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
-                console.log('Conexiones actuales:', newEdges);
+                //console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
 
@@ -199,6 +220,8 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
+
+                
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}
