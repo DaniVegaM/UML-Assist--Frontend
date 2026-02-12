@@ -9,16 +9,9 @@ import api from "./baseApiService";
 
 export const isAuthenticated = (): boolean => {
   const token = getAccessToken();
-  if (!token) return false;
-
-  try {
-    // Verificamos si el token ha expirado
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.exp > Date.now() / 1000;
-  } catch {
-    return false;
-  }
+  return !!token;
 };
+
 
 /* Despues de otorgar permisos, Google/Github redirige a la URL de callback con un "code" en los query params 
 para poder obtener los tokens y datos del usuario */
