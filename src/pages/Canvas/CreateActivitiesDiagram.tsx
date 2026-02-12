@@ -15,7 +15,7 @@ import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
-import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
+//import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
 

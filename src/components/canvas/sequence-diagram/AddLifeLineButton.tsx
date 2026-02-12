@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram"; // Ajusta tu import
 import type { NodeProps } from "@xyflow/react";
+import { createPrefixedNodeId } from "../../../utils/idGenerator";
 
 // Recibimos el ID y la posición directamente del nodo
 export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeProps) {
@@ -29,7 +30,6 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
             const lifeLines = prevNodes
                 .filter(n => n.type === 'lifeLine' && n.position.y === 100)
                 .sort((a, b) => a.position.x - b.position.x);
-
             // Encontramos la LifeLine más a la izquierda que está a la derecha del botón
             const lifeLinesOnRight = lifeLines.filter(ll => ll.position.x > currentBtnX!);
             // Encontramos la LifeLine más a la derecha que está a la izquierda del botón
@@ -56,7 +56,7 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
 
             // Empujamos las LifeLines que están a la derecha del botón
             const updatedNodes = prevNodes.map(node => {
-                if (node.type === 'lifeLine' && node.position.x > currentBtnX!) {
+                if (node.type === 'lifeLine' && node.position.y === 100 && node.position.x > currentBtnX!) {
                     return {
                         ...node,
                         position: {
@@ -70,13 +70,13 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
 
             // Agregamos la nueva LifeLine
             return updatedNodes.concat([{
-                id: `lifeLine_${Date.now()}`,
+                id: createPrefixedNodeId("lifeLine"),
                 type: 'lifeLine',
                 data: { label: "" },
                 position: { x: newLifeLineX, y: 100 },
                 connectable: true,
-                zIndex: 999,
-                style: { zIndex: 999 }
+                zIndex: -1,
+                style: { zIndex: -1 }
             }]);
         });
     }, [id, positionAbsoluteX, nodes, setNodes]);

@@ -30,11 +30,18 @@ export type NodeTypeIdKey =
   // Sequence diagram
   | 'lifeLine'
   | 'baseFragment'
-  | 'addLifeLineBtn';
+  | 'addLifeLineBtn'
+  // Fragmentos reales que estás usando
+  | "altFragment"
+  | "optFragment"
+  | "loopFragment"
+  | "breakFragment"
+  | "seqFragment"
+  | "strictFragment"
+  | "parFragment";
 
 
 const PREFIX_BY_TYPE: Record<NodeTypeIdKey, string> = {
-  // Activities (prefijos como en el Excalidraw)
   activity: 'actv',
   simpleAction: 'actn',
   acceptEvent: 'acce',
@@ -57,8 +64,19 @@ const PREFIX_BY_TYPE: Record<NodeTypeIdKey, string> = {
 
   // Sequence
   lifeLine: 'lobj',
-  baseFragment: 'frag',
   addLifeLineBtn: 'albn',
+
+  //Fragmentos
+  altFragment: 'altf',
+  optFragment: 'optf',
+  loopFragment: 'loop',
+  breakFragment: 'brkf',
+  seqFragment: 'seqf',
+  strictFragment: 'strf',
+  parFragment: 'parf',
+
+  // (opcional) si todavía existe en tu app:
+  baseFragment: 'frag',
 };
 
 export function generateShortUniqueId(): string {

@@ -17,7 +17,7 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
-import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
+//import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
