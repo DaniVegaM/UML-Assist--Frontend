@@ -3,6 +3,7 @@ import { useSequenceDiagram } from "../../../../hooks/useSequenceDiagram";
 import { useReactFlow, MarkerType } from "@xyflow/react";
 import { useTheme } from "../../../../hooks/useTheme";
 import { useCanvas } from "../../../../hooks/useCanvas";
+import DeleteIcon from "./DeleteIcon";
 
 interface ChangeHandleTypeProps {
     id: string;
@@ -11,9 +12,10 @@ interface ChangeHandleTypeProps {
     handleId: string | null;
     handleIndex: number | null;
     onDestroyEvent?: (action: 'destroy' | 'default') => void;
+    showDeleteLifeLine?: boolean;
 }
 
-export default function ChangeHandleType({ onClose, handleId, lifeLineId, handleIndex, onDestroyEvent }: ChangeHandleTypeProps) {
+export default function ChangeHandleType({ onClose, handleId, lifeLineId, handleIndex, onDestroyEvent, showDeleteLifeLine = false }: ChangeHandleTypeProps) {
 
     const { setNodes, setEdges } = useSequenceDiagram();
     const { getNode } = useReactFlow();
@@ -217,76 +219,106 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
         onClose();
     };
 
+    const deleteLifeLine = () => {
+        // Eliminar el nodo LifeLine
+        setNodes(prev => prev.filter(node => node.id !== lifeLineId));
+        
+        // Eliminar todas las conexiones (edges) asociadas al LifeLine
+        setEdges(prev => prev.filter(edge => 
+            edge.source !== lifeLineId && edge.target !== lifeLineId
+        ));
+        
+        onClose();
+    };
+
     return (
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[220px] overflow-hidden">
-            {/* Handle predeterminado */}
-            <div
-                onClick={() => handleItemClick('default')}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
-            >
-                <div className="rounded-full bg-neutral-400 dark:bg-neutral-300 w-6 h-6"></div>
-                <p>Handle predeterminado</p>
-            </div>
-            <div className="border-b border-sky-600 dark:border-neutral-700"></div>
-            
-            {/* Evento de destrucción */}
-            <div
-                onClick={() => handleItemClick('destroy')}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
-            >
-                <div className="rounded-full w-6 h-6">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" className="w-full h-full stroke-black dark:stroke-neutral-400">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
-                    </svg>
-                </div>
-                <p>Evento de destrucción</p>
-            </div>
-            <div className="border-b border-sky-600 dark:border-neutral-700"></div>
-            
-            {/* Mensaje perdido */}
-            <div
-                onClick={handleLostMessage}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
-            >
-                <div className="w-6 h-6 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <line x1="4" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="2"/>
-                        <circle cx="20" cy="12" r="3" fill="currentColor"/>
-                        <path d="M12 8L16 12L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                </div>
-                <p>Mensaje perdido</p>
-            </div>
-            <div className="border-b border-sky-600 dark:border-neutral-700"></div>
-            
-            {/* Mensaje encontrado */}
-            <div
-                onClick={handleFoundMessage}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
-            >
-                <div className="w-6 h-6 flex items-center justify-center">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="4" cy="12" r="3" fill="currentColor"/>
-                        <line x1="8" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/>
-                        <path d="M16 8L20 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                </div>
-                <p>Mensaje encontrado</p>
-            </div>
-            <div className="border-b border-sky-600 dark:border-neutral-700"></div>
-            
-            {/* Crear nueva línea de vida */}
-            <div
-                onClick={handleCreateNewLifeLine}
-                className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
-            >
-                <div className="w-6 h-6 flex items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-full h-full">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-                </div>
-                <p>Crear nueva línea de vida</p>
-            </div>
+            {!showDeleteLifeLine ? (
+                <>
+                    {/* Opciones para handles */}
+                    {/* Handle predeterminado */}
+                    <div
+                        onClick={() => handleItemClick('default')}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
+                    >
+                        <div className="rounded-full bg-neutral-400 dark:bg-neutral-300 w-6 h-6"></div>
+                        <p>Handle predeterminado</p>
+                    </div>
+                    <div className="border-b border-sky-600 dark:border-neutral-700"></div>
+                    
+                    {/* Evento de destrucción */}
+                    <div
+                        onClick={() => handleItemClick('destroy')}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
+                    >
+                        <div className="rounded-full w-6 h-6">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" className="w-full h-full stroke-black dark:stroke-neutral-400">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
+                            </svg>
+                        </div>
+                        <p>Evento de destrucción</p>
+                    </div>
+                    <div className="border-b border-sky-600 dark:border-neutral-700"></div>
+                    
+                    {/* Mensaje perdido */}
+                    <div
+                        onClick={handleLostMessage}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
+                    >
+                        <div className="w-6 h-6 flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <line x1="4" y1="12" x2="16" y2="12" stroke="currentColor" strokeWidth="2"/>
+                                <circle cx="20" cy="12" r="3" fill="currentColor"/>
+                                <path d="M12 8L16 12L12 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <p>Mensaje perdido</p>
+                    </div>
+                    <div className="border-b border-sky-600 dark:border-neutral-700"></div>
+                    
+                    {/* Mensaje encontrado */}
+                    <div
+                        onClick={handleFoundMessage}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
+                    >
+                        <div className="w-6 h-6 flex items-center justify-center">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="4" cy="12" r="3" fill="currentColor"/>
+                                <line x1="8" y1="12" x2="20" y2="12" stroke="currentColor" strokeWidth="2"/>
+                                <path d="M16 8L20 12L16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                        </div>
+                        <p>Mensaje encontrado</p>
+                    </div>
+                    <div className="border-b border-sky-600 dark:border-neutral-700"></div>
+                    
+                    {/* Crear nueva línea de vida */}
+                    <div
+                        onClick={handleCreateNewLifeLine}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
+                    >
+                        <div className="w-6 h-6 flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-full h-full">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                            </svg>
+                        </div>
+                        <p>Crear nueva línea de vida</p>
+                    </div>
+                </>
+            ) : (
+                <>
+                    {/* Opción eliminar - solo visible al hacer clic en el nodo */}
+                    <div
+                        onClick={deleteLifeLine}
+                        className="flex items-center gap-3 px-4 py-2 hover:bg-red-100 dark:hover:bg-red-700 cursor-pointer text-sm dark:text-white"
+                    >
+                        <div className="w-6 h-6 flex items-center justify-center">
+                            <DeleteIcon className="w-full h-full" />
+                        </div>
+                        <p>Eliminar</p>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
