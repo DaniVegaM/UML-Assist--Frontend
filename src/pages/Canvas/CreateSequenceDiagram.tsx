@@ -18,6 +18,7 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -200,6 +201,7 @@ function DiagramContent() {
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
                 <ReactFlow
+                    deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
@@ -243,6 +245,7 @@ function DiagramContent() {
                         aria-label="Controles de lienzo"
                         position="bottom-right"
                     />
+                    <NodeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
                 <AIChatBar type="secuencia"/>

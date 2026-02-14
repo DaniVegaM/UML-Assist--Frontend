@@ -10,12 +10,12 @@ import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
-import DataNodeContextMenu from "../../components/canvas/activities-diagram/contextMenu/DataNodeContextMenu";
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -183,6 +183,7 @@ function DiagramContent() {
 
             <section className="h-full w-full relative">
                 <ReactFlow
+                    deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
@@ -227,7 +228,7 @@ function DiagramContent() {
                         aria-label="Controles de lienzo"
                         position="bottom-right"
                     />
-                    <DataNodeContextMenu />
+                    <NodeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
                 <AIChatBar type="actividades"/>
