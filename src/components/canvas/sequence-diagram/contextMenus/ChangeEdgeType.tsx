@@ -1,5 +1,6 @@
 import { useReactFlow, MarkerType } from "@xyflow/react";
 import "react-contexify/dist/ReactContexify.css";
+import DeleteIcon from "../../../canvas/shared/DeleteIcon";
 
 interface ChangeEdgeTypeProps {
     onClose: () => void;
@@ -88,6 +89,13 @@ export default function ChangeEdgeType({ onClose, edgeId }: ChangeEdgeTypeProps)
         onClose();
     };
 
+    const handleDeleteEdge = () => {
+        if (!edgeId) return;
+
+        setEdges(prev => prev.filter(edge => edge.id !== edgeId));
+        onClose();
+    };
+
     return (
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[220px] overflow-hidden">
             {Object.entries(EDGE_TYPES).map(([key, { label }], index) => (
@@ -125,6 +133,20 @@ export default function ChangeEdgeType({ onClose, edgeId }: ChangeEdgeTypeProps)
                     )}
                 </div>
             ))}
+            
+            {/* Separador antes de la opción eliminar */}
+            <div className="border-b border-sky-600 dark:border-neutral-700"></div>
+            
+            {/* Opción Eliminar */}
+            <div
+                onClick={handleDeleteEdge}
+                className="flex items-center gap-3 px-4 py-2 hover:bg-red-100 dark:hover:bg-red-700 cursor-pointer text-sm dark:text-white"
+            >
+                <div className="w-12 h-6 flex items-center justify-center">
+                    <DeleteIcon />
+                </div>
+                <p>Eliminar</p>
+            </div>
         </div>
     )
 }
