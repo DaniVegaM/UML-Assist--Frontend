@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, type NodeProps, useReactFlow, useNodeId } from "@xyflow/react";
+import { NodeResizer, type NodeProps, useNodeId } from "@xyflow/react";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
@@ -10,7 +10,6 @@ const TEXT_AREA_MAX_LEN = 30;
 const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   const nodeId = useNodeId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { setNodes: setNodesRF } = useReactFlow();
   const { setNodes, setEdges } = useSequenceDiagram();
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
@@ -20,7 +19,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
 
   // Sincronizar guard con el nodo de React Flow
   useEffect(() => {
-    setNodesRF((nds) =>
+    setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
           return {
@@ -31,7 +30,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
         return node;
       })
     );
-  }, [guard, id, setNodesRF]);
+  }, [guard, id, setNodes]);
 
   const onGuardDoubleClick = useCallback(() => {
     setIsEditingGuard(true);
