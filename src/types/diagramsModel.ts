@@ -7,6 +7,7 @@ export type Diagram = {
     created_at?: Date;
     updated_at?: Date;
     content?: Content;
+    preview_image?: string;
 }
 
 export type Content = {
