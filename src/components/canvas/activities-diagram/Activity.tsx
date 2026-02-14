@@ -10,7 +10,7 @@ export default function Activity({ data } : DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
-    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
     const [sourceHandlesIds, setSourceHandlesIds] = useState<string[] | null>(null);
     const [targetHandlesIds, setTargetHandlesIds] = useState<string[] | null>(null);
     const updateNodeInternals = useUpdateNodeInternals();
@@ -63,6 +63,16 @@ export default function Activity({ data } : DataProps) {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     const onClickSourceBtn = () => {
         setSourceHandlesIds((prev) => {
             if (prev && prev?.length > 0) {
@@ -88,6 +98,7 @@ export default function Activity({ data } : DataProps) {
     return (
             <div
                 onDoubleClick={handleDoubleClick}
+                onContextMenu={handleContextMenu}
                 className="node-container"
             >
                 <NodeResizer

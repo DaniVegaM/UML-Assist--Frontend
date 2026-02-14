@@ -10,7 +10,7 @@ export default function AcceptEvent({data}: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || '');
-    const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
+    const { setIsZoomOnScrollEnabled, isTryingToConnect, openContextMenu } = useCanvas();
     const [showSourceHandle, setShowSourceHandle] = useState(true);
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
@@ -57,9 +57,20 @@ export default function AcceptEvent({data}: DataProps) {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onDoubleClick={handleDoubleClick}
+            onContextMenu={handleContextMenu}
             className="node-signal"
             style={{
                 clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 20% 50%)',

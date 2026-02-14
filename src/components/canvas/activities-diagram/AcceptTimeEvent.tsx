@@ -12,7 +12,7 @@ export default function AcceptTimeEvent({data}: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [value, setValue] = useState(data.label || '');
-    const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
+    const { setIsZoomOnScrollEnabled, isTryingToConnect, openContextMenu } = useCanvas();
     const [showSourceHandle, setShowSourceHandle] = useState(true);
     const { isDarkMode } = useTheme();
     const { setNodes } = useReactFlow();
@@ -60,9 +60,20 @@ export default function AcceptTimeEvent({data}: DataProps) {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onDoubleClick={handleDoubleClick}
+            onContextMenu={handleContextMenu}
             className="flex flex-col items-center justify-center transition-all duration-150 relative"
             style={{
                 marginRight: '-10px',

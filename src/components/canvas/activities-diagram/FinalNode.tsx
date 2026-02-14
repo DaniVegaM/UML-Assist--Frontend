@@ -9,7 +9,7 @@ import "../styles/nodeStyles.css";
 export default function FinalNode({ data }: NodeProps) {
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
-    const { isTryingToConnect } = useCanvas();
+    const { isTryingToConnect, openContextMenu } = useCanvas();
     const { isDarkMode } = useTheme();
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
@@ -37,11 +37,22 @@ export default function FinalNode({ data }: NodeProps) {
         ));
     }, [handles, nodeId, setNodes]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             className="bg-transparent p-4"
             onMouseEnter={() => setShowHandles(isTryingToConnect)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >
             <div ref={nodeRef} className="node-circle node-circle-md"

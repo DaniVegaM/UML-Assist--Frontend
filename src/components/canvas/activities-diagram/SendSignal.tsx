@@ -10,7 +10,7 @@ export default function SendSignal({data}: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
-    const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
+    const { setIsZoomOnScrollEnabled, isTryingToConnect, openContextMenu } = useCanvas();
     const [showSourceHandle, setShowSourceHandle] = useState(true);
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
@@ -57,6 +57,16 @@ export default function SendSignal({data}: DataProps) {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onDoubleClick={handleDoubleClick}
@@ -69,6 +79,7 @@ export default function SendSignal({data}: DataProps) {
             }}
             onMouseEnter={() => setShowSourceHandle(true)}
             onMouseLeave={() => setShowSourceHandle(false)}
+            onContextMenu={handleContextMenu}
         >
             <BaseHandle id={0} position={Position.Right} showHandle={showSourceHandle && !isTryingToConnect} className="!absolute !right-1" />
             <BaseHandle id={1} position={Position.Left} showHandle={isTryingToConnect} className="!absolute !left-0" />

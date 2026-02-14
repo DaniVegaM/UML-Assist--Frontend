@@ -14,7 +14,7 @@ export default function CallOperation({ data }: DataProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(data.label || "");
-  const { setIsZoomOnScrollEnabled } = useCanvas();
+  const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
 
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
@@ -74,9 +74,20 @@ export default function CallOperation({ data }: DataProps) {
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
 
+  const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      nodeId: nodeId ?? "",
+    });
+  }, [openContextMenu, nodeId]);
+
   return (
     <div
       onDoubleClick={handleDoubleClick}
+      onContextMenu={handleContextMenu}
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
       className="bg-transparent p-4"

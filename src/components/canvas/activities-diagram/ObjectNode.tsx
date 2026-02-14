@@ -13,7 +13,7 @@ export default function ObjectNode({ data }: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
-    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
 
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
@@ -74,11 +74,22 @@ export default function ObjectNode({ data }: DataProps) {
         setValue(prevValue => prevValue.trim());
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
             className="bg-transparent p-4"
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >

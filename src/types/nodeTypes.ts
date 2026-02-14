@@ -24,7 +24,6 @@ import BreakFragmentNode from "../components/canvas/sequence-diagram/BreakFragme
 import SeqFragmentNode from "../components/canvas/sequence-diagram/SeqFragmentNode";
 import StrictFragmentNode from "../components/canvas/sequence-diagram/StrictFragmentNode";
 import ParFragmentNode from "../components/canvas/sequence-diagram/ParFragmentNode";
-import NoteNode from "../components/canvas/NoteComponent";
 import NoteComponent from "../components/canvas/NoteComponent";
 import InterruptActivityRegion from "../components/canvas/activities-diagram/InterruptActivityRegion";
 
@@ -46,7 +45,7 @@ export const activitiesNodeTypes = {
   connectorNode: ConnectorNode,
   callBehavior: CallBehaviorNode,
   exceptionHandling: ExceptionHandling,
-  note: NoteNode,
+  note: NoteComponent,
   InterruptActivityRegion: InterruptActivityRegion
 };
 

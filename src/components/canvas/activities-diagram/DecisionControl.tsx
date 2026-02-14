@@ -1,17 +1,29 @@
-import { Position } from "@xyflow/react";
+import { Position, useNodeId } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import "../styles/nodeStyles.css";
 
 
 export default function DecitionControl() {
     const [showHandles, setShowHandles] = useState(false);
-    const {isTryingToConnect} = useCanvas();
+    const {isTryingToConnect, openContextMenu} = useCanvas();
+    const nodeId = useNodeId();
+
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
 
     return (
         <div
             className="node-diamond"
+            onContextMenu={handleContextMenu}
             style={{
                 clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
             }}
