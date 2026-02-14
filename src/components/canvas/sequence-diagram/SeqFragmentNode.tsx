@@ -1,10 +1,13 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useNodeId, type NodeProps } from "@xyflow/react";
+import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import DeleteIcon from "./contextMenus/DeleteIcon";
 
 
 const SeqFragmentNode = ({ selected }: NodeProps) => {
+  const nodeId = useNodeId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [separators, setSeparators] = useState<number[]>([]);
   const [separatorPositions, setSeparatorPositions] = useState<number[]>([]);
@@ -12,6 +15,7 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
   const { getZoom } = useReactFlow();
+  const { setNodes, setEdges } = useSequenceDiagram();
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -48,6 +52,21 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
     });
     closeContextMenu();
   }, [closeContextMenu]);
+
+  // Handler para eliminar el nodo
+  const deleteNode = useCallback(() => {
+    if (!nodeId) return;
+    
+    // Eliminar el nodo
+    setNodes(prev => prev.filter(node => node.id !== nodeId));
+    
+    // Eliminar todas las conexiones (edges) asociadas al nodo
+    setEdges(prev => prev.filter(edge => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+    
+    closeContextMenu();
+  }, [nodeId, setNodes, setEdges, closeContextMenu]);
 
   const handleMouseDown = useCallback((index: number) => (e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -138,10 +157,17 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
 
   return (
     <div
-      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150"
+      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150 relative"
       style={{ minWidth: '350px', minHeight: '150px', zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
       onContextMenu={handleContextMenu}
     >
+      {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{ pointerEvents: 'auto' }}
+        onContextMenu={handleContextMenu}
+      />
+      
       <NodeResizer
         minWidth={350}
         minHeight={150}
@@ -149,7 +175,7 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
         isVisible={selected}
       />
       <div
-        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1"
+        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10"
         style={{
           clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
           width: '50px',
@@ -160,9 +186,9 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
       </div>
 
       {/* Espacio vacío donde iría la guarda (seq no requiere guarda) */}
-      <div />
+      <div className="relative z-10" />
 
-      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative">
+      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative z-10">
 
         {/* Separadores */}
         {separators.map((_, index) => (
@@ -227,6 +253,14 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
                     ({separators.length})
                   </span>
                 )}
+              </div>
+              <div className="border-t border-gray-200 dark:border-neutral-700"></div>
+              <div
+                onClick={deleteNode}
+                className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-red-100 dark:hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <DeleteIcon />
+                Eliminar
               </div>
             </div>
           </div>
