@@ -1,9 +1,11 @@
 
 import type { UserData } from '../types/auth';
 
-export const setTokens = (accessToken: string, refreshToken: string) => {
+export const setTokens = (accessToken: string, refreshToken?: string) => {
     localStorage.setItem('access_token', accessToken);
-    localStorage.setItem('refresh_token', refreshToken);
+    if (refreshToken) {
+        localStorage.setItem('refresh_token', refreshToken);
+    }
 }
 
 export const setUserData = (userData: UserData) => {
@@ -29,10 +31,6 @@ export const getUserData = () => {
 
 export const getAccessToken = () => {
     return localStorage.getItem('access_token');
-}
-
-export const getRefreshToken = () => {
-    return localStorage.getItem('refresh_token');
 }
 
 export const isAuthenticated = () => {
