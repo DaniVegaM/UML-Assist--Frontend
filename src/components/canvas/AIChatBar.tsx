@@ -39,9 +39,8 @@ ${edges.map(e => {
     
 `sequenceDiagram
 
-participants[${nodes.filter(n => n.type === 'lifeLine').length}]{id, name, x, startY, endEvent}
+participants[${nodes.length}]{id, name, x, startY, endEvent}
 ${nodes
-    .filter(n => n.type === 'lifeLine')
     .sort((a, b) => a.position.x - b.position.x)
     .map(n => {
         const startY = Math.round(n.position.y);
@@ -49,24 +48,12 @@ ${nodes
         return `${n.id}, ${n.data.label}, ${Math.round(n.position.x)}, ${startY}, ${endEvent}`;
     }).join('\n')}
 
-fragments[${nodes.filter(n => n.type?.includes('Fragment')).length}]{id, type, label, x, y, width, height}
-${nodes
-    .filter(n => n.type?.includes('Fragment'))
-    .map(n => {
-        const fragmentType = n.type?.replace('Fragment', '') || 'unknown';
-        const label = n.data?.label || fragmentType;
-        const width = Math.round(n.measured?.width || n.width || 0);
-        const height = Math.round(n.measured?.height || n.height || 0);
-        return `${n.id}, ${fragmentType}, ${label}, ${Math.round(n.position.x)}, ${Math.round(n.position.y)}, ${width}, ${height}`;
-    }).join('\n')}
-
 messages[${edges.length}]{id, type, source, target, label, yPos, fragmentId, operand}
 ${edges
-    .map(e => ({ ...e, yPos: (e.data as Record<string, unknown>)?.y as number || 0 }))
-    .sort((a, b) => (a.yPos as number) - (b.yPos as number))
+    .map(e => ({ ...e, yPos: e.data?.y || 0 }))
+    .sort((a, b) => a.yPos - b.yPos)
     .map(e => {
-        const edgeData = e.data as Record<string, unknown>;
-        let type = edgeData?.edgeType as string || 'async';
+        let type = e.data?.edgeType || 'async';
 
         if (e.type === 'lostMessageEdge') type = 'lost';
         if (e.type === 'foundMessageEdge') type = 'found';
@@ -76,10 +63,8 @@ ${edges
         
         const source = type === 'found' ? '[FOUND]' : e.source;
         const target = type === 'lost' ? '[LOST]' : e.target;
-        const label = typeof e.label === 'string' ? e.label : (edgeData?.label as string || '');
-        const fragmentId = edgeData?.fragmentId as string || '';
-        const operand = edgeData?.operand as string || '';
-        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos as number)}, ${fragmentId}, ${operand}`;
+        const label = typeof e.label === 'string' ? e.label : (e.data?.label || '');
+        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}`;
     }).join('\n')}`}
         `;
 
