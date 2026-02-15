@@ -90,7 +90,7 @@ export default function AcceptTimeEvent({data}: DataProps) {
             <BaseHandle id={1} position={Position.Left} showHandle={isTryingToConnect} className="!absolute !left-12 !top-6" />
 
             {/* Textarea debajo, sin position absolute */}
-            <div className="mt-2 w-full flex justify-center">
+            <div className="mt-2 w-full flex flex-col justify-center">
                 <textarea
                     ref={textareaRef}
                     value={value}

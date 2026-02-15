@@ -23,13 +23,11 @@ export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
         setIsThinking(true);
 
         const intermediateLanguage = `
-UserPrompt: ${initialContext}
-
 ${type === 'actividades' ? 
 `activityDiagram
 
-nodes[${nodes.length}]{id, content, activityId}
-${nodes.map(n => `${n.id}, ${n.data.label}, ${n.parentId || ""}`).join('\n')}
+nodes[${nodes.length}]{id, content, parentNodeId}
+${nodes.map(n => `${n.id}, ${(n.data.label as string).replace("\n", " ")}, ${n.parentId || ""}`).join('\n')}
 
 edges[${edges.length}]{id, sourceNode, targetNode, guard}
 ${edges.map(e => {
@@ -41,8 +39,9 @@ ${edges.map(e => {
     
 `sequenceDiagram
 
-participants[${nodes.length}]{id, name, x, startY, endEvent}
+participants[${nodes.filter(n => n.type === 'lifeLine').length}]{id, name, x, startY, endEvent}
 ${nodes
+    .filter(n => n.type === 'lifeLine')
     .sort((a, b) => a.position.x - b.position.x)
     .map(n => {
         const startY = Math.round(n.position.y);
@@ -50,12 +49,24 @@ ${nodes
         return `${n.id}, ${n.data.label}, ${Math.round(n.position.x)}, ${startY}, ${endEvent}`;
     }).join('\n')}
 
-messages[${edges.length}]{id, type, source, target, label, yPos}
+fragments[${nodes.filter(n => n.type?.includes('Fragment')).length}]{id, type, label, x, y, width, height}
+${nodes
+    .filter(n => n.type?.includes('Fragment'))
+    .map(n => {
+        const fragmentType = n.type?.replace('Fragment', '') || 'unknown';
+        const label = n.data?.label || fragmentType;
+        const width = Math.round(n.measured?.width || n.width || 0);
+        const height = Math.round(n.measured?.height || n.height || 0);
+        return `${n.id}, ${fragmentType}, ${label}, ${Math.round(n.position.x)}, ${Math.round(n.position.y)}, ${width}, ${height}`;
+    }).join('\n')}
+
+messages[${edges.length}]{id, type, source, target, label, yPos, fragmentId, operand}
 ${edges
-    .map(e => ({ ...e, yPos: e.data?.y || 0 }))
-    .sort((a, b) => a.yPos - b.yPos)
+    .map(e => ({ ...e, yPos: (e.data as Record<string, unknown>)?.y as number || 0 }))
+    .sort((a, b) => (a.yPos as number) - (b.yPos as number))
     .map(e => {
-        let type = e.data?.edgeType || 'async';
+        const edgeData = e.data as Record<string, unknown>;
+        let type = edgeData?.edgeType as string || 'async';
 
         if (e.type === 'lostMessageEdge') type = 'lost';
         if (e.type === 'foundMessageEdge') type = 'found';
@@ -65,14 +76,22 @@ ${edges
         
         const source = type === 'found' ? '[FOUND]' : e.source;
         const target = type === 'lost' ? '[LOST]' : e.target;
-        const label = typeof e.label === 'string' ? e.label : (e.data?.label || '');
-        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}`;
+        const label = typeof e.label === 'string' ? e.label : (edgeData?.label as string || '');
+        const fragmentId = edgeData?.fragmentId as string || '';
+        const operand = edgeData?.operand as string || '';
+        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos as number)}, ${fragmentId}, ${operand}`;
     }).join('\n')}`}
         `;
 
         console.log("Lenguaje intermedio enviado a la IA:", intermediateLanguage);
 
-        const reviewDiagramResponse = await reviewDiagramWithAI(intermediateLanguage);
+        const reviewDiagramData = {
+            userPrompt: initialContext,
+            diagramType: type === 'actividades' ? 'activities' : 'sequence' as 'activities' | 'sequence',
+            intermediateLanguage,
+        }
+
+        const reviewDiagramResponse = await reviewDiagramWithAI(reviewDiagramData);
         
         console.log("Respuesta de la IA:", reviewDiagramResponse.data.suggestions);
         

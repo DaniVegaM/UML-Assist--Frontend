@@ -16,6 +16,7 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { createPrefixedNodeId } from "../../utils/idGenerator";
 
 
 function DiagramContent() {
@@ -126,7 +127,7 @@ function DiagramContent() {
 
             const newEdge = {
                 ...params,
-                id: `edge-${params.source}-${params.target}`,
+                id: createPrefixedNodeId('edge'),
                 type: edgeType,
                 label: defaultLabel,
             };
