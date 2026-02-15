@@ -2,6 +2,7 @@
 
 import { createContext, type ReactNode, useState } from "react";
 import { type Edge, type Node } from "@xyflow/react";
+import { createPrefixedNodeId } from "../utils/idGenerator";
 
 // Define el tipo para los handles
 interface Handle {
@@ -27,7 +28,7 @@ export const SequenceDiagramContext = createContext<SequenceDiagramContextType |
 export function CanvasProvider({ children }: { children: ReactNode }) {
     const initialNodes: Node<NodeData>[] = [
         { 
-            id: 'lifeLine_0', 
+            id: createPrefixedNodeId("lifeLine"),
             type: 'lifeLine', 
             position: { x: 400, y: 100 }, 
             data: { label: "" },

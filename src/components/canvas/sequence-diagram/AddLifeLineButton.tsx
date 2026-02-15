@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram"; // Ajusta tu import
 import type { NodeProps } from "@xyflow/react";
+import { createPrefixedNodeId } from "../../../utils/idGenerator";
 
 // Recibimos el ID y la posición directamente del nodo
 export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeProps) {
@@ -29,7 +30,6 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
             const lifeLines = prevNodes
                 .filter(n => n.type === 'lifeLine' && n.position.y === 100)
                 .sort((a, b) => a.position.x - b.position.x);
-
             // Encontramos la LifeLine más a la izquierda que está a la derecha del botón
             const lifeLinesOnRight = lifeLines.filter(ll => ll.position.x > currentBtnX!);
             // Encontramos la LifeLine más a la derecha que está a la izquierda del botón
@@ -70,7 +70,7 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
 
             // Agregamos la nueva LifeLine
             return updatedNodes.concat([{
-                id: `lifeLine_${Date.now()}`,
+                id: createPrefixedNodeId("lifeLine"),
                 type: 'lifeLine',
                 data: { label: "" },
                 position: { x: newLifeLineX, y: 100 },

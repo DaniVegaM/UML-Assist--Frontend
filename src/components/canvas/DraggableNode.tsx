@@ -3,6 +3,7 @@ import { useReactFlow, type XYPosition } from "@xyflow/react";
 import { useRef, useState } from "react";
 import type { DraggableNodeProps } from "../../types/canvas";
 import type { Node } from "@xyflow/react";
+import { createPrefixedNodeId, type NodeTypeIdKey } from "../../utils/idGenerator";
 
 
 export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
@@ -10,20 +11,8 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
-    const getId = () => {
-        const nodes = getNodes();
-        // Encontramos el ID más alto para este tipo de nodo y continuamos desde ahí
-        const existingIds = nodes
-            .filter(n => n.id.startsWith(`${nodeType}_`))
-            .map(n => {
-                const match = n.id.match(new RegExp(`^${nodeType}_(\\d+)$`));
-                return match ? parseInt(match[1], 10) : -1;
-            })
-            .filter(id => id >= 0);
+   const getId = () => createPrefixedNodeId(nodeType as NodeTypeIdKey);
 
-        const nextId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 0;
-        return `${nodeType}_${nextId}`;
-    };
 
     useDraggable(draggableRef as React.RefObject<HTMLElement>, {
         position: position,
@@ -66,8 +55,10 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     incomingEdge = 'exceptionHandlingEdge';
                 }
 
+                const newNodeId = getId();
+
                 const newNode = {
-                    id: getId(),
+                    id: newNodeId,
                     type: nodeType,
                     position: flowPosition,
                     data: {
@@ -91,9 +82,9 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                     const nodesToAdd: Node[] = [newNode as Node];
                     if (nodeType === 'InterruptActivityRegion') {
                         const acceptEventNode: Node = {
-                            id: `accept_${newNode.id}`,
+                            id: createPrefixedNodeId("acceptEvent"),
                             type: 'acceptEvent',
-                            parentId: newNode.id,
+                            parentId: newNodeId,
                             extent: 'parent',
                             position: { x: 260, y: 180 },
                             data: {},
@@ -113,14 +104,14 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 // Si se esta soltando sobre un activity node, hacer que sea hijo de este 
                 await new Promise(resolve => setTimeout(resolve, 50));
                 const nodes = getNodes();
-                const currentNode = nodes.find(n => n.id === newNode.id);
+                const currentNode = nodes.find(n => n.id === newNodeId);
                 if (!currentNode) return;
-                const intersections = getIntersectingNodes(currentNode).map((n) => n.id);
+                const intersections = getIntersectingNodes(currentNode);
 
-                const parentRegionId = intersections.find(nodeId =>
-                    nodeId.startsWith('activity') ||
-                    nodeId.startsWith('InterruptActivityRegion')
-                );
+
+                const parentRegionId = intersections.find((n) =>
+                n.type === "activity" || n.type === "InterruptActivityRegion"
+                )?.id;
                 if (
                     currentNode.type !== 'activity' &&
                     currentNode.type !== 'InterruptActivityRegion' &&

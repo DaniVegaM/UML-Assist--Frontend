@@ -17,6 +17,7 @@ import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/Sna
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
+
 function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
@@ -64,15 +65,14 @@ function DiagramContent() {
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node).map((n) => n.id);
-        // console.log('Nodos que intersectan con el nodo arrastrado:', intersections);
 
         if (node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
             node.parentId = intersections.find(nodeId => nodeId.startsWith('activity')) || undefined;
             node.extent = 'parent';
         }
         setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
-
     }, []);
+
 
     const onConnect = useCallback(
         (params: Connection) => {
@@ -81,6 +81,7 @@ function DiagramContent() {
 
             let edgeType = {};
             let defaultLabel = '';
+
 
             // Definir el tipo de edge según el tipo de nodo conectado
             if (
