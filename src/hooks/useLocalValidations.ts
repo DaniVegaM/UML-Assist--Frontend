@@ -233,11 +233,17 @@ export function useLocalValidations(nodes: Node[], edges: Edge[]) {
             // Validación base: tipos requeridos
             if (!sourceType || !targetType) return false;
 
-            // Solo permitir conexiones LifeLine -> LifeLine
-            // Nota: hoy el UI ya limita esto porque solo las lifelines tienen handles,
-            // pero se deja como “capa de seguridad” por si se agregan handles a otros nodos.
+            // Permitir conexiones entre lifelines y también conexiones con notas
+            const isNoteConnection = sourceType === 'note' || targetType === 'note';
+            const isLifeLineConnection = sourceType === "lifeLine" && targetType === "lifeLine";
 
-            if (sourceType !== "lifeLine" || targetType !== "lifeLine") return false;
+            // Solo permitir conexiones LifeLine <-> LifeLine o Note <-> LifeLine
+            if (!isLifeLineConnection && !isNoteConnection) return false;
+
+            // Si es conexión con nota, al menos uno debe ser lifeline
+            if (isNoteConnection && sourceType !== "lifeLine" && targetType !== "lifeLine") {
+                return false;
+            }
 
             // En secuencia SIEMPRE debe haber handles
             if (!connection.sourceHandle || !connection.targetHandle) return false;

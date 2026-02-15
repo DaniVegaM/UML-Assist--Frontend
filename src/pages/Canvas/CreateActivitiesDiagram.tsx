@@ -15,7 +15,6 @@ import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
-//import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
 
@@ -28,11 +27,6 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
-
-    useEffect(() => {
-        console.log("🧩 [ACTIVIDADES] NODES ACTUALES:");
-        nodes.forEach((n) => console.log(`NODE → id: ${n.id} | type: ${n.type}`));
-    }, [nodes]);
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -64,45 +58,20 @@ function DiagramContent() {
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
-            console.log("onEdgesChange", changes);
-
-            setEdges((edgesSnapshot) => {
-                let nextEdges = applyEdgeChanges(changes, edgesSnapshot);
-
-                const hasRemoval = changes.some((c) => c.type === "remove");
-                if (hasRemoval) {
-                    console.log("Edge eliminado, compactando handles...");
-
-                    setNodes((nodesSnapshot) => {
-                        const res = compactHandlesAfterEdgeRemoval(nodesSnapshot, nextEdges);
-                        nextEdges = res.edges;
-                        return res.nodes;
-                    });
-                }
-                return nextEdges;
-            });
+            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
         },
-        []
+        [],
     );
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-        const intersections = getIntersectingNodes(node);
+        const intersections = getIntersectingNodes(node).map((n) => n.id);
 
-        const parentRegion = intersections.find(
-            (n) => n.type === "activity" || n.type === "InterruptActivityRegion"
-        );
-
-        if (node.type !== "activity" && node.type !== "InterruptActivityRegion" && parentRegion) {
-            node.parentId = parentRegion.id;
-            node.extent = "parent";
-        } else {
-            // si no está dentro de una región, lo “des-empatan” (opcional pero recomendado)
-            node.parentId = undefined;
-            node.extent = undefined;
+        if (node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
+            node.parentId = intersections.find(nodeId => nodeId.startsWith('activity')) || undefined;
+            node.extent = 'parent';
         }
-
-        setNodes((nodes) => nodes.map((n) => (n.id === node.id ? node : n)));
-    }, [getIntersectingNodes]);
+        setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
+    }, []);
 
 
     const onConnect = useCallback(
@@ -110,7 +79,7 @@ function DiagramContent() {
             const sourceNode = nodes.find((node) => node.id === params.source);
             const targetNode = nodes.find((node) => node.id === params.target);
 
-            let edgeType: string = 'labeledEdge';
+            let edgeType = {};
             let defaultLabel = '';
 
 
@@ -157,7 +126,7 @@ function DiagramContent() {
 
             const newEdge = {
                 ...params,
-                id: `edge_${crypto.randomUUID()}`,
+                id: `edge-${params.source}-${params.target}`,
                 type: edgeType,
                 label: defaultLabel,
             };
@@ -236,7 +205,7 @@ function DiagramContent() {
                         },
                         type: 'labeledEdge',
                     }}
-                    //isValidConnection={isValidActivityConnection}
+                    isValidConnection={isValidActivityConnection}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     connectionLineComponent={SnapConnectionLine}
@@ -248,19 +217,9 @@ function DiagramContent() {
                     onNodeDrag={onNodeDrag}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
-                    onConnectStart={(e, info) => {
-                        console.log("🟢 onConnectStart", info);
-                        setIsTryingToConnect(true);
-                    }}
-                    onConnectEnd={() => {
-                        console.log("🟡 onConnectEnd");
-                        setIsTryingToConnect(false);
-                    }}
-                    onConnect={(params) => {
-                        console.log("✅ onConnect fired", params);
-                        onConnect(params);
-                    }}
-
+                    onConnect={onConnect}
+                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onConnectEnd={() => setIsTryingToConnect(false)}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls

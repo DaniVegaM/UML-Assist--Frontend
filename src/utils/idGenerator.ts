@@ -31,7 +31,6 @@ export type NodeTypeIdKey =
   | 'lifeLine'
   | 'baseFragment'
   | 'addLifeLineBtn'
-  // Fragmentos reales que estás usando
   | "altFragment"
   | "optFragment"
   | "loopFragment"
@@ -75,7 +74,6 @@ const PREFIX_BY_TYPE: Record<NodeTypeIdKey, string> = {
   strictFragment: 'strf',
   parFragment: 'parf',
 
-  // (opcional) si todavía existe en tu app:
   baseFragment: 'frag',
 };
 

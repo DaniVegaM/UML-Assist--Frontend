@@ -56,7 +56,7 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
 
             // Empujamos las LifeLines que están a la derecha del botón
             const updatedNodes = prevNodes.map(node => {
-                if (node.type === 'lifeLine' && node.position.y === 100 && node.position.x > currentBtnX!) {
+                if (node.type === 'lifeLine' && node.position.x > currentBtnX!) {
                     return {
                         ...node,
                         position: {
@@ -75,8 +75,8 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
                 data: { label: "" },
                 position: { x: newLifeLineX, y: 100 },
                 connectable: true,
-                zIndex: -1,
-                style: { zIndex: -1 }
+                zIndex: 999,
+                style: { zIndex: 999 }
             }]);
         });
     }, [id, positionAbsoluteX, nodes, setNodes]);

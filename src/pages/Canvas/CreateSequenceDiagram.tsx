@@ -17,7 +17,6 @@ import { useParams } from "react-router";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
-//import { compactHandlesAfterEdgeRemoval } from "../../utils/handles";
 import AIChatBar from "../../components/canvas/AIChatBar";
 
 function DiagramContent() {
@@ -26,20 +25,6 @@ function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
-
-
-    useEffect(() => {
-  (window as any).__SEQ_NODES__ = nodes;
-  (window as any).__SEQ_EDGES__ = edges;
-}, [nodes, edges]);
-
-
-    useEffect(() => {
-        console.log("🧩 NODES ACTUALES:");
-        nodes.forEach(n => {
-            console.log(`NODE → id: ${n.id} | type: ${n.type}`);
-        });
-    }, [nodes]);
 
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { isValidSequenceConnection } = useLocalValidations(nodes, edges);
@@ -60,7 +45,7 @@ function DiagramContent() {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram, setNodes, setEdges]);
+    }, [diagram]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -73,9 +58,21 @@ function DiagramContent() {
                 //Aplicamos los cambios a los nodos
                 const updatedNodes = applyNodeChanges(changes, nodesSnapshot);
 
+                // Tipos de nodos que pueden moverse libremente en ambas dimensiones
+                const freeMovementNodeTypes = [
+                    'altFragment',
+                    'optFragment',
+                    'loopFragment',
+                    'breakFragment',
+                    'seqFragment',
+                    'strictFragment',
+                    'parFragment',
+                    'note'
+                ];
+
                 //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
                 return updatedNodes.map(node => {
-                    if (node.type === 'note') {
+                    if (freeMovementNodeTypes.includes(node.type || '')) {
                         return node;
                     }
                     return {
@@ -93,28 +90,9 @@ function DiagramContent() {
 
     const onEdgesChange = useCallback(
         (changes: EdgeChange[]) => {
-            //console.log("[SECUENCIA] onEdgesChange", changes);
-
-            setEdges((edgesSnapshot) => {
-            const nextEdges = applyEdgeChanges(changes, edgesSnapshot);
-
-            const hasRemoval = changes.some((c) => c.type === "remove");
-            if (!hasRemoval) return nextEdges;
-
-            console.log("[SECUENCIA] Edge eliminado -> compactando handles...");
-
-            let compactedEdges = nextEdges;
-
-            setNodes((nodesSnapshot) => {
-                const res = compactHandlesAfterEdgeRemoval(nodesSnapshot, nextEdges);
-                compactedEdges = res.edges;
-                return res.nodes;
-            });
-
-            return compactedEdges;
-            });
+            setEdges((edgesSnapshot) => (applyEdgeChanges(changes, edgesSnapshot)));
         },
-        [setEdges, setNodes]
+        [setEdges],
     );
 
     const onConnect = useCallback(
@@ -170,7 +148,6 @@ function DiagramContent() {
 
             setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
-                //console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
 

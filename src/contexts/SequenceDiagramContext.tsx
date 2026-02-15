@@ -4,8 +4,6 @@ import { createContext, type ReactNode, useState } from "react";
 import { type Edge, type Node } from "@xyflow/react";
 import { createPrefixedNodeId } from "../utils/idGenerator";
 
-console.log("🔥 CREATE ACTIVITIES FILE LOADED 123");
-
 // Define el tipo para los handles
 interface Handle {
     id: string;
@@ -35,9 +33,9 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             position: { x: 400, y: 100 }, 
             data: { label: "" },
             connectable: true,
-            zIndex: -1,
+            zIndex: 999,
             style: {
-                zIndex: -1
+                zIndex: 999
             }
         }
     ]
