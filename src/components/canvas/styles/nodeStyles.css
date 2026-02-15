@@ -230,3 +230,40 @@
 .dark .interruptible-region.selected {
   box-shadow: 0 0 0 1px #e4e4e7;
 }
+
+.box-div {
+  @apply absolute flex items-center justify-center w-24 h-10;
+  @apply bg-white rounded-md border border-black;
+  @apply transition-all duration-200;
+  @apply z-20;
+}
+
+.dark .box-div {
+  @apply bg-neutral-800 border-white;
+}
+
+.inner-box {
+  @apply pointer-events-none;
+}
+
+.box-div>.react-flow__handle {
+  @apply w-2 h-2 rounded-full bg-gray-400 absolute;
+  @apply transition-opacity duration-200;
+}
+
+.box-div>.react-flow__handle[type="source"] {
+  right: -8px;
+}
+
+.box-div>.react-flow__handle[type="target"] {
+  left: -8px;
+}
+
+.add-box-btn {
+  @apply w-6 h-6 rounded-full bg-neutral-300 hover:bg-neutral-400 text-black flex items-center justify-center cursor-pointer;
+  font-weight: bold;
+}
+
+.dark .add-box-btn {
+  @apply bg-neutral-600 hover:bg-neutral-500 text-white;
+}
