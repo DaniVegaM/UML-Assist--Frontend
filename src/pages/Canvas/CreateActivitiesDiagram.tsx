@@ -16,16 +16,25 @@ import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/Sna
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
+import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
-    const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
+    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu, closeEdgeContextMenu } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
+
+    const onEdgeContextMenu = useCallback(
+        (event: React.MouseEvent, edge: Edge) => {
+            event.preventDefault();
+            openEdgeContextMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
+        },
+        [openEdgeContextMenu],
+    );
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -220,6 +229,7 @@ function DiagramContent() {
                     onConnect={onConnect}
                     onConnectStart={() => setIsTryingToConnect(true)}
                     onConnectEnd={() => setIsTryingToConnect(false)}
+                    onEdgeContextMenu={onEdgeContextMenu}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
@@ -229,6 +239,7 @@ function DiagramContent() {
                         position="bottom-right"
                     />
                     <NodeContextMenu />
+                    <EdgeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
                 <AIChatBar type="actividades"/>
