@@ -109,21 +109,26 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 const intersections = getIntersectingNodes(currentNode);
 
 
-                const parentRegionId = intersections.find((n) =>
-                n.type === "activity" || n.type === "InterruptActivityRegion"
-                )?.id;
+                const parentRegion = intersections.find((n) =>
+                    n.type === "activity" || n.type === "InterruptActivityRegion"
+                );
                 if (
                     currentNode.type !== 'activity' &&
                     currentNode.type !== 'InterruptActivityRegion' &&
-                    parentRegionId
+                    parentRegion
                 ) {
                     setNodes((nds) =>
                         nds.map((node) => {
                             if (node.id === currentNode.id) {
                                 return {
                                     ...node,
-                                    parentId: parentRegionId,
+                                    parentId: parentRegion.id,
                                     extent: 'parent',
+                                    // Convertir posición absoluta a relativa al padre
+                                    position: {
+                                        x: node.position.x - parentRegion.position.x,
+                                        y: node.position.y - parentRegion.position.y,
+                                    },
                                 };
                             }
                             return node;
