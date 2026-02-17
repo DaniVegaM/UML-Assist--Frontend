@@ -7,7 +7,7 @@ import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
 import DataNodeContextMenu from "../../components/canvas/activities-diagram/contextMenu/DataNodeContextMenu";
@@ -16,6 +16,10 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { NotificationCenterProvider } from "../../contexts/NotificationCenterContext";
+import NotificationCenterPanel from "../../components/layout/Canvas/NotificationCenterPanel";
+import NotificationCenterBridgeRegister from "../../components/layout/Canvas/notificationCenterBridgeRegister";
+import { notify } from "../../components/ui/NotificationComponent";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -25,7 +29,26 @@ function DiagramContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
-    const { isValidActivityConnection } = useLocalValidations(nodes, edges);
+    const { validateActivityConnection } = useLocalValidations(nodes, edges);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "warning" | "info" } | null>(null);
+
+        const isValidActivityConnectionWithFeedback = useCallback(
+            (conn: Connection) => {
+                const result = validateActivityConnection(conn);
+
+                if (!result.ok) {
+                lastInvalidAttemptRef.current = {
+                    ts: Date.now(),
+                    message: result.reason ?? "Esta relación no cumple las reglas locales del diagrama.",
+                    type: result.severity ?? "error",
+                };
+                }
+
+                return result.ok;
+            },
+            [validateActivityConnection]
+        );
+
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -76,10 +99,11 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
+
             const sourceNode = nodes.find((node) => node.id === params.source);
             const targetNode = nodes.find((node) => node.id === params.target);
 
-            let edgeType = {};
+            let edgeType = "labeledEdge";
             let defaultLabel = '';
 
             // Definir el tipo de edge según el tipo de nodo conectado
@@ -182,6 +206,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative">
+                <NotificationCenterPanel />
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}
@@ -204,7 +229,7 @@ function DiagramContent() {
                         },
                         type: 'labeledEdge',
                     }}
-                    isValidConnection={isValidActivityConnection}
+                    isValidConnection={isValidActivityConnectionWithFeedback}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     connectionLineComponent={SnapConnectionLine}
@@ -218,7 +243,17 @@ function DiagramContent() {
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
                     onConnectStart={() => setIsTryingToConnect(true)}
-                    onConnectEnd={() => setIsTryingToConnect(false)}
+                    onConnectEnd={() => {
+                        setIsTryingToConnect(false);
+
+                        const info = lastInvalidAttemptRef.current;
+                        if (info && Date.now() - info.ts < 700) {
+                            notify(info.type, "Conexión inválida", info.message);
+                        }
+                        lastInvalidAttemptRef.current = null;
+
+                    }}
+
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
@@ -240,8 +275,13 @@ export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                <DiagramContent />
+                <NotificationCenterProvider>
+                    <NotificationCenterBridgeRegister />
+                    <DiagramContent />
+                </NotificationCenterProvider>
             </CanvasProvider>
         </ReactFlowProvider>
+    
     );
 }
+

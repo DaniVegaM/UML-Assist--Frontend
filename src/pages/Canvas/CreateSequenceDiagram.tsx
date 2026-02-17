@@ -6,7 +6,7 @@ import Header from "../../components/layout/Canvas/Header";
 import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
@@ -18,6 +18,11 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { NotificationCenterProvider } from "../../contexts/NotificationCenterContext";
+import NotificationCenterPanel from "../../components/layout/Canvas/NotificationCenterPanel";
+import NotificationCenterBridgeRegister from "../../components/layout/Canvas/NotificationCenterBridgeRegister";
+import { notify } from "../../components/ui/NotificationComponent";
+
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -26,7 +31,25 @@ function DiagramContent() {
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
-    const { isValidSequenceConnection } = useLocalValidations(nodes, edges);
+    const { validateSequenceConnection } = useLocalValidations(nodes, edges);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "warning" | "info" } | null>(null);
+
+    const isValidSequenceConnectionWithFeedback = useCallback(
+        (conn: Connection) => {
+            const result = validateSequenceConnection(conn);
+
+            if (!result.ok) {
+            lastInvalidAttemptRef.current = {
+                ts: Date.now(),
+                message: result.reason ?? "Conexión inválida.",
+                type: result.severity ?? "error",
+            };
+            }
+
+            return result.ok;
+        },
+        [validateSequenceConnection]
+    );
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -100,6 +123,7 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
+            
             const sourceNode = nodes.find(n => n.id === params.source);
             const targetNode = nodes.find(n => n.id === params.target);
             const isSelfMessage = params.source === params.target;
@@ -149,7 +173,6 @@ function DiagramContent() {
 
             setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
-                console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
 
@@ -199,6 +222,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
+                <NotificationCenterPanel />
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}
@@ -231,9 +255,17 @@ function DiagramContent() {
                     onEdgesChange={onEdgesChange}
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
-                    isValidConnection={isValidSequenceConnection}
+                    isValidConnection={isValidSequenceConnectionWithFeedback}
+                    onConnectEnd={() => {
+                        setIsTryingToConnect(false);
+
+                        const info = lastInvalidAttemptRef.current;
+                        if (info && Date.now() - info.ts < 700) {
+                            notify(info.type, "Conexión inválida", info.message);
+                        }
+                        lastInvalidAttemptRef.current = null;
+                    }}
                     onConnectStart={() => setIsTryingToConnect(true)}
-                    onConnectEnd={() => setIsTryingToConnect(false)}
                     onConnect={onConnect}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -256,7 +288,10 @@ export default function CreateSequenceDiagram() {
         <ReactFlowProvider>
             <CanvasProvider>
                 <SequenceCanvasProvider>
-                    <DiagramContent />
+                    <NotificationCenterProvider>
+                        <NotificationCenterBridgeRegister />
+                        <DiagramContent />
+                    </NotificationCenterProvider>
                 </SequenceCanvasProvider>
             </CanvasProvider>
         </ReactFlowProvider>

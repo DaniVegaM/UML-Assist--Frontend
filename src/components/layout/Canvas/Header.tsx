@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router'
 import { useTheme } from '../../../hooks/useTheme';
 import type { HeaderProps } from '../../../types/canvas';
@@ -6,6 +5,8 @@ import { useEffect, useState } from 'react';
 import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import type { Diagram } from '../../../types/diagramsModel';
 import './Header.css';
+import NotificationBellButton from "./NotificationBellButton";
+
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
@@ -110,6 +111,8 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                     <button onClick={() => saveDiagram()} className="bg-white dark:bg-neutral-800 py-1 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
 
                     <button className="bg-white py-1 dark:bg-neutral-800 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Exportar</button>
+
+                    <NotificationBellButton />
 
                     <label htmlFor="switch" className="bg-white dark:bg-neutral-800 toggle ">
                         <input
