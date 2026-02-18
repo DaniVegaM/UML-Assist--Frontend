@@ -17,6 +17,7 @@ const StrictFragmentNode = ({ selected }: NodeProps) => {
   const { nodes: allNodes, edges } = useSequenceDiagram();
 
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
   const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const initialCalcDone = useRef(false);
 
@@ -32,7 +33,11 @@ const StrictFragmentNode = ({ selected }: NodeProps) => {
     lastFragmentBoundsRef.current = currentBounds;
     initialCalcDone.current = true;
     const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
+    const HEADER_HEIGHT = 25;
+    const containerTop = fragmentBounds.y + HEADER_HEIGHT;
+    const absSeparatorYs = separatorPositions.map(pos => containerTop + pos).sort((a, b) => a - b);
     const insideEdgeIds: string[] = [];
+    const newOperandAssignments: [string, string][] = [];
     for (const edge of edges) {
       if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
       const sourceInternal = getInternalNode(edge.source);
@@ -45,10 +50,15 @@ const StrictFragmentNode = ({ selected }: NodeProps) => {
       const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0), targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
       if (sourceAbsX >= fragLeft && sourceAbsX <= fragRight && sourceAbsY >= fragTop && sourceAbsY <= fragBottom && targetAbsX >= fragLeft && targetAbsX <= fragRight && targetAbsY >= fragTop && targetAbsY <= fragBottom) {
         insideEdgeIds.push(edge.id);
+        const avgY = (sourceAbsY + targetAbsY) / 2;
+        let operandIndex = 0;
+        for (let i = 0; i < absSeparatorYs.length; i++) { if (avgY > absSeparatorYs[i]) operandIndex = i + 1; }
+        newOperandAssignments.push([edge.id, `operand_${operandIndex + 1}`]);
       }
     }
     setContainedEdgeIds(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(insideEdgeIds); return prevStr === newStr ? prev : insideEdgeIds; });
-  }, [nodeId, edges, getNodesBounds, getInternalNode]);
+    setOperandAssignments(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(newOperandAssignments); return prevStr === newStr ? prev : newOperandAssignments; });
+  }, [nodeId, edges, getNodesBounds, getInternalNode, separatorPositions]);
 
   useEffect(() => { const timeout = setTimeout(() => { computeContainedEdges(); }, 100); return () => clearTimeout(timeout); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -56,14 +66,22 @@ const StrictFragmentNode = ({ selected }: NodeProps) => {
   useEffect(() => { if (!initialCalcDone.current) return; computeContainedEdges(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allNodes]);
 
-  // Sincronizar edges contenidos en data
+  // Recalcular operandos cuando cambien separadores
+  useEffect(() => {
+    if (!initialCalcDone.current) return;
+    lastFragmentBoundsRef.current = null;
+    computeContainedEdges();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [separatorPositions]);
+
+  // Sincronizar edges y operandos contenidos en data
   useEffect(() => {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n =>
-      n.id === nodeId ? { ...n, data: { ...n.data, label: '', edges: containedEdgeIds } } : n
+      n.id === nodeId ? { ...n, data: { ...n.data, label: '', edges: containedEdgeIds, operands: operandAssignments } } : n
     ));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containedEdgeIds]);
+  }, [containedEdgeIds, operandAssignments]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {

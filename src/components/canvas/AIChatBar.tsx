@@ -64,8 +64,11 @@ ${edges
         const source = type === 'found' ? '[FOUND]' : e.source;
         const target = type === 'lost' ? '[LOST]' : e.target;
         const label = typeof e.label === 'string' ? e.label : (e.data?.label || '');
-        const fragmentId = nodes.find(n => Array.isArray(n.data.edges) && n.data.edges.includes(e.id))?.id || '';
-        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}, ${fragmentId}, `;
+        const fragmentNode = nodes.find(n => Array.isArray(n.data.edges) && (n.data.edges as string[]).includes(e.id));
+        const fragmentId = fragmentNode?.id || '';
+        const operandsArr = fragmentNode?.data?.operands as [string, string][] | undefined;
+        const operand = operandsArr?.find(([id]) => id === e.id)?.[1] || '';
+        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}, ${fragmentId}, ${operand}`;
     }).join('\n')}`}
         `;
 

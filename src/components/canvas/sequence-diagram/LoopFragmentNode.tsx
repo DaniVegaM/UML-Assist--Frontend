@@ -23,6 +23,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   const [isEditingMax, setIsEditingMax] = useState(false);
 
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
   const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   const initialCalcDone = useRef(false);
 
@@ -39,6 +40,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
     initialCalcDone.current = true;
     const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
     const insideEdgeIds: string[] = [];
+    const newOperandAssignments: [string, string][] = [];
     for (const edge of edges) {
       if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
       const sourceInternal = getInternalNode(edge.source);
@@ -51,9 +53,11 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
       const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0), targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
       if (sourceAbsX >= fragLeft && sourceAbsX <= fragRight && sourceAbsY >= fragTop && sourceAbsY <= fragBottom && targetAbsX >= fragLeft && targetAbsX <= fragRight && targetAbsY >= fragTop && targetAbsY <= fragBottom) {
         insideEdgeIds.push(edge.id);
+        newOperandAssignments.push([edge.id, 'operand_1']);
       }
     }
     setContainedEdgeIds(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(insideEdgeIds); return prevStr === newStr ? prev : insideEdgeIds; });
+    setOperandAssignments(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(newOperandAssignments); return prevStr === newStr ? prev : newOperandAssignments; });
   }, [nodeId, edges, getNodesBounds, getInternalNode]);
 
   useEffect(() => { const timeout = setTimeout(() => { computeContainedEdges(); }, 100); return () => clearTimeout(timeout); // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -82,10 +86,10 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   useEffect(() => {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n =>
-      n.id === nodeId ? { ...n, data: { ...n.data, edges: containedEdgeIds } } : n
+      n.id === nodeId ? { ...n, data: { ...n.data, edges: containedEdgeIds, operands: operandAssignments } } : n
     ));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containedEdgeIds]);
+  }, [containedEdgeIds, operandAssignments]);
 
   const onGuardDoubleClick = useCallback(() => {
     setIsEditingGuard(true);

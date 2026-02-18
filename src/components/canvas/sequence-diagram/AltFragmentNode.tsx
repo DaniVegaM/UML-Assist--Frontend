@@ -26,6 +26,8 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
 
   // Estado para los IDs de edges contenidos dentro del fragmento
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  // Estado para las asignaciones de operandos: [edgeId, operandLabel][]
+  const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
   // Ref para rastrear la última posición/dimensiones del fragmento y evitar recálculos innecesarios
   const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
   // Ref para saber si ya se hizo el cálculo inicial
@@ -66,7 +68,15 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
     const fragTop = fragmentBounds.y;
     const fragBottom = fragmentBounds.y + fragmentBounds.height;
 
+    // Calcular las posiciones absolutas Y de los separadores (ordenados)
+    const HEADER_HEIGHT = 25;
+    const containerTop = fragmentBounds.y + HEADER_HEIGHT;
+    const absSeparatorYs = separatorPositions
+      .map(pos => containerTop + pos)
+      .sort((a, b) => a - b);
+
     const insideEdgeIds: string[] = [];
+    const newOperandAssignments: [string, string][] = [];
 
     for (const edge of edges) {
       if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
@@ -100,6 +110,28 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
 
       if (sourceInside && targetInside) {
         insideEdgeIds.push(edge.id);
+
+        // Determinar en qué operando cae usando el promedio Y de los handles
+        const avgY = (sourceAbsY + targetAbsY) / 2;
+        let operandIndex = 0;
+        for (let i = 0; i < absSeparatorYs.length; i++) {
+          if (avgY > absSeparatorYs[i]) {
+            operandIndex = i + 1;
+          }
+        }
+
+        // Generar label del operando
+        let operandLabel: string;
+        if (operandIndex === 0) {
+          // Primer operando (antes de cualquier separador)
+          operandLabel = rawFirstOperand ? `operand_${rawFirstOperand}` : 'operand_1';
+        } else {
+          // Operandos después de separadores
+          const sepName = separatorValues[operandIndex - 1];
+          operandLabel = sepName ? `operand_${sepName}` : `operand_${operandIndex + 1}`;
+        }
+
+        newOperandAssignments.push([edge.id, operandLabel]);
       }
     }
 
@@ -108,7 +140,13 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
       const newStr = JSON.stringify(insideEdgeIds);
       return prevStr === newStr ? prev : insideEdgeIds;
     });
-  }, [nodeId, edges, getNodesBounds, getInternalNode]);
+
+    setOperandAssignments(prev => {
+      const prevStr = JSON.stringify(prev);
+      const newStr = JSON.stringify(newOperandAssignments);
+      return prevStr === newStr ? prev : newOperandAssignments;
+    });
+  }, [nodeId, edges, getNodesBounds, getInternalNode, separatorPositions, rawFirstOperand, separatorValues]);
 
   // Cálculo inicial con delay para que los handleBounds estén listos
   useEffect(() => {
@@ -126,6 +164,14 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
     computeContainedEdges();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allNodes]);
+
+  // Recalcular operandos cuando cambien separadores o sus nombres
+  useEffect(() => {
+    if (!initialCalcDone.current) return;
+    lastFragmentBoundsRef.current = null; // Forzar recálculo
+    computeContainedEdges();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [separatorPositions, rawFirstOperand, separatorValues]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -284,13 +330,14 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
             ...n,
             data: {
               ...n.data,
-              edges: containedEdgeIds
+              edges: containedEdgeIds,
+              operands: operandAssignments,
             }
           }
         : n
     ));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [containedEdgeIds]);
+  }, [containedEdgeIds, operandAssignments]);
 
   // Ref para guardar la altura anterior del contenedor
   const previousHeightRef = useRef<number | null>(null);
