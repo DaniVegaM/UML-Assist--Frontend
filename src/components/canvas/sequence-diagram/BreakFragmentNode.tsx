@@ -1,16 +1,59 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, type NodeProps, useReactFlow } from "@xyflow/react";
+import { NodeResizer, type NodeProps, useReactFlow, useNodeId } from "@xyflow/react";
+import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 
 const TEXT_AREA_MAX_LEN = 30;
 
 const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
+  const nodeId = useNodeId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { setNodes } = useReactFlow();
+  const { setNodes, getNodesBounds, getInternalNode } = useReactFlow();
   const { setIsZoomOnScrollEnabled } = useCanvas();
+  const { nodes: allNodes, edges } = useSequenceDiagram();
 
   const [guard, setGuard] = useState((data as any)?.guard || "");
   const [isEditingGuard, setIsEditingGuard] = useState(false);
+
+  const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const initialCalcDone = useRef(false);
+
+  const computeContainedEdges = useCallback(() => {
+    if (!nodeId) return;
+    const fragmentBounds = getNodesBounds([nodeId]);
+    if (!fragmentBounds || fragmentBounds.width === 0) return;
+    const currentBounds = { x: Math.round(fragmentBounds.x), y: Math.round(fragmentBounds.y), w: Math.round(fragmentBounds.width), h: Math.round(fragmentBounds.height) };
+    if (initialCalcDone.current) {
+      const prev = lastFragmentBoundsRef.current;
+      if (prev && prev.x === currentBounds.x && prev.y === currentBounds.y && prev.w === currentBounds.w && prev.h === currentBounds.h) return;
+    }
+    lastFragmentBoundsRef.current = currentBounds;
+    initialCalcDone.current = true;
+    const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
+    const insideEdgeIds: string[] = [];
+    for (const edge of edges) {
+      if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
+      const sourceInternal = getInternalNode(edge.source);
+      const targetInternal = getInternalNode(edge.target);
+      if (!sourceInternal || !targetInternal) continue;
+      const sourceHandle = sourceInternal.internals.handleBounds?.source?.find(h => h.id === edge.sourceHandle) ?? sourceInternal.internals.handleBounds?.target?.find(h => h.id === edge.sourceHandle);
+      const targetHandle = targetInternal.internals.handleBounds?.target?.find(h => h.id === edge.targetHandle) ?? targetInternal.internals.handleBounds?.source?.find(h => h.id === edge.targetHandle);
+      if (!sourceHandle && !targetHandle) continue;
+      const sourceAbsX = sourceInternal.internals.positionAbsolute.x + (sourceHandle?.x ?? 0), sourceAbsY = sourceInternal.internals.positionAbsolute.y + (sourceHandle?.y ?? 0);
+      const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0), targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
+      if (sourceAbsX >= fragLeft && sourceAbsX <= fragRight && sourceAbsY >= fragTop && sourceAbsY <= fragBottom && targetAbsX >= fragLeft && targetAbsX <= fragRight && targetAbsY >= fragTop && targetAbsY <= fragBottom) {
+        insideEdgeIds.push(edge.id);
+      }
+    }
+    setContainedEdgeIds(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(insideEdgeIds); return prevStr === newStr ? prev : insideEdgeIds; });
+  }, [nodeId, edges, getNodesBounds, getInternalNode]);
+
+  useEffect(() => { const timeout = setTimeout(() => { computeContainedEdges(); }, 100); return () => clearTimeout(timeout); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { if (!initialCalcDone.current) return; computeContainedEdges(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allNodes]);
 
   // Sincronizar guard con el nodo de React Flow
   useEffect(() => {
@@ -26,6 +69,15 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
       })
     );
   }, [guard, id, setNodes]);
+
+  // Sincronizar edges contenidos por separado
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId ? { ...n, data: { ...n.data, edges: containedEdgeIds } } : n
+    ));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containedEdgeIds]);
 
   const onGuardDoubleClick = useCallback(() => {
     setIsEditingGuard(true);

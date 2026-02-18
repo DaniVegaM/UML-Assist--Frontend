@@ -3,6 +3,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useReactFlow, useNodeId, type NodeProps, type Node } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import type { AltFragmentData } from "../../../types/canvas";
+import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 
 const TEXT_AREA_MAX_LEN = 30;
 
@@ -20,7 +21,111 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
   const [rawFirstOperand, setRawFirstOperand] = useState<string>(data?.firstOperand || '');
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { getZoom, setNodes } = useReactFlow();
+  const { getZoom, setNodes, getNodesBounds, getInternalNode } = useReactFlow();
+  const { nodes: allNodes, edges } = useSequenceDiagram();
+
+  // Estado para los IDs de edges contenidos dentro del fragmento
+  const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  // Ref para rastrear la última posición/dimensiones del fragmento y evitar recálculos innecesarios
+  const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  // Ref para saber si ya se hizo el cálculo inicial
+  const initialCalcDone = useRef(false);
+
+  // Función reutilizable para calcular los edges contenidos
+  const computeContainedEdges = useCallback(() => {
+    if (!nodeId) return;
+
+    const fragmentBounds = getNodesBounds([nodeId]);
+    if (!fragmentBounds || fragmentBounds.width === 0) return;
+
+    const currentBounds = {
+      x: Math.round(fragmentBounds.x),
+      y: Math.round(fragmentBounds.y),
+      w: Math.round(fragmentBounds.width),
+      h: Math.round(fragmentBounds.height),
+    };
+
+    // Después del cálculo inicial, solo recalcular si los bounds cambiaron
+    if (initialCalcDone.current) {
+      const prev = lastFragmentBoundsRef.current;
+      if (
+        prev &&
+        prev.x === currentBounds.x &&
+        prev.y === currentBounds.y &&
+        prev.w === currentBounds.w &&
+        prev.h === currentBounds.h
+      ) {
+        return;
+      }
+    }
+    lastFragmentBoundsRef.current = currentBounds;
+    initialCalcDone.current = true;
+
+    const fragLeft = fragmentBounds.x;
+    const fragRight = fragmentBounds.x + fragmentBounds.width;
+    const fragTop = fragmentBounds.y;
+    const fragBottom = fragmentBounds.y + fragmentBounds.height;
+
+    const insideEdgeIds: string[] = [];
+
+    for (const edge of edges) {
+      if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
+
+      const sourceInternal = getInternalNode(edge.source);
+      const targetInternal = getInternalNode(edge.target);
+      if (!sourceInternal || !targetInternal) continue;
+
+      const sourceHandle =
+        sourceInternal.internals.handleBounds?.source?.find(h => h.id === edge.sourceHandle)
+        ?? sourceInternal.internals.handleBounds?.target?.find(h => h.id === edge.sourceHandle);
+
+      const targetHandle =
+        targetInternal.internals.handleBounds?.target?.find(h => h.id === edge.targetHandle)
+        ?? targetInternal.internals.handleBounds?.source?.find(h => h.id === edge.targetHandle);
+
+      if (!sourceHandle && !targetHandle) continue;
+
+      const sourceAbsX = sourceInternal.internals.positionAbsolute.x + (sourceHandle?.x ?? 0);
+      const sourceAbsY = sourceInternal.internals.positionAbsolute.y + (sourceHandle?.y ?? 0);
+      const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0);
+      const targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
+
+      const sourceInside =
+        sourceAbsX >= fragLeft && sourceAbsX <= fragRight &&
+        sourceAbsY >= fragTop && sourceAbsY <= fragBottom;
+
+      const targetInside =
+        targetAbsX >= fragLeft && targetAbsX <= fragRight &&
+        targetAbsY >= fragTop && targetAbsY <= fragBottom;
+
+      if (sourceInside && targetInside) {
+        insideEdgeIds.push(edge.id);
+      }
+    }
+
+    setContainedEdgeIds(prev => {
+      const prevStr = JSON.stringify(prev);
+      const newStr = JSON.stringify(insideEdgeIds);
+      return prevStr === newStr ? prev : insideEdgeIds;
+    });
+  }, [nodeId, edges, getNodesBounds, getInternalNode]);
+
+  // Cálculo inicial con delay para que los handleBounds estén listos
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      computeContainedEdges();
+    }, 100);
+    return () => clearTimeout(timeout);
+    // Solo ejecutar una vez al montar
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Recalcular cuando se mueva el nodo (posición/tamaño del fragmento cambia)
+  useEffect(() => {
+    if (!initialCalcDone.current) return; // Evitar doble ejecución con el initial
+    computeContainedEdges();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allNodes]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -151,7 +256,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
 
-  // Sincronizar datos con node.data
+  // Sincronizar datos con node.data (sin containedEdgeIds para evitar loop)
   useEffect(() => {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n =>
@@ -162,12 +267,29 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
               ...n.data,
               firstOperand: rawFirstOperand,
               separatorValues,
-              separatorPositions
+              separatorPositions,
             }
           }
         : n
     ));
   }, [nodeId, rawFirstOperand, separatorValues, separatorPositions, setNodes]);
+
+  // Sincronizar edges contenidos por separado para evitar loop infinito
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId
+        ? {
+            ...n,
+            data: {
+              ...n.data,
+              edges: containedEdgeIds
+            }
+          }
+        : n
+    ));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containedEdgeIds]);
 
   // Ref para guardar la altura anterior del contenedor
   const previousHeightRef = useRef<number | null>(null);
