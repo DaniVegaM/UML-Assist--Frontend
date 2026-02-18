@@ -265,6 +265,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
             ...n,
             data: {
               ...n.data,
+              label: rawFirstOperand,
               firstOperand: rawFirstOperand,
               separatorValues,
               separatorPositions,

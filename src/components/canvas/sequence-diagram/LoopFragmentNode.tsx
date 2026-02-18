@@ -67,9 +67,10 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
     setNodes((nds) =>
       nds.map((node) => {
         if (node.id === id) {
+          const label = [guard, `${minIterations}..${maxIterations}`].filter(Boolean).join(' ');
           return {
             ...node,
-            data: { ...node.data, guard, minIterations, maxIterations },
+            data: { ...node.data, label, guard, minIterations, maxIterations },
           };
         }
         return node;

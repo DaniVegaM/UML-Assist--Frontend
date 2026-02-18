@@ -60,7 +60,7 @@ const StrictFragmentNode = ({ selected }: NodeProps) => {
   useEffect(() => {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n =>
-      n.id === nodeId ? { ...n, data: { ...n.data, edges: containedEdgeIds } } : n
+      n.id === nodeId ? { ...n, data: { ...n.data, label: '', edges: containedEdgeIds } } : n
     ));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [containedEdgeIds]);

@@ -62,7 +62,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, guard },
+            data: { ...node.data, label: guard, guard },
           };
         }
         return node;
