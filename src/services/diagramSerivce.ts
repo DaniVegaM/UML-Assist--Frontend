@@ -36,11 +36,8 @@ export const createDiagram = async (formData: FormData) => {
 };
 
 export const updateDiagram = async (id: number, formData: FormData) => {
-    if (!formData.get("id")) {
-        throw new Error("El ID del diagrama es requerido para actualizar.");
-    }
     try {
-        const response = await api.put(`api/diagram/${id}/`, formData, {
+        const response = await api.patch(`api/diagram/${id}/`, formData, {
             headers: {
                 "Content-Type": "multipart/form-data",
             },
@@ -51,6 +48,8 @@ export const updateDiagram = async (id: number, formData: FormData) => {
         throw error;
     }
 };
+
+
 
 export const patchDiagram = async (diagramData: Diagram) => {
     if (!diagramData.id) {
