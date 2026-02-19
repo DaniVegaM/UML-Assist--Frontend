@@ -37,7 +37,9 @@ export type NodeTypeIdKey =
   | "breakFragment"
   | "seqFragment"
   | "strictFragment"
-  | "parFragment";
+  | "parFragment"
+  //Edge-generico
+  | "edge";
 
 
 const PREFIX_BY_TYPE: Record<NodeTypeIdKey, string> = {
@@ -75,6 +77,9 @@ const PREFIX_BY_TYPE: Record<NodeTypeIdKey, string> = {
   parFragment: 'parf',
 
   baseFragment: 'frag',
+
+  //Edge genérico
+  edge: 'edge',
 };
 
 export function generateShortUniqueId(): string {

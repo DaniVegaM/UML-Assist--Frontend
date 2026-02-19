@@ -1,17 +1,87 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, useReactFlow, type NodeProps } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useNodeId, type NodeProps } from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 
 
 const SeqFragmentNode = ({ selected }: NodeProps) => {
+  const nodeId = useNodeId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [separators, setSeparators] = useState<number[]>([]);
   const [separatorPositions, setSeparatorPositions] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { getZoom } = useReactFlow();
+  const { getZoom, setNodes, getNodesBounds, getInternalNode } = useReactFlow();
+  const { nodes: allNodes, edges } = useSequenceDiagram();
+
+  const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
+  const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const initialCalcDone = useRef(false);
+
+  const computeContainedEdges = useCallback(() => {
+    if (!nodeId) return;
+    const fragmentBounds = getNodesBounds([nodeId]);
+    if (!fragmentBounds || fragmentBounds.width === 0) return;
+    const currentBounds = { x: Math.round(fragmentBounds.x), y: Math.round(fragmentBounds.y), w: Math.round(fragmentBounds.width), h: Math.round(fragmentBounds.height) };
+    if (initialCalcDone.current) {
+      const prev = lastFragmentBoundsRef.current;
+      if (prev && prev.x === currentBounds.x && prev.y === currentBounds.y && prev.w === currentBounds.w && prev.h === currentBounds.h) return;
+    }
+    lastFragmentBoundsRef.current = currentBounds;
+    initialCalcDone.current = true;
+    const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
+    const HEADER_HEIGHT = 25;
+    const containerTop = fragmentBounds.y + HEADER_HEIGHT;
+    const absSeparatorYs = separatorPositions.map(pos => containerTop + pos).sort((a, b) => a - b);
+    const insideEdgeIds: string[] = [];
+    const newOperandAssignments: [string, string][] = [];
+    for (const edge of edges) {
+      if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
+      const sourceInternal = getInternalNode(edge.source);
+      const targetInternal = getInternalNode(edge.target);
+      if (!sourceInternal || !targetInternal) continue;
+      const sourceHandle = sourceInternal.internals.handleBounds?.source?.find(h => h.id === edge.sourceHandle) ?? sourceInternal.internals.handleBounds?.target?.find(h => h.id === edge.sourceHandle);
+      const targetHandle = targetInternal.internals.handleBounds?.target?.find(h => h.id === edge.targetHandle) ?? targetInternal.internals.handleBounds?.source?.find(h => h.id === edge.targetHandle);
+      if (!sourceHandle && !targetHandle) continue;
+      const sourceAbsX = sourceInternal.internals.positionAbsolute.x + (sourceHandle?.x ?? 0), sourceAbsY = sourceInternal.internals.positionAbsolute.y + (sourceHandle?.y ?? 0);
+      const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0), targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
+      if (sourceAbsX >= fragLeft && sourceAbsX <= fragRight && sourceAbsY >= fragTop && sourceAbsY <= fragBottom && targetAbsX >= fragLeft && targetAbsX <= fragRight && targetAbsY >= fragTop && targetAbsY <= fragBottom) {
+        insideEdgeIds.push(edge.id);
+        const avgY = (sourceAbsY + targetAbsY) / 2;
+        let operandIndex = 0;
+        for (let i = 0; i < absSeparatorYs.length; i++) { if (avgY > absSeparatorYs[i]) operandIndex = i + 1; }
+        newOperandAssignments.push([edge.id, `operand_${operandIndex + 1}`]);
+      }
+    }
+    setContainedEdgeIds(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(insideEdgeIds); return prevStr === newStr ? prev : insideEdgeIds; });
+    setOperandAssignments(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(newOperandAssignments); return prevStr === newStr ? prev : newOperandAssignments; });
+  }, [nodeId, edges, getNodesBounds, getInternalNode, separatorPositions]);
+
+  useEffect(() => { const timeout = setTimeout(() => { computeContainedEdges(); }, 100); return () => clearTimeout(timeout); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { if (!initialCalcDone.current) return; computeContainedEdges(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allNodes]);
+
+  // Recalcular operandos cuando cambien separadores
+  useEffect(() => {
+    if (!initialCalcDone.current) return;
+    lastFragmentBoundsRef.current = null;
+    computeContainedEdges();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [separatorPositions]);
+
+  // Sincronizar edges y operandos contenidos en data
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId ? { ...n, data: { ...n.data, label: '', edges: containedEdgeIds, operands: operandAssignments } } : n
+    ));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containedEdgeIds, operandAssignments]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {

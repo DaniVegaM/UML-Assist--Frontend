@@ -1,4 +1,4 @@
-import type { Diagram } from "../types/diagramsModel";
+import type { Diagram, ReviewDiagramData } from "../types/diagramsModel";
 import api from "./baseApiService";
 
 export const fetchDiagrams = async () => {
@@ -67,7 +67,7 @@ export const deleteDiagram = async (id: number) => {
     }
 };
 
-export const reviewDiagramWithAI = async (intermediateLanguage: string) => {
+export const reviewDiagramWithAI = async (intermediateLanguage: ReviewDiagramData) => {
     try {
         const response = await api.post(`api/ai/review-diagram/`, intermediateLanguage);
         return response;

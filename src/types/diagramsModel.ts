@@ -49,3 +49,9 @@ export type Position = {
     x: number;
     y: number;
 }
+
+export type ReviewDiagramData = {
+    userPrompt: string;
+    diagramType: 'activities' | 'sequence';
+    intermediateLanguage: string;
+}

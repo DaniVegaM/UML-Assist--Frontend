@@ -18,6 +18,7 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { createPrefixedNodeId } from "../../utils/idGenerator";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -118,7 +119,7 @@ function DiagramContent() {
             const isNoteConnection = sourceNode?.type === 'note' || targetNode?.type === 'note';
             const newEdge: Edge = {
                 ...params,
-                id: `edge-${params.sourceHandle}-${params.targetHandle}`,
+                id: createPrefixedNodeId('edge'),
                 type: isNoteConnection
                     ? 'noteEdge'
                     : (isSelfMessage ? 'selfMessageEdge' : 'messageEdge'),
