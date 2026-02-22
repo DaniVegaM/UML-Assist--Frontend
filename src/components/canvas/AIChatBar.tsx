@@ -1,7 +1,8 @@
-import { useEdges, useNodes } from "@xyflow/react";
+import { useEdges, useNodes, useReactFlow } from "@xyflow/react";
 import { useCallback, useState } from "react";
 import { reviewDiagramWithAI } from "../../services/diagramSerivce";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import type { ReviewDiagramResponse } from "../../types/diagramsModel";
 
 export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const [isVisible, setIsVisible] = useState(false);
@@ -9,6 +10,7 @@ export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const [initialContext, setInitialContext] = useState("");
     const nodes = useNodes();
     const edges = useEdges();
+    const { setNodes } = useReactFlow();
     const TEXT_AREA_MAX_LEN = 100;
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -81,8 +83,20 @@ ${edges
         }
 
         const reviewDiagramResponse = await reviewDiagramWithAI(reviewDiagramData);
+        const responseData = reviewDiagramResponse.data as ReviewDiagramResponse;
         
-        console.log("Respuesta de la IA:", reviewDiagramResponse.data.suggestions);
+        console.log("Respuesta de la IA:", responseData.suggestions);
+
+        // Inyectar cada sugerencia directamente en el data del nodo correspondiente
+        if (responseData.suggestions && typeof responseData.suggestions === 'object') {
+            setNodes(prevNodes =>
+                prevNodes.map(n =>
+                    responseData.suggestions[n.id]
+                        ? { ...n, data: { ...n.data, suggestion: responseData.suggestions[n.id] } }
+                        : n
+                )
+            );
+        }
         
         setTimeout(() => {
             setIsThinking(false);
