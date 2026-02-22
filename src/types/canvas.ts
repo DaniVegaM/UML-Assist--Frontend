@@ -63,7 +63,8 @@ export interface DataProps{
         isCreatedLifeLine?: boolean,
         orderedHandles?: {id: string, order: number}[],
         sourceBoxesLength?: number,
-        targetBoxesLength?: number
+        targetBoxesLength?: number,
+        suggestion?: string;
     }
 }
 

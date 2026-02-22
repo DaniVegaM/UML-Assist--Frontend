@@ -56,3 +56,8 @@ export type ReviewDiagramData = {
     diagramType: 'activities' | 'sequence';
     intermediateLanguage: string;
 }
+
+export type ReviewDiagramResponse = {
+    general_description: string;
+    suggestions: Record<string, string>;
+}
