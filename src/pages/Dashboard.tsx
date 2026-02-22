@@ -152,7 +152,7 @@ export default function Dashboard() {
 
             setDiagrams(diagrams.filter(d => d.id !== selectedDiagramCard.id));
             setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: true, showError: false });
-            
+
             setTimeout(() => {
                 setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
                 setSelectedDiagramCard(null);
@@ -161,7 +161,7 @@ export default function Dashboard() {
             await minLoadingTime;
             console.error('Error al eliminar el diagrama:', err);
             setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: true });
-            
+
             setTimeout(() => {
                 setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
             }, 3000);
@@ -240,12 +240,12 @@ export default function Dashboard() {
 
                 {!loading && !error && diagrams.length > 0 && (
                     <div style={{
-                                backdropFilter: 'blur(3px) saturate(180%)',
-                                WebkitBackdropFilter: 'blur(3px) saturate(180%)',
-                                backgroundColor: 'rgba(248, 248, 248, 0.1)',
-                                minHeight: '100vh',
-                                padding: '40px'
-                            }}
+                        backdropFilter: 'blur(3px) saturate(180%)',
+                        WebkitBackdropFilter: 'blur(3px) saturate(180%)',
+                        backgroundColor: 'rgba(248, 248, 248, 0.1)',
+                        minHeight: '100vh',
+                        padding: '40px'
+                    }}
                     >
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                             <h1 className="text-3xl font-black leading-tight dark:text-white text-center md:text-left uppercase text-gray-800 md:text-4xl mb-3">
@@ -271,10 +271,18 @@ export default function Dashboard() {
                                     className="flex flex-col cursor-pointer p-6 rounded-2xl border-2 border-zinc-200/60 dark:border-zinc-700/60 bg-white dark:bg-zinc-800 hover:border-sky-400 dark:hover:border-sky-500 transition-all duration-300 hover:shadow-2xl hover:-translate-y-1"
                                 >
                                     <div className="flex justify-between items-start">
-                                        <div className="w-14 h-14 rounded-xl bg-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
+                                        <div className="w-full h-40 rounded-xl overflow-hidden mb-4 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center">
+                                            {diagram.preview_image ? (
+                                                <img
+                                                    src={diagram.preview_image}
+                                                    alt="Preview"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            ) : (
+                                                <span className="text-sm text-zinc-400">
+                                                    Sin preview
+                                                </span>
+                                            )}
                                         </div>
                                         <button
                                             onClick={(e) => handleContextMenu(e, diagram)}

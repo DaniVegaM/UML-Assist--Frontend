@@ -5,6 +5,7 @@ import type { HeaderProps } from '../../../types/canvas';
 import { useEffect, useState } from 'react';
 import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import type { Diagram } from '../../../types/diagramsModel';
+import { toPng } from 'html-to-image';
 import './Header.css';
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
@@ -21,30 +22,57 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         }
     }, [diagramTitle])
 
+    const generatePreview = async (): Promise<Blob | null> => {
+        const reactFlowElement = document.querySelector('.react-flow');
+
+        if (!reactFlowElement) return null;
+
+        try {
+            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
+                backgroundColor: '#ffffff'
+            });
+
+            const response = await fetch(dataUrl);
+            const blob = await response.blob();
+            return blob;
+        } catch (error) {
+            console.error("Error generando preview:", error);
+            return null;
+        }
+    };
+
+
     const saveDiagram = async () => {
-        if (saving === true) return;
+        if (saving) return;
+
         setLoading({ showLoading: true, showConfirmation: false, showError: false });
         setSaving(true);
-        const diagramData: Diagram = {
-            id: diagramId ? diagramId : undefined,
-            title: title,
-            content: {
-                type: type,
-                canvas: {
-                    nodes: nodes,
-                    edges: edges,
-                    totalNodes: nodes.length,
-                    totalEdges: edges.length
-                }
-            }
-        }
 
         const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
 
         try {
+            const previewBlob = await generatePreview();
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append(
+                "content",
+                JSON.stringify({
+                    type: type,
+                    canvas: {
+                        nodes: nodes,
+                        edges: edges,
+                        totalNodes: nodes.length,
+                        totalEdges: edges.length
+                    }
+                })
+            );
+
+            if (previewBlob) {
+                formData.append("preview_image", previewBlob, "preview.png");
+            }
             const savePromise = !diagramId
-                ? createDiagram(diagramData)
-                : updateDiagram(diagramData);
+                ? createDiagram(formData)
+                : updateDiagram(diagramId, formData);
 
             await Promise.all([savePromise, minLoadingTime]);
 
@@ -71,7 +99,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
             <section className="h-full bg-sky-600 grid grid-cols-3 gap-4 p-1 items-center">
                 <div className="flex items-center justify-start gap-2 pl-2">
                     <Link to="/dashboard" className="mr-4 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"/></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
                     </Link>
                     <Link to="/" className="flex items-center justify-center gap-3">
                         <svg
