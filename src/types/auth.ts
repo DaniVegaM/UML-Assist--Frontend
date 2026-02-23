@@ -6,7 +6,7 @@ export type UserData = {
 
 export type AuthResponse = {
   access_token: string;
-  refresh_token: string;
+  refresh_token?: string;
   user: UserData;
   success: boolean;
 };

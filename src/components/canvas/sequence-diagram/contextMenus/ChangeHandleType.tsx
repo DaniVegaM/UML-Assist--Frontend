@@ -4,6 +4,7 @@ import { useReactFlow, MarkerType } from "@xyflow/react";
 import { useTheme } from "../../../../hooks/useTheme";
 import { useCanvas } from "../../../../hooks/useCanvas";
 import DeleteIcon from "./DeleteIcon";
+import { createPrefixedNodeId } from "../../../../utils/idGenerator";
 
 interface ChangeHandleTypeProps {
     id: string;
@@ -155,13 +156,15 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
         const HEADER_HEIGHT = 24; // Altura aproximada del header de la lifeline
         
         // Calcular la posición de la nueva lifeline (a la derecha de la actual)
-        const newLifeLineId = `lifeLine_created_${generateUniqueId()}`;
+        const newLifeLineId = createPrefixedNodeId("lifeLine");
         const newPositionX = sourceNode.position.x + 300;
         
         // Obtener la posición del handle desde los internals de React Flow
-        const handleId = `${lifeLineId}_Handle-${handleIndex}`;
+        const sourceHandleDomId = `${lifeLineId}_Handle-${handleIndex}`;
         const sourceNodeElement = document.querySelector(`[data-id="${lifeLineId}"]`);
-        const handleElement = sourceNodeElement?.querySelector(`[data-handleid="${handleId}"]`);
+        const handleElement = sourceNodeElement?.querySelector(
+        `[data-handleid="${sourceHandleDomId}"]`
+        );
         
         let newPositionY = sourceNode.position.y; // Default
         

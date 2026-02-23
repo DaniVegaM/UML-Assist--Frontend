@@ -61,7 +61,9 @@ export interface DataProps{
         label?: string
         destroyHandleIndex?: number,
         isCreatedLifeLine?: boolean,
-        orderedHandles?: {id: string, order: number}[]
+        orderedHandles?: {id: string, order: number}[],
+        sourceBoxesLength?: number,
+        targetBoxesLength?: number
     }
 }
 

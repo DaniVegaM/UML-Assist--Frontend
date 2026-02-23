@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useReactFlow, useStore } from "@xyflow/react";
 import { useSequenceDiagram } from "./useSequenceDiagram";
+import { createPrefixedNodeId } from "../utils/idGenerator";
+
 
 export function useAddLifeLinesBtns() {
     const { nodes, setNodes } = useSequenceDiagram();
@@ -63,8 +65,8 @@ export function useAddLifeLinesBtns() {
             //Filtramos los nodos que no son botones de agregar LifeLine
             const nonAddLLBtnNodes = prevNodes.filter(node => node.type !== 'addLifeLineBtn');
             //Creamos los nuevos nodos de botones de agregar LifeLine
-            const addLLBtnNodes = addLLBtnPositionsX.map((pos, index) => ({
-                id: `addLifeLineBtn_${index}`,
+            const addLLBtnNodes = addLLBtnPositionsX.map((pos) => ({
+                id: createPrefixedNodeId("addLifeLineBtn"),
                 type: 'addLifeLineBtn',
                 position: { x: pos.x, y: pos.y },
                 data: { isHiding: false },

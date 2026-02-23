@@ -17,6 +17,7 @@ import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
+import { createPrefixedNodeId } from "../../utils/idGenerator";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -72,16 +73,24 @@ function DiagramContent() {
     );
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-        const intersections = getIntersectingNodes(node).map((n) => n.id);
-        // console.log('Nodos que intersectan con el nodo arrastrado:', intersections);
+        const intersections = getIntersectingNodes(node);
+        const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
 
-        if (node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
-            node.parentId = intersections.find(nodeId => nodeId.startsWith('activity')) || undefined;
-            node.extent = 'parent';
+        if (node.type !== 'activity' && parentNode) {
+            // Solo asignar parentId si no lo tenía ya (evitar recalcular en cada drag)
+            if (node.parentId !== parentNode.id) {
+                node.parentId = parentNode.id;
+                node.extent = 'parent';
+                // Convertir posición absoluta a relativa al padre
+                node.position = {
+                    x: node.position.x - parentNode.position.x,
+                    y: node.position.y - parentNode.position.y,
+                };
+            }
         }
         setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
-
     }, []);
+
 
     const onConnect = useCallback(
         (params: Connection) => {
@@ -90,6 +99,7 @@ function DiagramContent() {
 
             let edgeType = {};
             let defaultLabel = '';
+
 
             // Definir el tipo de edge según el tipo de nodo conectado
             if (
@@ -134,7 +144,7 @@ function DiagramContent() {
 
             const newEdge = {
                 ...params,
-                id: `edge-${params.source}-${params.target}`,
+                id: createPrefixedNodeId('edge'),
                 type: edgeType,
                 label: defaultLabel,
             };
