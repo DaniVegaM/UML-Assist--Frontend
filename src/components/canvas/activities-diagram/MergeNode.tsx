@@ -1,13 +1,24 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import BaseHandle from "../BaseHandle";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { Position } from "@xyflow/react";
+import { Position, useNodeId } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 
 
 export default function MergeNodel() {
+    const nodeId = useNodeId();
     const [showHandles, setShowHandles] = useState(false);
-    const {isTryingToConnect} = useCanvas();
+    const { isTryingToConnect, openContextMenu } = useCanvas();
+
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
 
     return (
         <div
@@ -17,6 +28,7 @@ export default function MergeNodel() {
             }}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
         >
             <BaseHandle id={0} position={Position.Top} showHandle={showHandles && isTryingToConnect} className="!absolute !top-1"/>
             <BaseHandle id={3} position={Position.Left} showHandle={showHandles && isTryingToConnect} className="!absolute !left-1"/>

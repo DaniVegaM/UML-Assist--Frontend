@@ -9,14 +9,16 @@ export default function Activity({ data }: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
-    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
+    const [sourceHandlesIds, setSourceHandlesIds] = useState<string[] | null>(null);
+    const [targetHandlesIds, setTargetHandlesIds] = useState<string[] | null>(null);
+    const updateNodeInternals = useUpdateNodeInternals();
 
     const { setNodes, getNode, setEdges } = useReactFlow();
 
     const nodeId = useNodeId();
     const node = getNode(nodeId!);
     const isSelected = node?.selected ?? false;
-    const updateNodeInternals = useUpdateNodeInternals();
 
     const [sourceBoxes, setSourceBoxes] = useState<number[]>(() => {
         if (data.sourceBoxesLength) {
@@ -82,6 +84,26 @@ export default function Activity({ data }: DataProps) {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
+    const onClickSourceBtn = () => {
+        setSourceHandlesIds((prev) => {
+            if (prev && prev?.length > 0) {
+                return [...prev, 'source_' + prev.length];
+            } else {
+                return ['source_0'];
+            }
+        });
+    };
+                            
     const addSourceBox = () => {
         setSourceBoxes(prev => {
             const newBoxes = [...prev, prev.length];
@@ -167,29 +189,33 @@ export default function Activity({ data }: DataProps) {
 
 
     return (
-        <div onDoubleClick={handleDoubleClick} className="node-container">
-            <NodeResizer
-                color="#0084D1"
-                isVisible={isSelected}
-                minWidth={1000}
-                minHeight={600}
-            />
+            <div
+                onDoubleClick={handleDoubleClick}
+                onContextMenu={handleContextMenu}
+                className="node-container"
+            >
+              <NodeResizer
+                  color="#0084D1"
+                  isVisible={isSelected}
+                  minWidth={1000}
+                  minHeight={600}
+              />
 
-            <div className="flex flex-col">
-                <textarea
-                    ref={textareaRef}
-                    value={value}
-                    onChange={onChange}
-                    onBlur={handleBlur}
-                    onWheel={(e) => e.stopPropagation()}
-                    placeholder="Actividad"
-                    className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
-                    rows={1}
-                />
-                {isEditing &&
-                    <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-                }
-            </div>
+              <div className="flex flex-col">
+                  <textarea
+                      ref={textareaRef}
+                      value={value}
+                      onChange={onChange}
+                      onBlur={handleBlur}
+                      onWheel={(e) => e.stopPropagation()}
+                      placeholder="Actividad"
+                      className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+                      rows={1}
+                  />
+                  {isEditing &&
+                      <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                  }
+              </div>
 
             <div className="flex justify-between items-start w-full mt-2">
                 <div className="flex flex-col justify-start items-center relative">

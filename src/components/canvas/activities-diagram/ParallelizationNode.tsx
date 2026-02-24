@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BaseHandle from "../BaseHandle";
 import { Position, useNodeConnections, useNodeId, useUpdateNodeInternals } from "@xyflow/react";
 import { useCanvas } from "../../../hooks/useCanvas";
@@ -6,7 +6,7 @@ import "../styles/nodeStyles.css";
 
 export default function ParallelizationNode() {
     const [showHandles, setShowHandles] = useState(false);
-    const { isTryingToConnect } = useCanvas();
+    const { isTryingToConnect, openContextMenu } = useCanvas();
     const [sourceHandlesIds, setSourceHandlesIds] = useState<number[]>([0, 1]);
     const [targetHandlesIds, setTargetHandlesIds] = useState<number[]>([0, 1]);
 
@@ -28,11 +28,22 @@ export default function ParallelizationNode() {
         updateNodeInternals(nodeId ? nodeId : '');
     }, [connections, updateNodeInternals]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             className="node-bar"
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
         >
             <div className="flex">
                 <div className="flex flex-col">

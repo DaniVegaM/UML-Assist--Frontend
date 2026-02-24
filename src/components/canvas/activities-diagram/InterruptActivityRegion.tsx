@@ -4,7 +4,7 @@ import { useCanvas } from "../../../hooks/useCanvas";
 import "../styles/nodeStyles.css";
 
 export default function InterruptActivityRegion() {
-    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
     const nodeId = useNodeId();
     const { getNode } = useReactFlow();
     const [isHovered, setIsHovered] = useState(false);
@@ -22,12 +22,23 @@ export default function InterruptActivityRegion() {
         setIsZoomOnScrollEnabled(true);
     }, [setIsZoomOnScrollEnabled]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onMouseEnter={() => setIsHovered(true)} 
             onMouseLeave={() => setIsHovered(false)}
             onMouseDown={onMouseDown}
             onMouseUp={onMouseUp}
+            onContextMenu={handleContextMenu}
             className="interruptible-region"
             style={{
                 position: "relative",

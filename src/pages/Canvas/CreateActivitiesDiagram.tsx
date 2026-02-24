@@ -10,24 +10,32 @@ import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
-import DataNodeContextMenu from "../../components/canvas/activities-diagram/contextMenu/DataNodeContextMenu";
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import NodeContextMenu from "../../components/canvas/NodeContextMenu";
+import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
-
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
-    const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
+    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu, closeEdgeContextMenu } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
+
+    const onEdgeContextMenu = useCallback(
+        (event: React.MouseEvent, edge: Edge) => {
+            event.preventDefault();
+            openEdgeContextMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
+        },
+        [openEdgeContextMenu],
+    );
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -194,6 +202,7 @@ function DiagramContent() {
 
             <section className="h-full w-full relative">
                 <ReactFlow
+                    deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
@@ -230,6 +239,7 @@ function DiagramContent() {
                     onConnect={onConnect}
                     onConnectStart={() => setIsTryingToConnect(true)}
                     onConnectEnd={() => setIsTryingToConnect(false)}
+                    onEdgeContextMenu={onEdgeContextMenu}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
@@ -238,7 +248,8 @@ function DiagramContent() {
                         aria-label="Controles de lienzo"
                         position="bottom-right"
                     />
-                    <DataNodeContextMenu />
+                    <NodeContextMenu />
+                    <EdgeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
                 <AIChatBar type="actividades"/>

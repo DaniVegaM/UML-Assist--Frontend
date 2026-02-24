@@ -1,10 +1,11 @@
 import { useRef, useEffect, useState } from "react";
-import { useCanvas } from "../../../../hooks/useCanvas";
+import { useCanvas } from "../../hooks/useCanvas";
 import { useReactFlow, useNodes, type Node as RFNode, type XYPosition } from "@xyflow/react";
+import DeleteIcon from "./shared/DeleteIcon";
 
-export default function DataNodeContextMenu() {
+export default function NodeContextMenu() {
     const { contextMenu, closeContextMenu } = useCanvas();
-    const { setNodes } = useReactFlow();
+    const { setNodes, setEdges } = useReactFlow();
     const nodes = useNodes();
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -52,6 +53,13 @@ export default function DataNodeContextMenu() {
 
     if (!contextMenu) return null;
 
+    // Obtener el nodo actual
+    const currentNode = nodes.find((n: RFNode) => n.id === contextMenu.nodeId);
+    if (!currentNode) return null;
+
+    // Verificar si es un dataNode
+    const isDataNode = currentNode.type === 'dataNode';
+
     const changeType = (variant: "centralBuffer" | "datastore") => {
         setNodes((nodes: RFNode[]) =>
             nodes.map((n: RFNode) =>
@@ -63,6 +71,22 @@ export default function DataNodeContextMenu() {
         closeContextMenu();
     };
 
+    const deleteNode = () => {
+        // Eliminar el nodo
+        setNodes((nodes: RFNode[]) =>
+            nodes.filter((n: RFNode) => n.id !== contextMenu.nodeId)
+        );
+        
+        // Eliminar todas las conexiones (edges) asociadas al nodo
+        setEdges((edges) =>
+            edges.filter((edge) => 
+                edge.source !== contextMenu.nodeId && edge.target !== contextMenu.nodeId
+            )
+        );
+        
+        closeContextMenu();
+    };
+
     return (
         <div
             ref={menuRef}
@@ -70,22 +94,42 @@ export default function DataNodeContextMenu() {
             style={{ top: menuPos.y, left: menuPos.x }}
             onContextMenu={(e) => e.preventDefault()} // evita que se abra el menú del navegador sobre el menú
         >
-
+            {isDataNode && (
+                <>
+                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-neutral-700">
+                        Tipo de nodo
+                    </div>
+                    <div className="flex flex-col">
+                        <div
+                            onClick={() => changeType("datastore")}
+                            className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-sky-100 dark:hover:bg-sky-700 transition-colors"
+                        >
+                            Data Store
+                        </div>
+                        <div className="border-t border-sky-600 dark:border-neutral-700"></div>
+                        <div
+                            onClick={() => changeType("centralBuffer")}
+                            className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-sky-100 dark:hover:bg-sky-700 transition-colors"
+                        >
+                            Central Buffer
+                        </div>
+                    </div>
+                    <div className="border-t border-sky-600 dark:border-neutral-700"></div>
+                </>
+            )}
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-neutral-700">
+                Opciones
+            </div>
             <div className="flex flex-col">
                 <div
-                    onClick={() => changeType("datastore")}
-                    className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-sky-100 dark:hover:bg-sky-700 transition-colors"
+                    onClick={deleteNode}
+                    className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-red-100 dark:hover:bg-red-700 transition-colors flex items-center gap-2"
                 >
-                    Data Store
-                </div>
-                <div className="border-t border-sky-600 dark:border-neutral-700"></div>
-                <div
-                    onClick={() => changeType("centralBuffer")}
-                    className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-sky-100 dark:hover:bg-sky-700 transition-colors"
-                >
-                    Central Buffer
+                    <DeleteIcon />
+                    Eliminar
                 </div>
             </div>
         </div>
     );
 }
+
