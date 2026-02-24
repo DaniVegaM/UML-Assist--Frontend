@@ -5,7 +5,6 @@ import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import type { AltFragmentData } from "../../../types/canvas";
-import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 
 const TEXT_AREA_MAX_LEN = 30;
 

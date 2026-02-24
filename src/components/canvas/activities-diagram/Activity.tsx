@@ -19,7 +19,6 @@ export default function Activity({ data }: DataProps) {
     const nodeId = useNodeId();
     const node = getNode(nodeId!);
     const isSelected = node?.selected ?? false;
-    const updateNodeInternals = useUpdateNodeInternals();
 
     const [sourceBoxes, setSourceBoxes] = useState<number[]>(() => {
         if (data.sourceBoxesLength) {
@@ -102,8 +101,8 @@ export default function Activity({ data }: DataProps) {
             } else {
                 return ['source_0'];
             }
-        }
-    }
+        });
+    };
                             
     const addSourceBox = () => {
         setSourceBoxes(prev => {

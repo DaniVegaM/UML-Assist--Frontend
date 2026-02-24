@@ -5,7 +5,6 @@ import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import type { ParFragmentData } from "../../../types/canvas";
-import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 
 const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) => {
   const nodeId = useNodeId();
