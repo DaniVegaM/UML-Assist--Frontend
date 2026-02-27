@@ -1,7 +1,13 @@
 import { useCallback } from "react";
 import type { Connection, Edge, Node } from "@xyflow/react";
 
-export type ValidationSeverity = "error" | "warning" | "info";
+/**
+* Hook para validaciones locales de:
+* - Actividades (isValidActivityConnection)
+* - Secuencia (isValidSequenceConnection)
+*/
+
+export type ValidationSeverity = "success" | "error" | "info";
 
 export type ValidationResult = {
     ok: boolean;
@@ -66,12 +72,11 @@ const hasAnyHandleUsed = useCallback(
         const sourceNode = findNode(connection.source);
         const targetNode = findNode(connection.target);
 
-        // Base: deben existir
+        // Validación base: source/target deben existir
         if (!sourceNode || !targetNode) {
             return {
             ok: false,
-            severity: "error",
-            code: "NODE_NOT_FOUND",
+            severity: "info",
             reason: "No se pudo identificar el nodo origen o destino.",
             };
         }
@@ -81,12 +86,11 @@ const hasAnyHandleUsed = useCallback(
         const sourceNodeType = sourceNode.type;
         const targetNodeType = targetNode.type;
 
-        // Base: tipos requeridos
+        // Validación base: tipos requeridos
         if (!sourceNodeType || !targetNodeType) {
             return {
             ok: false,
-            severity: "error",
-            code: "NODE_TYPE_MISSING",
+            severity: "info",
             reason: "No se pudo determinar el tipo de nodo (origen o destino).",
             };
         }
@@ -95,39 +99,35 @@ const hasAnyHandleUsed = useCallback(
         if (hasAnyHandleUsed(connection)) {
             return {
             ok: false,
-            severity: "error",
-            code: "HANDLE_ALREADY_USED",
-            reason: "Ese punto de conexión (handle) ya está siendo utilizado.",
+            severity: "info",
+            reason: "Ese punto de conexión ya está ocupado. Usa otro punto o elimina la conexión existente.",
             };
         }
 
-        // No conectar a uno mismo
+        // Evitar conexiones a uno mismo
         if (sourceNodeId === targetNodeId) {
             return {
             ok: false,
-            severity: "error",
-            code: "SELF_CONNECTION",
+            severity: "info",
             reason: "No se permite conectar un nodo consigo mismo.",
             };
         }
 
-        // No duplicar A → B
+        // Evitar múltiples conexiones entre dos nodos (A → B repetido) 
         if (hasEdge(sourceNodeId, targetNodeId)) {
             return {
             ok: false,
-            severity: "error",
-            code: "DUPLICATE_EDGE",
-            reason: "Ya existe una conexión entre esos dos nodos (A → B).",
+            severity: "info",
+            reason: "Ya existe una conexión entre estos dos elementos.",
             };
         }
 
-        // No loops A ↔ B
+        // Evitar loops entre 2 nodos (A → B y B → A)
         if (hasReverseEdge(sourceNodeId, targetNodeId)) {
             return {
             ok: false,
-            severity: "error",
-            code: "REVERSE_EDGE_LOOP",
-            reason: "No se permite un ciclo directo entre dos nodos (A → B y B → A).",
+            severity: "info",
+            reason: "No se permite una conexión en ambos sentidos entre los mismos dos elementos.",
             };
         }
 
@@ -135,6 +135,7 @@ const hasAnyHandleUsed = useCallback(
         const isFinalTarget =
             targetNodeType === "finalNode" || targetNodeType === "finalFlowNode";
 
+        // ¿El source YA tiene alguna salida hacia algún final?
         const sourceAlreadyEndsInFinal = edges.some((e) => {
             if (e.source !== sourceNodeId) return false;
             const t = findNode(e.target)?.type;
@@ -145,8 +146,7 @@ const hasAnyHandleUsed = useCallback(
         if (isFinalTarget && outgoingCount(sourceNodeId) > 0) {
             return {
             ok: false,
-            severity: "error",
-            code: "FINAL_TARGET_REQUIRES_NO_OUTGOING",
+            severity: "info",
             reason:
                 "No puedes conectar a un nodo final si el nodo origen ya tiene salidas.",
             };
@@ -156,8 +156,7 @@ const hasAnyHandleUsed = useCallback(
         if (sourceAlreadyEndsInFinal) {
             return {
             ok: false,
-            severity: "error",
-            code: "SOURCE_ALREADY_ENDS_IN_FINAL",
+            severity: "info",
             reason:
                 "Este nodo ya finaliza en un nodo final; no puede tener más salidas.",
             };
@@ -166,6 +165,7 @@ const hasAnyHandleUsed = useCallback(
         // ---------- GRUPO: Acciones ----------
         const actionTypes = ["simpleAction", "callBehavior", "callOperation"];
 
+        // Entradas al target que vengan del grupo de acciones
         const incomingEdgesFromActionGroup = edges.filter((e) => {
             if (e.target !== targetNodeId) return false;
             const sourceType = findNode(e.source)?.type;
@@ -186,10 +186,9 @@ const hasAnyHandleUsed = useCallback(
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "ACTION_MAX_INCOMING_1",
+            severity: "info",
             reason:
-                "Una acción solo puede tener una entrada desde el flujo de acciones.",
+                "Una acción solo puede tener una entrada dentro del flujo de control.",
             };
         }
 
@@ -201,39 +200,38 @@ const hasAnyHandleUsed = useCallback(
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "ACTION_MAX_OUTGOING_1",
+            severity: "info",
             reason:
-                "Una acción solo puede tener una salida hacia el flujo de acciones.",
+                "Una acción solo puede tener una salida dentro del flujo de control.",
             };
         }
 
         // ---------- Decision Control ----------
+        // Solo 1 conexión de entrada
         if (targetNodeType === "decisionControl" && incomingCount(targetNodeId) > 0) {
             return {
             ok: false,
-            severity: "error",
-            code: "DECISION_MAX_INCOMING_1",
+            severity: "info",
             reason: "Un nodo de decisión solo puede tener una conexión de entrada.",
             };
         }
 
         // ---------- Merge Node ----------
+        // Solo 1 conexión de salida
         if (sourceNodeType === "mergeNode" && outgoingCount(sourceNodeId) > 0) {
             return {
             ok: false,
-            severity: "error",
-            code: "MERGE_MAX_OUTGOING_1",
+            severity: "info",
             reason: "Un nodo merge solo puede tener una conexión de salida.",
             };
         }
 
         // ---------- Initial Node ----------
+        // Solo 1 salida
         if (sourceNodeType === "initialNode" && outgoingCount(sourceNodeId) > 0) {
             return {
             ok: false,
-            severity: "error",
-            code: "INITIAL_MAX_OUTGOING_1",
+            severity: "info",
             reason: "El nodo inicial solo puede tener una salida.",
             };
         }
@@ -241,8 +239,7 @@ const hasAnyHandleUsed = useCallback(
         if (targetNodeType === "initialNode") {
             return {
             ok: false,
-            severity: "error",
-            code: "INITIAL_NO_INCOMING",
+            severity: "info",
             reason: "El nodo inicial no puede recibir conexiones.",
             };
         }
@@ -253,41 +250,40 @@ const hasAnyHandleUsed = useCallback(
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "INITIAL_CANNOT_CONNECT_TO_OBJECT_OR_DATA",
-            reason: "El nodo inicial no puede conectar directamente a Object o Data.",
+            severity: "info",
+            reason: "El nodo inicial debe conectarse al flujo de control, no a un nodo de objeto o dato.",
             };
         }
 
         // ---------- Final Node ----------
+        // No acepta salidas
         if (sourceNodeType === "finalNode") {
             return {
             ok: false,
-            severity: "error",
-            code: "FINAL_NO_OUTGOING",
+            severity: "info",
             reason: "El nodo final no puede tener salidas.",
             };
         }
 
         // ---------- Final Flow Node ----------
+        // No acepta salidas
         if (sourceNodeType === "finalFlowNode") {
             return {
             ok: false,
-            severity: "error",
-            code: "FINAL_FLOW_NO_OUTGOING",
+            severity: "info",
             reason: "El final de flujo no puede tener salidas.",
             };
         }
 
         // ---------- Connector Node ----------
+        // No múltiples conexiones salientes o entrantes (cualquier lado)
         if (
             sourceNodeType === "connectorNode" &&
             (incomingCount(sourceNodeId) > 0 || outgoingCount(sourceNodeId) > 0)
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "CONNECTOR_SINGLE_CONNECTION_ONLY",
+            severity: "info",
             reason: "El conector no puede tener múltiples conexiones.",
             };
         }
@@ -298,41 +294,41 @@ const hasAnyHandleUsed = useCallback(
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "CONNECTOR_SINGLE_CONNECTION_ONLY_TARGET",
+            severity: "info",
             reason: "El conector no puede tener múltiples conexiones.",
             };
         }
 
         // ---------- Data Node ----------
+        // Permitir múltiples entradas y una sola salida
         if (sourceNodeType === "dataNode" && outgoingCount(sourceNodeId) > 0) {
             return {
             ok: false,
-            severity: "error",
-            code: "DATA_MAX_OUTGOING_1",
-            reason: "Un Data Node puede tener múltiples entradas, pero solo una salida.",
+            severity: "info",
+            reason: "Un nodo de datos puede tener varias entradas, pero solo una salida.",
             };
         }
 
-        // ---------- Object Node ----------
+        // ---------- GRUPO: Object Node ----------
+        // Permitir múltiples salidas.
+        // Mantener solo 1 entrada (si se requiere en la app).
         if (targetNodeType === "objectNode" && incomingCount(targetNodeId) > 0) {
             return {
             ok: false,
-            severity: "error",
-            code: "OBJECT_MAX_INCOMING_1",
-            reason: "Un Object Node solo puede tener una entrada.",
+            severity: "info",
+            reason: "Un nodo de objeto solo puede tener una entrada.",
             };
         }
 
         // ---------- Exception Handling ----------
+        // Solo una entrada y sin salidas
         if (
             sourceNodeType === "exceptionHandling" ||
             (targetNodeType === "exceptionHandling" && incomingCount(targetNodeId) > 0)
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "EXCEPTION_RULE",
+            severity: "info",
             reason:
                 "El manejador de excepción no puede tener salidas y solo puede tener una entrada.",
             };
@@ -362,11 +358,11 @@ const hasAnyHandleUsed = useCallback(
         const sourceNode = findNode(connection.source);
         const targetNode = findNode(connection.target);
 
+        // Validación base: source/target deben existir
         if (!sourceNode || !targetNode) {
             return {
             ok: false,
-            severity: "error",
-            code: "NODE_NOT_FOUND",
+            severity: "info",
             reason: "No se pudo identificar el nodo origen o destino.",
             };
         }
@@ -374,57 +370,59 @@ const hasAnyHandleUsed = useCallback(
         const sourceType = sourceNode.type;
         const targetType = targetNode.type;
 
+        // Validación base: tipos requeridos
         if (!sourceType || !targetType) {
             return {
             ok: false,
-            severity: "error",
-            code: "NODE_TYPE_MISSING",
+            severity: "info",
             reason: "No se pudo determinar el tipo de nodo (origen o destino).",
             };
         }
 
+         // Permitir conexiones entre lifelines y también conexiones con notas
         const isNoteConnection = sourceType === "note" || targetType === "note";
         const isLifeLineConnection = sourceType === "lifeLine" && targetType === "lifeLine";
 
+        // Solo permitir conexiones LifeLine <-> LifeLine o Note <-> LifeLine
         if (!isLifeLineConnection && !isNoteConnection) {
             return {
             ok: false,
-            severity: "error",
-            code: "SEQ_ONLY_LIFELINE_OR_NOTE",
+            severity: "info",
             reason: "Solo se permiten conexiones LifeLine ↔ LifeLine o Note ↔ LifeLine.",
             };
         }
 
+        // Si es conexión con nota, al menos uno debe ser lifeline
         if (isNoteConnection && sourceType !== "lifeLine" && targetType !== "lifeLine") {
             return {
             ok: false,
-            severity: "error",
-            code: "SEQ_NOTE_NEEDS_LIFELINE",
+            severity: "info",
             reason: "Una nota solo puede conectarse con una LifeLine.",
             };
         }
 
+        // En secuencia SIEMPRE debe haber handles
         if (!connection.sourceHandle || !connection.targetHandle) {
             return {
             ok: false,
-            severity: "error",
-            code: "SEQ_HANDLES_REQUIRED",
-            reason: "En secuencia siempre deben usarse handles (puntos de conexión).",
+            severity: "info",
+            reason: "En el diagrama de secuencia debes conectar desde un punto de conexión válido en ambos elementos."
             };
         }
 
+        // Self-message: no permitir mismo handle como origen y destino 
         if (
             connection.source === connection.target &&
             connection.sourceHandle === connection.targetHandle
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "SEQ_SAME_HANDLE_SELF_MESSAGE",
-            reason: "No se permite un self-message usando el mismo handle.",
+            severity: "info",
+            reason: "No se permite un mensaje a sí mismo usando el mismo punto de conexión.",
             };
         }
 
+        // Evitar duplicar exactamente el mismo mensaje (mismos handles) 
         if (
             edges.some(
             (e) =>
@@ -434,9 +432,8 @@ const hasAnyHandleUsed = useCallback(
         ) {
             return {
             ok: false,
-            severity: "error",
-            code: "SEQ_DUPLICATE_MESSAGE",
-            reason: "Ya existe un mensaje con esos mismos handles.",
+            severity: "info",
+            reason: "Ya existe un mensaje entre esos mismos puntos de conexión.",
             };
         }
 

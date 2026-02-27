@@ -16,9 +16,6 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
-import { NotificationCenterProvider } from "../../contexts/NotificationCenterContext";
-import NotificationCenterPanel from "../../components/layout/Canvas/NotificationCenterPanel";
-import NotificationCenterBridgeRegister from "../../components/layout/Canvas/notificationCenterBridgeRegister";
 import { notify } from "../../components/ui/NotificationComponent";
 
 function DiagramContent() {
@@ -30,7 +27,7 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { validateActivityConnection } = useLocalValidations(nodes, edges);
-    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "warning" | "info" } | null>(null);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
 
         const isValidActivityConnectionWithFeedback = useCallback(
             (conn: Connection) => {
@@ -40,7 +37,7 @@ function DiagramContent() {
                 lastInvalidAttemptRef.current = {
                     ts: Date.now(),
                     message: result.reason ?? "Esta relación no cumple las reglas locales del diagrama.",
-                    type: result.severity ?? "error",
+                    type: result.severity ?? "info",
                 };
                 }
 
@@ -206,7 +203,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative">
-                <NotificationCenterPanel />
+                
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}
@@ -275,10 +272,7 @@ export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                <NotificationCenterProvider>
-                    <NotificationCenterBridgeRegister />
                     <DiagramContent />
-                </NotificationCenterProvider>
             </CanvasProvider>
         </ReactFlowProvider>
     

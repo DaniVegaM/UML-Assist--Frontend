@@ -18,9 +18,6 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
-import { NotificationCenterProvider } from "../../contexts/NotificationCenterContext";
-import NotificationCenterPanel from "../../components/layout/Canvas/NotificationCenterPanel";
-import NotificationCenterBridgeRegister from "../../components/layout/Canvas/NotificationCenterBridgeRegister";
 import { notify } from "../../components/ui/NotificationComponent";
 
 
@@ -32,7 +29,7 @@ function DiagramContent() {
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { validateSequenceConnection } = useLocalValidations(nodes, edges);
-    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "warning" | "info" } | null>(null);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
 
     const isValidSequenceConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -42,7 +39,7 @@ function DiagramContent() {
             lastInvalidAttemptRef.current = {
                 ts: Date.now(),
                 message: result.reason ?? "Conexión inválida.",
-                type: result.severity ?? "error",
+                type: result.severity ?? "info",
             };
             }
 
@@ -211,6 +208,20 @@ function DiagramContent() {
         );
     }, [isDarkMode, setEdges]);
 
+    const handleConnectEnd = useCallback(() => {
+        setIsTryingToConnect(false);
+
+        const info = lastInvalidAttemptRef.current;
+        if (info && Date.now() - info.ts < 700) {
+            notify(info.type, "Conexión inválida", info.message);
+        }
+        lastInvalidAttemptRef.current = null;
+    }, [setIsTryingToConnect]);
+
+    const handleConnectStart = useCallback(() => {
+        setIsTryingToConnect(true);
+    }, [setIsTryingToConnect]);
+
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header
@@ -222,7 +233,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
-                <NotificationCenterPanel />
+
                 <ReactFlow
                     fitView={false}
                     preventScrolling={true}
@@ -256,16 +267,8 @@ function DiagramContent() {
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     isValidConnection={isValidSequenceConnectionWithFeedback}
-                    onConnectEnd={() => {
-                        setIsTryingToConnect(false);
-
-                        const info = lastInvalidAttemptRef.current;
-                        if (info && Date.now() - info.ts < 700) {
-                            notify(info.type, "Conexión inválida", info.message);
-                        }
-                        lastInvalidAttemptRef.current = null;
-                    }}
-                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onConnectEnd={handleConnectEnd}
+                    onConnectStart={handleConnectStart}
                     onConnect={onConnect}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -288,10 +291,7 @@ export default function CreateSequenceDiagram() {
         <ReactFlowProvider>
             <CanvasProvider>
                 <SequenceCanvasProvider>
-                    <NotificationCenterProvider>
-                        <NotificationCenterBridgeRegister />
                         <DiagramContent />
-                    </NotificationCenterProvider>
                 </SequenceCanvasProvider>
             </CanvasProvider>
         </ReactFlowProvider>
