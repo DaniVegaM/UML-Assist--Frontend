@@ -46,4 +46,4 @@ jobs:
             docker rm uml-frontend || true
             
             docker pull ${{ steps.login-ecr.outputs.registry }}/uml-assist-frontend:latest
-            docker run -d --name uml-frontend -p 80:80 ${{ steps.login-ecr.outputs.registry }}/uml-assist-frontend:latest
+            docker run -d --name uml-frontend --env-file /home/ec2-user/app-config/frontend.env -p 80:80 ${{ steps.login-ecr.outputs.registry }}/uml-assist-frontend:latest
