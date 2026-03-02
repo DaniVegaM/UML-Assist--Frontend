@@ -192,6 +192,20 @@ function DiagramContent() {
         );
     }, [isDarkMode]);
 
+    const handleConnectStart = useCallback(() => {
+        setIsTryingToConnect(true);
+    }, [setIsTryingToConnect]);
+
+    const handleConnectEnd = useCallback(() => {
+        setIsTryingToConnect(false);
+
+        const info = lastInvalidAttemptRef.current;
+        if (info && Date.now() - info.ts < 700) {
+                notify(info.type, "Conexión inválida", info.message);
+        }
+        lastInvalidAttemptRef.current = null;
+    }, [setIsTryingToConnect]);
+
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header
@@ -239,17 +253,8 @@ function DiagramContent() {
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
-                    onConnectStart={() => setIsTryingToConnect(true)}
-                    onConnectEnd={() => {
-                        setIsTryingToConnect(false);
-
-                        const info = lastInvalidAttemptRef.current;
-                        if (info && Date.now() - info.ts < 700) {
-                            notify(info.type, "Conexión inválida", info.message);
-                        }
-                        lastInvalidAttemptRef.current = null;
-
-                    }}
+                    onConnectStart={handleConnectStart}
+                    onConnectEnd={handleConnectEnd}
 
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
