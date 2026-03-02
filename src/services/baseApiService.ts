@@ -1,6 +1,6 @@
 import type { AxiosInstance } from "axios";
 import axios from "axios";
-import { getAccessToken, getRefreshToken, clearStorage, setTokens } from "../helpers/auth";
+import { getAccessToken, clearStorage } from "../helpers/auth";
 
 
 // Instancia base de axios
@@ -30,9 +30,9 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor para manejar refresh automático cuando se realiza un request y el token ya expiró
+// Interceptor para manejar errores de autenticación sin refresh
 api.interceptors.response.use(
-  (response) => response, 
+  (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
@@ -41,71 +41,11 @@ api.interceptors.response.use(
     }
 
     const isAuthRoute = originalRequest.url?.includes('/auth/'); // No incluimos las rutas de auth
-
     if (isAuthRoute) return Promise.reject(error);
 
-    //cola para evitar múltiples refresh simultáneos
-    let _any = api as any;
-    _any.__isRefreshing = _any.__isRefreshing || false;
-    _any.__failedQueue = _any.__failedQueue || [];
-
-    const processQueue = (err: any, token: string | null = null) => {
-      _any.__failedQueue.forEach((prom: any) => {
-        if (err) {
-          prom.reject(err);
-        } else {
-          if (!prom.config.headers) prom.config.headers = {};
-          prom.config.headers['Authorization'] = `Bearer ${token}`;
-          prom.resolve(api(prom.config));
-        }
-      });
-      _any.__failedQueue = [];
-    };
-
-    //si ya estamos refrescando, encolamos la request original y retornamos una promesa
-    if (_any.__isRefreshing) {
-      return new Promise((resolve, reject) => {
-        _any.__failedQueue.push({ resolve, reject, config: originalRequest });
-      });
-    }
-
-    //marcamos retry para no entrar en loop
-    (originalRequest as any)._retry = true;
-    _any.__isRefreshing = true;
-
-    try {
-      const refreshToken = getRefreshToken();
-
-      if (!refreshToken) {
-        throw new Error('No refresh token available');
-      }
-
-      const response = await api.post('api/user/auth/refresh/', {
-        refresh_token: refreshToken,
-      });
-
-      const { access_token, refresh_token } = response.data;
-
-      if (access_token && refresh_token) {
-        setTokens(access_token, refresh_token);
-      } else if (access_token) {
-        localStorage.setItem('access_token', access_token);
-      }
-
-      processQueue(null, access_token);
-
-      if (!originalRequest.headers) originalRequest.headers = {};
-      originalRequest.headers['Authorization'] = `Bearer ${access_token}`;
-
-      return api(originalRequest);
-    } catch (refreshError) {
-      processQueue(refreshError, null);
-      clearStorage();
-      window.location.href = '/iniciar-sesion';
-      return Promise.reject(refreshError);
-    } finally {
-      _any.__isRefreshing = false;
-    }
+    clearStorage();
+    window.location.href = '/iniciar-sesion';
+    return Promise.reject(error);
   }
 );
 

@@ -9,7 +9,7 @@ import "../styles/nodeStyles.css";
 export default function FinalFlowNode({ data }: NodeProps) {
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
-    const { isTryingToConnect } = useCanvas();
+    const { isTryingToConnect, openContextMenu } = useCanvas();
     const { isDarkMode } = useTheme();
 
     // Manejo de handles
@@ -38,10 +38,21 @@ export default function FinalFlowNode({ data }: NodeProps) {
         ));
     }, [handles, nodeId, setNodes]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onMouseEnter={() => setShowHandles(isTryingToConnect)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
             className="bg-transparent p-4"
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >

@@ -23,13 +23,11 @@ export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
         setIsThinking(true);
 
         const intermediateLanguage = `
-UserPrompt: ${initialContext}
-
 ${type === 'actividades' ? 
 `activityDiagram
 
-nodes[${nodes.length}]{id, content, activityId}
-${nodes.map(n => `${n.id}, ${n.data.label}, ${n.parentId || ""}`).join('\n')}
+nodes[${nodes.length}]{id, content, parentNodeId}
+${nodes.map(n => `${n.id}, ${(n.data.label as string).replace("\n", " ")}, ${n.parentId || ""}`).join('\n')}
 
 edges[${edges.length}]{id, sourceNode, targetNode, guard}
 ${edges.map(e => {
@@ -50,7 +48,7 @@ ${nodes
         return `${n.id}, ${n.data.label}, ${Math.round(n.position.x)}, ${startY}, ${endEvent}`;
     }).join('\n')}
 
-messages[${edges.length}]{id, type, source, target, label, yPos}
+messages[${edges.length}]{id, type, source, target, label, yPos, fragmentId, operand}
 ${edges
     .map(e => ({ ...e, yPos: e.data?.y || 0 }))
     .sort((a, b) => a.yPos - b.yPos)
@@ -66,13 +64,23 @@ ${edges
         const source = type === 'found' ? '[FOUND]' : e.source;
         const target = type === 'lost' ? '[LOST]' : e.target;
         const label = typeof e.label === 'string' ? e.label : (e.data?.label || '');
-        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}`;
+        const fragmentNode = nodes.find(n => Array.isArray(n.data.edges) && (n.data.edges as string[]).includes(e.id));
+        const fragmentId = fragmentNode?.id || '';
+        const operandsArr = fragmentNode?.data?.operands as [string, string][] | undefined;
+        const operand = operandsArr?.find(([id]) => id === e.id)?.[1] || '';
+        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}, ${fragmentId}, ${operand}`;
     }).join('\n')}`}
         `;
 
         console.log("Lenguaje intermedio enviado a la IA:", intermediateLanguage);
 
-        const reviewDiagramResponse = await reviewDiagramWithAI(intermediateLanguage);
+        const reviewDiagramData = {
+            userPrompt: initialContext,
+            diagramType: type === 'actividades' ? 'activities' : 'sequence' as 'activities' | 'sequence',
+            intermediateLanguage,
+        }
+
+        const reviewDiagramResponse = await reviewDiagramWithAI(reviewDiagramData);
         
         console.log("Respuesta de la IA:", reviewDiagramResponse.data.suggestions);
         

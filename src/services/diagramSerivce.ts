@@ -1,4 +1,4 @@
-import type { Diagram } from "../types/diagramsModel";
+import type { Diagram, ReviewDiagramData } from "../types/diagramsModel";
 import api from "./baseApiService";
 
 export const fetchDiagrams = async () => {
@@ -8,7 +8,7 @@ export const fetchDiagrams = async () => {
     } catch (error) {
         console.error("Error al obtener los diagramas:", error);
         throw error;
-    }  
+    }
 };
 
 export const fetchDiagramById = async (id: string) => {
@@ -21,28 +21,35 @@ export const fetchDiagramById = async (id: string) => {
     }
 };
 
-export const createDiagram = async (diagramData: Diagram) => {
+export const createDiagram = async (formData: FormData) => {
     try {
-        const response = await api.post("api/diagram/", diagramData);
+        const response = await api.post("api/diagram/", formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return response;
     } catch (error) {
         console.error("Error al crear el diagrama:", error);
         throw error;
-    }  
+    }
 };
 
-export const updateDiagram = async (diagramData: Diagram) => {
-    if (!diagramData.id) {
-        throw new Error("El ID del diagrama es requerido para actualizar.");
-    }
+export const updateDiagram = async (id: number, formData: FormData) => {
     try {
-        const response = await api.put(`api/diagram/${diagramData.id}/`, diagramData);
+        const response = await api.patch(`api/diagram/${id}/`, formData, {
+            headers: {
+                "Content-Type": "multipart/form-data",
+            },
+        });
         return response;
     } catch (error) {
         console.error("Error al actualizar el diagrama:", error);
         throw error;
     }
 };
+
+
 
 export const patchDiagram = async (diagramData: Diagram) => {
     if (!diagramData.id) {
@@ -67,7 +74,7 @@ export const deleteDiagram = async (id: number) => {
     }
 };
 
-export const reviewDiagramWithAI = async (intermediateLanguage: string) => {
+export const reviewDiagramWithAI = async (intermediateLanguage: ReviewDiagramData) => {
     try {
         const response = await api.post(`api/ai/review-diagram/`, intermediateLanguage);
         return response;

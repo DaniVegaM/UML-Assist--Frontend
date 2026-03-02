@@ -19,7 +19,8 @@ import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
 import { notify } from "../../components/ui/NotificationComponent";
-
+import NodeContextMenu from "../../components/canvas/NodeContextMenu";
+import { createPrefixedNodeId } from "../../utils/idGenerator";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -27,6 +28,7 @@ function DiagramContent() {
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { validateSequenceConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
@@ -89,13 +91,11 @@ function DiagramContent() {
                     'note'
                 ];
 
-                //Restaurar las posiciones Y originales solo para nodos que NO son fragmentos
+                //Restaurar las posiciones Y originales para mantener nodos en su línea horizontal
                 return updatedNodes.map(node => {
-                    // Si es un fragmento, permitir movimiento libre
                     if (freeMovementNodeTypes.includes(node.type || '')) {
                         return node;
                     }
-                    // Para otros nodos (lifelines, etc.), mantener la posición Y fija
                     return {
                         ...node,
                         position: {
@@ -116,13 +116,11 @@ function DiagramContent() {
         [setEdges],
     );
 
-
-
     const onConnect = useCallback(
-        (params: Connection) => {
-            
+        (params: Connection) => {          
             const sourceNode = nodes.find(n => n.id === params.source);
             const targetNode = nodes.find(n => n.id === params.target);
+
             const isSelfMessage = params.source === params.target;
 
             // Obtener la posición Y del handle de origen
@@ -140,7 +138,7 @@ function DiagramContent() {
             const isNoteConnection = sourceNode?.type === 'note' || targetNode?.type === 'note';
             const newEdge: Edge = {
                 ...params,
-                id: `edge-${params.sourceHandle}-${params.targetHandle}`,
+                id: createPrefixedNodeId('edge'),
                 type: isNoteConnection
                     ? 'noteEdge'
                     : (isSelfMessage ? 'selfMessageEdge' : 'messageEdge'),
@@ -235,6 +233,7 @@ function DiagramContent() {
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
 
                 <ReactFlow
+                    deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
@@ -278,6 +277,7 @@ function DiagramContent() {
                         aria-label="Controles de lienzo"
                         position="bottom-right"
                     />
+                    <NodeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={SEQUENCE_NODES} oneColumn={true} />
                 <AIChatBar type="secuencia"/>

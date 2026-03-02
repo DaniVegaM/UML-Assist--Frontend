@@ -10,14 +10,7 @@ import api from "./baseApiService";
 export const isAuthenticated = (): boolean => {
   const token = getAccessToken();
   if (!token) return false;
-
-  try {
-    // Verificamos si el token ha expirado
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    return payload.exp > Date.now() / 1000;
-  } catch {
-    return false;
-  }
+  return true;
 };
 
 /* Despues de otorgar permisos, Google/Github redirige a la URL de callback con un "code" en los query params 
@@ -55,10 +48,10 @@ export const handleCallback = async (provider: string, code: string) => {
       }
     );
 
-    const { access_token, refresh_token, user, success } = response.data;
+    const { access_token, user, success } = response.data;
 
     // Guardamos tokens y datos del usuario
-    setTokens(access_token, refresh_token);
+    setTokens(access_token);
     setUserData({
       email: user.email,
       username: user.username,
@@ -68,29 +61,6 @@ export const handleCallback = async (provider: string, code: string) => {
     return { user, success };
   } catch (error) {
     console.error("Error en callback:", error);
-    throw error;
-  }
-};
-
-export const refreshAccessToken = async () => {
-  try {
-    const refreshToken = localStorage.getItem("refresh_token");
-
-    if (!refreshToken) {
-      throw new Error("No refresh token available");
-    }
-
-    const response = await api.post("api/user/auth/refresh/", {
-      refresh_token: refreshToken,
-    });
-
-    const { access_token } = response.data;
-    localStorage.setItem("access_token", access_token);
-
-    return access_token;
-  } catch (error) {
-    console.error("Error refreshing token:", error);
-    logout();
     throw error;
   }
 };
@@ -107,13 +77,7 @@ export const getCurrentUser = async () => {
 
 export const logout = async () => {
   try {
-    const refreshToken = localStorage.getItem("refresh_token");
-
-    if (refreshToken) {
-      await api.post("api/user/auth/logout/", {
-        refresh_token: refreshToken,
-      });
-    }
+    await api.post("api/user/auth/logout/");
   } catch (error) {
     console.error("Error during logout:", error);
   } finally {
@@ -128,11 +92,11 @@ export const loginWithCredentials = async (email: string, password: string) => {
       password,
     });
 
-    const { access_token, refresh_token, user } = response.data;
+    const { access_token, user } = response.data;
     console.log("Login successful for user:", user);
 
     // Guardamos tokens y datos del usuario
-    setTokens(access_token, refresh_token);
+    setTokens(access_token);
     setUserData({ email: user.email, username: user.username, provider: user.provider, });
 
     return { user, success: true };
@@ -152,11 +116,11 @@ export const registerWithCredentials = async (
       password,
     });
 
-    const { access_token, refresh_token, user } = response.data;
+    const { access_token, user } = response.data;
     console.log("Registration successful for user:", user);
 
     // Guardamos tokens y datos del usuario
-    setTokens(access_token, refresh_token);
+    setTokens(access_token);
     setUserData({ email: user.email, username: user.username, provider: user.provider, });
 
     return { user, success: true };
@@ -177,8 +141,9 @@ export async function changePassword(values: ChangePasswordValues) {
     const response = await api.post("api/user/users/change_password/", values);
 
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     // axios devuelve el error del servidor en error.response.data
-    throw error.response?.data || { message: "Error al cambiar la contraseña" };
+    const err = error as { response?: { data?: unknown } };
+    throw err.response?.data || { message: "Error al cambiar la contraseña" };
   }
 }

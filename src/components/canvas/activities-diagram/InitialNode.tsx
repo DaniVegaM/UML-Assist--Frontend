@@ -3,12 +3,14 @@ import { useCallback, useRef, useState, useEffect } from "react";
 import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import { useNodeId, useReactFlow, type NodeProps } from "@xyflow/react";
 import "../styles/nodeStyles.css";
+import { useCanvas } from "../../../hooks/useCanvas";
 
 
 
 export default function InitialNode({ data }: NodeProps) {
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
+    const { openContextMenu } = useCanvas();
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -35,10 +37,21 @@ export default function InitialNode({ data }: NodeProps) {
         ));
     }, [handles, nodeId, setNodes]);
 
+    const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
     return (
         <div
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
+            onContextMenu={handleContextMenu}
             className="bg-transparent p-4"
             onMouseMove={(evt) => { magneticHandle(evt) }}
         >

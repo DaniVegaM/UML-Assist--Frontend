@@ -7,6 +7,7 @@ export type Diagram = {
     created_at?: Date;
     updated_at?: Date;
     content?: Content;
+    preview_image?: string;
 }
 
 export type Content = {
@@ -48,4 +49,10 @@ export type Measured = {
 export type Position = {
     x: number;
     y: number;
+}
+
+export type ReviewDiagramData = {
+    userPrompt: string;
+    diagramType: 'activities' | 'sequence';
+    intermediateLanguage: string;
 }

@@ -1,16 +1,71 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, type NodeProps, useReactFlow } from "@xyflow/react";
+import { NodeResizer, type NodeProps, useReactFlow, useNodeId } from "@xyflow/react";
+import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
+import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import DeleteIcon from "./contextMenus/DeleteIcon";
 
 const TEXT_AREA_MAX_LEN = 30;
 
 const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
+  const nodeId = useNodeId();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const { setNodes } = useReactFlow();
+
+  const { setNodes, setEdges } = useSequenceDiagram();
+
+  const { getNodesBounds, getInternalNode } = useReactFlow();
+
   const { setIsZoomOnScrollEnabled } = useCanvas();
+  const { nodes: allNodes, edges } = useSequenceDiagram();
 
   const [guard, setGuard] = useState((data as any)?.guard || "");
   const [isEditingGuard, setIsEditingGuard] = useState(false);
+  const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+
+  // Estado para los IDs de edges contenidos dentro del fragmento
+  const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
+  const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const initialCalcDone = useRef(false);
+
+  const computeContainedEdges = useCallback(() => {
+    if (!nodeId) return;
+    const fragmentBounds = getNodesBounds([nodeId]);
+    if (!fragmentBounds || fragmentBounds.width === 0) return;
+    const currentBounds = { x: Math.round(fragmentBounds.x), y: Math.round(fragmentBounds.y), w: Math.round(fragmentBounds.width), h: Math.round(fragmentBounds.height) };
+    if (initialCalcDone.current) {
+      const prev = lastFragmentBoundsRef.current;
+      if (prev && prev.x === currentBounds.x && prev.y === currentBounds.y && prev.w === currentBounds.w && prev.h === currentBounds.h) return;
+    }
+    lastFragmentBoundsRef.current = currentBounds;
+    initialCalcDone.current = true;
+    const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
+    const insideEdgeIds: string[] = [];
+    const newOperandAssignments: [string, string][] = [];
+    for (const edge of edges) {
+      if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
+      const sourceInternal = getInternalNode(edge.source);
+      const targetInternal = getInternalNode(edge.target);
+      if (!sourceInternal || !targetInternal) continue;
+      const sourceHandle = sourceInternal.internals.handleBounds?.source?.find(h => h.id === edge.sourceHandle) ?? sourceInternal.internals.handleBounds?.target?.find(h => h.id === edge.sourceHandle);
+      const targetHandle = targetInternal.internals.handleBounds?.target?.find(h => h.id === edge.targetHandle) ?? targetInternal.internals.handleBounds?.source?.find(h => h.id === edge.targetHandle);
+      if (!sourceHandle && !targetHandle) continue;
+      const sourceAbsX = sourceInternal.internals.positionAbsolute.x + (sourceHandle?.x ?? 0), sourceAbsY = sourceInternal.internals.positionAbsolute.y + (sourceHandle?.y ?? 0);
+      const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0), targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
+      if (sourceAbsX >= fragLeft && sourceAbsX <= fragRight && sourceAbsY >= fragTop && sourceAbsY <= fragBottom && targetAbsX >= fragLeft && targetAbsX <= fragRight && targetAbsY >= fragTop && targetAbsY <= fragBottom) {
+        insideEdgeIds.push(edge.id);
+        newOperandAssignments.push([edge.id, 'operand_1']);
+      }
+    }
+    setContainedEdgeIds(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(insideEdgeIds); return prevStr === newStr ? prev : insideEdgeIds; });
+    setOperandAssignments(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(newOperandAssignments); return prevStr === newStr ? prev : newOperandAssignments; });
+  }, [nodeId, edges, getNodesBounds, getInternalNode]);
+
+  useEffect(() => { const timeout = setTimeout(() => { computeContainedEdges(); }, 100); return () => clearTimeout(timeout); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { if (!initialCalcDone.current) return; computeContainedEdges(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allNodes]);
 
   // Sincronizar guard con el nodo de React Flow
   useEffect(() => {
@@ -19,13 +74,22 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
         if (node.id === id) {
           return {
             ...node,
-            data: { ...node.data, guard },
+            data: { ...node.data, label: guard, guard },
           };
         }
         return node;
       })
     );
   }, [guard, id, setNodes]);
+
+  // Sincronizar edges contenidos por separado
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId ? { ...n, data: { ...n.data, edges: containedEdgeIds, operands: operandAssignments } } : n
+    ));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containedEdgeIds, operandAssignments]);
 
   const onGuardDoubleClick = useCallback(() => {
     setIsEditingGuard(true);
@@ -49,15 +113,50 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
     setIsZoomOnScrollEnabled(true);
   }, [setIsZoomOnScrollEnabled]);
 
+  // Handler para abrir el menú contextual
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenuEvent(e.nativeEvent);
+  }, []);
+
+  // Handler para cerrar el menú contextual
+  const closeContextMenu = useCallback(() => {
+    setContextMenuEvent(null);
+  }, []);
+
+  // Handler para eliminar el nodo
+  const deleteNode = useCallback(() => {
+    if (!nodeId) return;
+    
+    // Eliminar el nodo
+    setNodes(prev => prev.filter(node => node.id !== nodeId));
+    
+    // Eliminar todas las conexiones (edges) asociadas al nodo
+    setEdges(prev => prev.filter(edge => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+    
+    closeContextMenu();
+  }, [nodeId, setNodes, setEdges, closeContextMenu]);
+
   return (
     <div
-      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full"
+      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full relative"
       style={{ minWidth: "300px", minHeight: "100px", pointerEvents: selected ? 'auto' : 'none' }}
+      onContextMenu={handleContextMenu}
     >
+      {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{ pointerEvents: 'auto' }}
+        onContextMenu={handleContextMenu}
+      />
+      
       <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
 
       {/* Pentágono con la palabra clave "opt" */}
-      <div className="flex items-start">
+      <div className="flex items-start relative z-10">
         <div
           className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1"
           style={{
@@ -70,7 +169,7 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
         </div>
 
         {/* Guard del fragmento opcional */}
-        <div className="flex-1 cursor-text" onDoubleClick={onGuardDoubleClick}>
+        <div className="flex-1 cursor-text relative z-10" onDoubleClick={onGuardDoubleClick}>
           <textarea
             ref={textareaRef}
             placeholder="[condición]"
@@ -87,9 +186,32 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
       </div>
 
       {/* Área del operando (sin separadores) */}
-      <div className="w-full h-[calc(100%-25px)] relative">
+      <div className="w-full h-[calc(100%-25px)] relative z-10">
         {/* Espacio para contenido del fragmento */}
       </div>
+
+      {/* Menú contextual */}
+      {contextMenuEvent && (
+        <ContextMenuPortal event={contextMenuEvent} onClose={closeContextMenu}>
+          <div
+            className="bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[180px] overflow-hidden"
+            onContextMenu={(e) => e.preventDefault()}
+          >
+            <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-neutral-700">
+              Fragmento Opt
+            </div>
+            <div className="flex flex-col">
+              <div
+                onClick={deleteNode}
+                className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-red-100 dark:hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <DeleteIcon />
+                Eliminar
+              </div>
+            </div>
+          </div>
+        </ContextMenuPortal>
+      )}
     </div>
   );
 };

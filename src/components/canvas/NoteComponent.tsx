@@ -15,7 +15,7 @@ export default function NoteComponent({data} : DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
-    const { setIsZoomOnScrollEnabled } = useCanvas();
+    const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
 
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -33,7 +33,7 @@ export default function NoteComponent({data} : DataProps) {
     // Sincronizamos handles con node.data cuando cambien
     useEffect(() => {
         if (!nodeId) return;
-        setNodes(nodes => nodes.map(n =>
+        setNodes((nodes: any) => nodes.map((n: any) =>
             n.id === nodeId
                 ? { ...n, data: { ...n.data, handles, label: value } }
                 : n
@@ -72,18 +72,37 @@ export default function NoteComponent({data} : DataProps) {
         setValue(v => v.trim());
     }, [setIsZoomOnScrollEnabled]);
 
+    // Handler para abrir el menú contextual
+    const handleContextMenu = useCallback((e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu({
+            x: e.clientX,
+            y: e.clientY,
+            nodeId: nodeId ?? "",
+        });
+    }, [openContextMenu, nodeId]);
+
 
     return (
         <div
             onDoubleClick={handleDoubleClick}
             onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
-            className="bg-transparent p-4"
+            className="bg-transparent p-4 relative"
             onMouseMove={magneticHandle}
+            onContextMenu={handleContextMenu}
         >
+            {/* Overlay para capturar clic derecho */}
+            <div 
+                className="absolute inset-0 z-0"
+                style={{ pointerEvents: 'auto' }}
+                onContextMenu={handleContextMenu}
+            />
+            
             <div
                 ref={nodeRef}
-                className="node-note relative min-w-[200px] p-2 text-[12px] border border-neutral-800 bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:border-white dark:hover:bg-zinc-600 transition-colors duration-150"
+                className="node-note relative min-w-[200px] p-2 text-[12px] border border-neutral-800 bg-gray-100 hover:bg-gray-200 dark:bg-neutral-800 dark:border-white dark:hover:bg-zinc-600 transition-colors duration-150 z-10"
             >
                 {handles.map((handle, i) => (
                     <BaseHandle

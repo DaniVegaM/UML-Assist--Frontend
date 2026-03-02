@@ -10,19 +10,21 @@ import { useCanvas } from "../../hooks/useCanvas";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
-import DataNodeContextMenu from "../../components/canvas/activities-diagram/contextMenu/DataNodeContextMenu";
 import type { Diagram } from "../../types/diagramsModel";
 import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
 import { notify } from "../../components/ui/NotificationComponent";
+import NodeContextMenu from "../../components/canvas/NodeContextMenu";
+import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
+import { createPrefixedNodeId } from "../../utils/idGenerator";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
-    const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
+    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu, closeEdgeContextMenu } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
@@ -46,6 +48,14 @@ function DiagramContent() {
             [validateActivityConnection]
         );
 
+
+    const onEdgeContextMenu = useCallback(
+        (event: React.MouseEvent, edge: Edge) => {
+            event.preventDefault();
+            openEdgeContextMenu({ x: event.clientX, y: event.clientY, edgeId: edge.id });
+        },
+        [openEdgeContextMenu],
+    );
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -83,16 +93,24 @@ function DiagramContent() {
     );
 
     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
-        const intersections = getIntersectingNodes(node).map((n) => n.id);
-        // console.log('Nodos que intersectan con el nodo arrastrado:', intersections);
+        const intersections = getIntersectingNodes(node);
+        const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
 
-        if (node.type !== 'activity' && intersections.some(nodeId => nodeId.startsWith('activity'))) {
-            node.parentId = intersections.find(nodeId => nodeId.startsWith('activity')) || undefined;
-            node.extent = 'parent';
+        if (node.type !== 'activity' && parentNode) {
+            // Solo asignar parentId si no lo tenía ya (evitar recalcular en cada drag)
+            if (node.parentId !== parentNode.id) {
+                node.parentId = parentNode.id;
+                node.extent = 'parent';
+                // Convertir posición absoluta a relativa al padre
+                node.position = {
+                    x: node.position.x - parentNode.position.x,
+                    y: node.position.y - parentNode.position.y,
+                };
+            }
         }
         setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
-
     }, []);
+
 
     const onConnect = useCallback(
         (params: Connection) => {
@@ -102,6 +120,7 @@ function DiagramContent() {
 
             let edgeType = "labeledEdge";
             let defaultLabel = '';
+
 
             // Definir el tipo de edge según el tipo de nodo conectado
             if (
@@ -146,7 +165,7 @@ function DiagramContent() {
 
             const newEdge = {
                 ...params,
-                id: `edge-${params.source}-${params.target}`,
+                id: createPrefixedNodeId('edge'),
                 type: edgeType,
                 label: defaultLabel,
             };
@@ -192,10 +211,6 @@ function DiagramContent() {
         );
     }, [isDarkMode]);
 
-    const handleConnectStart = useCallback(() => {
-        setIsTryingToConnect(true);
-    }, [setIsTryingToConnect]);
-
     const handleConnectEnd = useCallback(() => {
         setIsTryingToConnect(false);
 
@@ -219,6 +234,7 @@ function DiagramContent() {
             <section className="h-full w-full relative">
                 
                 <ReactFlow
+                    deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
                     preventScrolling={true}
                     colorMode={isDarkMode ? 'dark' : 'light'}
@@ -253,9 +269,9 @@ function DiagramContent() {
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
-                    onConnectStart={handleConnectStart}
                     onConnectEnd={handleConnectEnd}
-
+                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onEdgeContextMenu={onEdgeContextMenu}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
@@ -264,7 +280,8 @@ function DiagramContent() {
                         aria-label="Controles de lienzo"
                         position="bottom-right"
                     />
-                    <DataNodeContextMenu />
+                    <NodeContextMenu />
+                    <EdgeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
                 <AIChatBar type="actividades"/>

@@ -32,6 +32,7 @@ export default function LifeLine({ data }: DataProps) {
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
     const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
+    const [showNodeContextMenu, setShowNodeContextMenu] = useState(false);
     const [destroyHandleIndex, setDestroyHandleIndex] = useState<number | null>(data?.destroyHandleIndex ?? null);
 
     // Callback ref para actualizar handleRef cuando cambie el último handle
@@ -151,12 +152,23 @@ export default function LifeLine({ data }: DataProps) {
         setContextMenuEvent(event.nativeEvent);
         setSelectedHandle(handleId);
         setSelectedHandleIndex(handleIndex);
+        setShowNodeContextMenu(false);
+    };
+
+    const handleNodeContextMenu = (event: React.MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setContextMenuEvent(event.nativeEvent);
+        setSelectedHandle(null);
+        setSelectedHandleIndex(null);
+        setShowNodeContextMenu(true);
     };
 
     const closeContextMenu = () => {
         setContextMenuEvent(null);
         setSelectedHandle(null);
         setSelectedHandleIndex(null);
+        setShowNodeContextMenu(false);
     };
 
     // Callback para cuando se selecciona el evento de destrucción
@@ -204,6 +216,7 @@ export default function LifeLine({ data }: DataProps) {
         > {/*LIFELINE COMPLETA*/}
             <div
                 onDoubleClick={handleDoubleClick}
+                onContextMenu={handleNodeContextMenu}
                 className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
 
             > {/*HEAD DE LA LIFELINE*/}
@@ -288,6 +301,7 @@ export default function LifeLine({ data }: DataProps) {
                         handleIndex={selectedHandleIndex}
                         lifeLineId={nodeId!}
                         onDestroyEvent={handleDestroyEvent}
+                        showDeleteLifeLine={showNodeContextMenu}
                     />
                 </ContextMenuPortal>
             )}

@@ -1,7 +1,9 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { NodeResizer, useReactFlow, useNodeId, type NodeProps, type Node } from "@xyflow/react";
+import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import DeleteIcon from "./contextMenus/DeleteIcon";
 import type { ParFragmentData } from "../../../types/canvas";
 
 const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) => {
@@ -14,7 +16,66 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { getZoom, setNodes } = useReactFlow();
+  const { setNodes, setEdges } = useSequenceDiagram();
+  const { getZoom, getNodesBounds, getInternalNode } = useReactFlow();
+  const { nodes: allNodes, edges } = useSequenceDiagram();
+  const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
+  const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
+  const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
+  const initialCalcDone = useRef(false);
+
+  const computeContainedEdges = useCallback(() => {
+    if (!nodeId) return;
+    const fragmentBounds = getNodesBounds([nodeId]);
+    if (!fragmentBounds || fragmentBounds.width === 0) return;
+    const currentBounds = { x: Math.round(fragmentBounds.x), y: Math.round(fragmentBounds.y), w: Math.round(fragmentBounds.width), h: Math.round(fragmentBounds.height) };
+    if (initialCalcDone.current) {
+      const prev = lastFragmentBoundsRef.current;
+      if (prev && prev.x === currentBounds.x && prev.y === currentBounds.y && prev.w === currentBounds.w && prev.h === currentBounds.h) return;
+    }
+    lastFragmentBoundsRef.current = currentBounds;
+    initialCalcDone.current = true;
+    const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
+    const HEADER_HEIGHT = 25;
+    const containerTop = fragmentBounds.y + HEADER_HEIGHT;
+    const absSeparatorYs = separatorPositions.map(pos => containerTop + pos).sort((a, b) => a - b);
+    const insideEdgeIds: string[] = [];
+    const newOperandAssignments: [string, string][] = [];
+    for (const edge of edges) {
+      if (edge.type !== 'messageEdge' && edge.type !== 'selfMessageEdge') continue;
+      const sourceInternal = getInternalNode(edge.source);
+      const targetInternal = getInternalNode(edge.target);
+      if (!sourceInternal || !targetInternal) continue;
+      const sourceHandle = sourceInternal.internals.handleBounds?.source?.find(h => h.id === edge.sourceHandle) ?? sourceInternal.internals.handleBounds?.target?.find(h => h.id === edge.sourceHandle);
+      const targetHandle = targetInternal.internals.handleBounds?.target?.find(h => h.id === edge.targetHandle) ?? targetInternal.internals.handleBounds?.source?.find(h => h.id === edge.targetHandle);
+      if (!sourceHandle && !targetHandle) continue;
+      const sourceAbsX = sourceInternal.internals.positionAbsolute.x + (sourceHandle?.x ?? 0), sourceAbsY = sourceInternal.internals.positionAbsolute.y + (sourceHandle?.y ?? 0);
+      const targetAbsX = targetInternal.internals.positionAbsolute.x + (targetHandle?.x ?? 0), targetAbsY = targetInternal.internals.positionAbsolute.y + (targetHandle?.y ?? 0);
+      if (sourceAbsX >= fragLeft && sourceAbsX <= fragRight && sourceAbsY >= fragTop && sourceAbsY <= fragBottom && targetAbsX >= fragLeft && targetAbsX <= fragRight && targetAbsY >= fragTop && targetAbsY <= fragBottom) {
+        insideEdgeIds.push(edge.id);
+        const avgY = (sourceAbsY + targetAbsY) / 2;
+        let operandIndex = 0;
+        for (let i = 0; i < absSeparatorYs.length; i++) { if (avgY > absSeparatorYs[i]) operandIndex = i + 1; }
+        newOperandAssignments.push([edge.id, `operand_${operandIndex + 1}`]);
+      }
+    }
+    setContainedEdgeIds(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(insideEdgeIds); return prevStr === newStr ? prev : insideEdgeIds; });
+    setOperandAssignments(prev => { const prevStr = JSON.stringify(prev); const newStr = JSON.stringify(newOperandAssignments); return prevStr === newStr ? prev : newOperandAssignments; });
+  }, [nodeId, edges, getNodesBounds, getInternalNode, separatorPositions]);
+
+  useEffect(() => { const timeout = setTimeout(() => { computeContainedEdges(); }, 100); return () => clearTimeout(timeout); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { if (!initialCalcDone.current) return; computeContainedEdges(); // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allNodes]);
+
+  // Recalcular operandos cuando cambien separadores
+  useEffect(() => {
+    if (!initialCalcDone.current) return;
+    lastFragmentBoundsRef.current = null;
+    computeContainedEdges();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [separatorPositions]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -51,6 +112,21 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
     });
     closeContextMenu();
   }, [closeContextMenu]);
+
+  // Handler para eliminar el nodo
+  const deleteNode = useCallback(() => {
+    if (!nodeId) return;
+    
+    // Eliminar el nodo
+    setNodes(prev => prev.filter(node => node.id !== nodeId));
+    
+    // Eliminar todas las conexiones (edges) asociadas al nodo
+    setEdges(prev => prev.filter(edge => 
+      edge.source !== nodeId && edge.target !== nodeId
+    ));
+    
+    closeContextMenu();
+  }, [nodeId, setNodes, setEdges, closeContextMenu]);
 
   const handleMouseDown = useCallback((index: number) => (e: React.MouseEvent) => {
     if (e.button !== 0) return;
@@ -97,6 +173,15 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
         : n
     ));
   }, [nodeId, separatorPositions, setNodes]);
+
+  // Sincronizar edges contenidos por separado
+  useEffect(() => {
+    if (!nodeId) return;
+    setNodes(nodes => nodes.map(n =>
+      n.id === nodeId ? { ...n, data: { ...n.data, label: '', edges: containedEdgeIds, operands: operandAssignments } } : n
+    ));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [containedEdgeIds, operandAssignments]);
 
   const previousHeightRef = useRef<number | null>(null);
 
@@ -157,10 +242,17 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
 
   return (
     <div
-      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150"
+      className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150 relative"
       style={{ minWidth: '350px', minHeight: '150px', zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
       onContextMenu={handleContextMenu}
     >
+      {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
+      <div 
+        className="absolute inset-0 z-0"
+        style={{ pointerEvents: 'auto' }}
+        onContextMenu={handleContextMenu}
+      />
+      
       <NodeResizer
         minWidth={350}
         minHeight={150}
@@ -168,7 +260,7 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
         isVisible={selected}
       />
       <div
-        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1"
+        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10"
         style={{
           clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
           width: '50px',
@@ -179,9 +271,9 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
       </div>
 
       {/* Espacio vacío donde iría la guarda (par no requiere guarda) */}
-      <div />
+      <div className="relative z-10" />
 
-      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative">
+      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative z-10">
 
         {/* Separadores */}
         {separators.map((_, index) => (
@@ -246,6 +338,14 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
                     ({separators.length})
                   </span>
                 )}
+              </div>
+              <div className="border-t border-gray-200 dark:border-neutral-700"></div>
+              <div
+                onClick={deleteNode}
+                className="px-4 py-2 cursor-pointer text-sm dark:text-white hover:bg-red-100 dark:hover:bg-red-700 transition-colors flex items-center gap-2"
+              >
+                <DeleteIcon />
+                Eliminar
               </div>
             </div>
           </div>
