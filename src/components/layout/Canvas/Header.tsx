@@ -1,4 +1,3 @@
-
 import { Link } from 'react-router'
 import { useTheme } from '../../../hooks/useTheme';
 import type { HeaderProps } from '../../../types/canvas';
@@ -7,6 +6,7 @@ import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import type { Diagram } from '../../../types/diagramsModel';
 import { toPng } from 'html-to-image';
 import './Header.css';
+
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();

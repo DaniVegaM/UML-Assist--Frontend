@@ -7,7 +7,7 @@ import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
 import type { Diagram } from "../../types/diagramsModel";
@@ -15,6 +15,7 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
@@ -27,7 +28,26 @@ function DiagramContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
-    const { isValidActivityConnection } = useLocalValidations(nodes, edges);
+    const { validateActivityConnection } = useLocalValidations(nodes, edges);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+        const isValidActivityConnectionWithFeedback = useCallback(
+            (conn: Connection) => {
+                const result = validateActivityConnection(conn);
+
+                if (!result.ok) {
+                lastInvalidAttemptRef.current = {
+                    ts: Date.now(),
+                    message: result.reason ?? "Esta relación no cumple las reglas locales del diagrama.",
+                    type: result.severity ?? "info",
+                };
+                }
+
+                return result.ok;
+            },
+            [validateActivityConnection]
+        );
+
 
     const onEdgeContextMenu = useCallback(
         (event: React.MouseEvent, edge: Edge) => {
@@ -94,10 +114,11 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
+
             const sourceNode = nodes.find((node) => node.id === params.source);
             const targetNode = nodes.find((node) => node.id === params.target);
 
-            let edgeType = {};
+            let edgeType = "labeledEdge";
             let defaultLabel = '';
 
 
@@ -190,6 +211,16 @@ function DiagramContent() {
         );
     }, [isDarkMode]);
 
+    const handleConnectEnd = useCallback(() => {
+        setIsTryingToConnect(false);
+
+        const info = lastInvalidAttemptRef.current;
+        if (info && Date.now() - info.ts < 700) {
+                notify(info.type, "Conexión inválida", info.message);
+        }
+        lastInvalidAttemptRef.current = null;
+    }, [setIsTryingToConnect]);
+
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header
@@ -201,6 +232,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative">
+                
                 <ReactFlow
                     deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
@@ -224,7 +256,7 @@ function DiagramContent() {
                         },
                         type: 'labeledEdge',
                     }}
-                    isValidConnection={isValidActivityConnection}
+                    isValidConnection={isValidActivityConnectionWithFeedback}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     connectionLineComponent={SnapConnectionLine}
@@ -237,8 +269,8 @@ function DiagramContent() {
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
+                    onConnectEnd={handleConnectEnd}
                     onConnectStart={() => setIsTryingToConnect(true)}
-                    onConnectEnd={() => setIsTryingToConnect(false)}
                     onEdgeContextMenu={onEdgeContextMenu}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -262,8 +294,10 @@ export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                <DiagramContent />
+                    <DiagramContent />
             </CanvasProvider>
         </ReactFlowProvider>
+    
     );
 }
+
