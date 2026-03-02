@@ -267,7 +267,8 @@ export function MessageEdge({
             d={edgePath}
             fill="none"
             stroke="transparent"
-            strokeWidth={20}
+            //opacity={0.3}
+            strokeWidth={50}
             onDoubleClick={(e) => {
             e.stopPropagation();
             startEditing();
