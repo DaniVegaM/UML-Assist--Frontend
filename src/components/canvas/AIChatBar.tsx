@@ -50,8 +50,8 @@ ${nodes
 
 messages[${edges.length}]{id, type, source, target, label, yPos, fragmentId, operand}
 ${edges
-    .map(e => ({ ...e, yPos: e.data?.y || 0 }))
-    .sort((a, b) => a.yPos - b.yPos)
+    .map(e => ({ ...e, yPos: (e.data?.y || 0) as number }))
+    .sort((a, b) => (a.yPos as number) - (b.yPos as number))
     .map(e => {
         let type = e.data?.edgeType || 'async';
 
@@ -68,7 +68,7 @@ ${edges
         const fragmentId = fragmentNode?.id || '';
         const operandsArr = fragmentNode?.data?.operands as [string, string][] | undefined;
         const operand = operandsArr?.find(([id]) => id === e.id)?.[1] || '';
-        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos)}, ${fragmentId}, ${operand}`;
+        return `${e.id}, ${type}, ${source}, ${target}, ${label}, ${Math.round(e.yPos as number)}, ${fragmentId}, ${operand}`;
     }).join('\n')}`}
         `;
 

@@ -9,7 +9,6 @@ export function CreateLifeLineEdge({
     sourceX,
     sourceY,
     targetX,
-    targetY,
     style,
     markerEnd,
 }: EdgeProps) {

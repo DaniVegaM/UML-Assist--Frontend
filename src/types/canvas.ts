@@ -14,27 +14,37 @@ export interface DraggableNodeProps {
 }
 
 export interface ElementsBarProps {
-    nodes: {
+    nodes: ({
         className?: string;
         svg: React.ReactNode;
         nodeType: string;
         label: string;
         description?: string;
-        separator?: string;
         grouped?: boolean;
-    }[];
+    } | {
+        separator: string;
+        svg?: React.ReactNode;
+        nodeType?: string;
+        label?: string;
+        grouped?: boolean;
+    })[];
     oneColumn?: boolean;
 }
 
 export interface BaseHandleProps {
     id: number | string;
     ref?: React.Ref<HTMLDivElement | null>;
+    type?: 'source' | 'target';
     position?: Position;
     left?: number;
     top?: number;
     className?: string;
     showHandle?: boolean;
     onContextMenu?: (e: React.MouseEvent<Element, MouseEvent>) => void;
+    maxSourceConnections?: number;
+    maxTargetConnections?: number;
+    showSourceHandleOptions?: boolean;
+    showTargetHandleOptions?: boolean;
 }
 export interface ActivityHandleProps {
     id: string;

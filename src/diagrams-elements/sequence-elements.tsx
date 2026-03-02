@@ -79,9 +79,6 @@ export const SEQUENCE_NODES = [
     },
     {
         separator: 'Otros',
-        svg: '',
-        nodeType: '',
-        label: ''
     },
     {
         svg: (

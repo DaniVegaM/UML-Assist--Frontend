@@ -4,7 +4,6 @@ import { useTheme } from '../../../hooks/useTheme';
 import type { HeaderProps } from '../../../types/canvas';
 import { useEffect, useState } from 'react';
 import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
-import type { Diagram } from '../../../types/diagramsModel';
 import { toPng } from 'html-to-image';
 import './Header.css';
 

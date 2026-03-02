@@ -10,8 +10,6 @@ export default function Activity({ data }: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
-    const [sourceHandlesIds, setSourceHandlesIds] = useState<string[] | null>(null);
-    const [targetHandlesIds, setTargetHandlesIds] = useState<string[] | null>(null);
     const updateNodeInternals = useUpdateNodeInternals();
 
     const { setNodes, getNode, setEdges } = useReactFlow();
@@ -93,16 +91,6 @@ export default function Activity({ data }: DataProps) {
             nodeId: nodeId ?? "",
         });
     }, [openContextMenu, nodeId]);
-
-    const onClickSourceBtn = () => {
-        setSourceHandlesIds((prev) => {
-            if (prev && prev?.length > 0) {
-                return [...prev, 'source_' + prev.length];
-            } else {
-                return ['source_0'];
-            }
-        });
-    };
                             
     const addSourceBox = () => {
         setSourceBoxes(prev => {
