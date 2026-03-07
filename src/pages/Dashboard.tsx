@@ -274,7 +274,8 @@ export default function Dashboard() {
                                         <div className="w-full h-40 rounded-xl overflow-hidden mb-4 bg-zinc-100 dark:bg-zinc-700 flex items-center justify-center">
                                             {diagram.preview_image ? (
                                                 <img
-                                                    src={diagram.preview_image}
+                                                    src={diagram.preview_image ? new URL(diagram.preview_image).pathname : '/ruta-a-imagen-por-defecto.png'}
+                                                    //src={diagram.preview_image}
                                                     alt="Preview"
                                                     className="w-full h-full object-cover"
                                                 />
