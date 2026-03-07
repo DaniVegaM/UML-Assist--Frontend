@@ -28,8 +28,8 @@ jobs:
           ECR_REPOSITORY: uml-assist-frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
