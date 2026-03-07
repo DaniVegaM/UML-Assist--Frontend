@@ -1,59 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-    BaseEdge,
-    EdgeLabelRenderer,
-    getStraightPath,
-    useReactFlow,
-    type EdgeProps,
-} from '@xyflow/react';
-
+import { useSequenceMessageValidation } from "../../hooks/useSequenceMessageValidation";
+import { BaseEdge, EdgeLabelRenderer, getStraightPath, useReactFlow, type Edge, type EdgeProps} from '@xyflow/react';
 import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
 import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
 
-const SEQUENCE_MESSAGE_REGEX =
-    /^\s*(?:(?<variable>[A-Za-z_]\w*)\s*=\s*)?(?<name>[A-Za-z_]\w*)(?:\s*\((?<params>[^)]*)\))?\s*(?::\s*(?<return>[A-Za-z_]\w*))?\s*$/;
+type MessageEdgeData = Record<string, unknown> & {
+    mustFillLabel?: boolean;
+    labelError?: string | null;
+    y?: number;
+};
 
-function parseMessageParts(value: string) {
-    const trimmed = value.trim();
-
-    const draft = trimmed.match(
-        /^\s*(?:[A-Za-z_]\w*\s*=\s*)?(?<name>[A-Za-z_]\w*)/
-    );
-    const draftName = (draft?.groups as any)?.name || '';
-
-    const hasEquals = /=/.test(trimmed);
-    const hasOpenParen = /\(/.test(trimmed);
-    const hasCloseParen = /\)/.test(trimmed);
-    const hasColon = /:/.test(trimmed);
-
-    const match = trimmed.match(SEQUENCE_MESSAGE_REGEX);
-    const g: any = match?.groups || {};
-
-    const paramsText = (g.params ?? '').trim();
-    const paramsOk =
-        paramsText === '' ||
-        paramsText.split(',').every((p) => /^[A-Za-z_]\w*$/.test(p.trim()));
-
-    return {
-        hasEquals,
-        hasOpenParen,
-        hasCloseParen,
-        hasColon,
-
-        variable: g.variable || '',
-        name: g.name || '',
-        params: paramsText,
-        returnType: g.return || '',
-
-        variableOk: !!g.variable,
-        nameOk: !!g.name,
-        paramsOk,
-        returnOk: !!g.return,
-        matchOk: !!match,
-        draftName,
-        draftNameOk: !!draftName,
-    };
-}
+type MessageEdgeType = Edge<MessageEdgeData>;
 
 const MAX_MESSAGE_LENGTH = 50;
 
@@ -71,16 +28,15 @@ export function MessageEdge({
     labelBgPadding,
     labelBgBorderRadius,
     data,
-    }: EdgeProps) {
-    const { setEdges } = useReactFlow();
+    }: EdgeProps<MessageEdgeType>) {
 
+    const { setEdges } = useReactFlow();
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
+    const { parts, errorMessage, validateLive, isValidFinal } = useSequenceMessageValidation(editingLabel);
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(
         null
     );
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const SNAP_THRESHOLD = 25; //Umbral sobre eje Y para guias horizontales
 
     const deltaY = targetY - sourceY;
@@ -96,55 +52,27 @@ export function MessageEdge({
         targetX : targetX -10,
         targetY: targetY,
     });
-  
+
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const isEmpty = editingLabel.trim().length === 0;
-    const parts = parseMessageParts(editingLabel);
-
-    const validateLive = (rawValue: string) => {
-        const trimmed = rawValue.trim();
-
-        if (!trimmed) {
-        setErrorMessage(null);
-        return false;
-        }
-
-        const p = parseMessageParts(rawValue);
-
-        const looksFinished =
-        p.nameOk && (p.hasCloseParen || p.hasColon || (!p.hasOpenParen && !p.hasCloseParen));
-
-        if (looksFinished && !SEQUENCE_MESSAGE_REGEX.test(trimmed)) {
-        setErrorMessage('Mensaje inválido. Revisa el formato.');
-        return false;
-        }
-
-        setErrorMessage(null);
-        return SEQUENCE_MESSAGE_REGEX.test(trimmed);
-    };
 
     useEffect(() => {
-        if (!isEditing && (!label || label === '') && (data as any)?.mustFillLabel) {
-        setEditingLabel('');
-        setIsEditing(true);
-        validateLive('');
+        if (!isEditing && (!label || label === '') && data?.mustFillLabel) {
+            setEditingLabel('');
+            setIsEditing(true);
+            validateLive('');
 
-        setEdges((currentEdges) =>
-            currentEdges.map((e) =>
-            e.id === id
-                ? { ...e, data: { ...(e.data || {}), mustFillLabel: false } }
-                : e
-            )
-        );
+            setEdges((currentEdges) =>
+                currentEdges.map((e) =>
+                e.id === id
+                    ? { ...e, data: { ...(e.data || {}), mustFillLabel: false } }
+                    : e
+                )
+            );
         }
-    }, [data, label, isEditing, id, setEdges]);
+    }, [data, label, isEditing, id, setEdges, validateLive, sourceY]);
 
-    const isValidFinal = (raw: string) => {
-        const trimmed = raw.trim();
-        if (!trimmed) return false;
-        return SEQUENCE_MESSAGE_REGEX.test(trimmed) && parseMessageParts(trimmed).paramsOk;
-    };
 
     const startEditing = () => {
         if (isEditing) return;
@@ -182,7 +110,6 @@ export function MessageEdge({
                 : e
             )
         );
-        setErrorMessage(null);
         setIsEditing(false);
         return;
         }
@@ -201,7 +128,6 @@ export function MessageEdge({
                 : e
             )
         );
-        setErrorMessage(null);
         setIsEditing(false);
         return;
         }
@@ -221,8 +147,6 @@ export function MessageEdge({
             : e
         )
         );
-
-        setErrorMessage(null);
         setIsEditing(false);
     };
 
@@ -230,16 +154,15 @@ export function MessageEdge({
         if (evt.key === 'Enter') {
         finishEditing();
         } else if (evt.key === 'Escape') {
-        const isMandatory = (data as any)?.mustFillLabel && (!label || label === '');
-        if (!isMandatory) {
-            setEdges((eds) =>
-            eds.map((e) =>
-                e.id === id ? { ...e, data: { ...(e.data || {}), labelError: null } } : e
-            )
-            );
-            setErrorMessage(null);
-            setIsEditing(false);
-        }
+            const isMandatory = data?.mustFillLabel && (!label || label === '');
+            if (!isMandatory) {
+                setEdges((eds) =>
+                    eds.map((e) =>
+                        e.id === id ? { ...e, data: { ...(e.data || {}), labelError: null } } : e
+                    )
+                );
+                setIsEditing(false);
+            }
         }
     };
 
@@ -413,7 +336,7 @@ export function MessageEdge({
                     </div>
                 )}
 
-                {(data as any)?.labelError && (
+                {data?.labelError && (
                     <div
                     className="text-[11px] text-red-500"
                     style={{
@@ -425,7 +348,7 @@ export function MessageEdge({
                         pointerEvents: 'none',
                     }}
                     >
-                    {(data as any).labelError}
+                    {data.labelError}
                     </div>
                 )}
                 </div>

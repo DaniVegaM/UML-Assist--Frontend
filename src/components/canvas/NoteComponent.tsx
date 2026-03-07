@@ -7,14 +7,25 @@ import "./styles/nodeStyles.css";
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import type { DataProps } from "../../types/canvas";
 
+type NoteNodeData = {
+    label?: string;
+    handles?: HandleData[];
+    mustFillText?: boolean;
+    labelError?: string | null;
+};
+
 export default function NoteComponent({data} : DataProps) {
 
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
+    const noteData = data as NoteNodeData;
+
+    const mustFillText = noteData.mustFillText ?? false;
+    const labelError = noteData.labelError ?? null;
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState(data.label || "");
+    const [value, setValue] = useState(noteData.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
 
     const [showHandles, setShowHandles] = useState(false);
@@ -23,7 +34,7 @@ export default function NoteComponent({data} : DataProps) {
     const { handles, magneticHandle } = useHandle({ 
         handleRef, 
         nodeRef,
-        initialHandles: data?.handles as HandleData[] | undefined
+        initialHandles: noteData.handles
     });
 
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {
@@ -39,6 +50,29 @@ export default function NoteComponent({data} : DataProps) {
                 : n
         ));
     }, [handles, nodeId, setNodes, value]);
+
+    useEffect(() => {
+        if (!nodeId) return;
+        const current = String(noteData.label ?? value ?? "").trim();
+
+        if (!isEditing && mustFillText && current === "") {
+            setNodes((nds) =>
+                nds.map((n) =>
+                    n.id === nodeId
+                        ? { ...n, data: { ...n.data, mustFillText: false } }
+                        : n
+                )
+            );
+
+            setIsEditing(true);
+            setIsZoomOnScrollEnabled(false);
+
+            setTimeout(() => {
+                textareaRef.current?.focus();
+                textareaRef.current?.select();
+            }, 0);
+        }
+    }, [nodeId, mustFillText, noteData.label, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -57,6 +91,13 @@ export default function NoteComponent({data} : DataProps) {
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            if (nodeId) {
+                setNodes((nds) =>
+                    nds.map((n) =>
+                        n.id === nodeId ? { ...n, data: { ...n.data, labelError: null } } : n
+                    )
+                );
+            }
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
@@ -64,13 +105,34 @@ export default function NoteComponent({data} : DataProps) {
                 textareaRef.current?.select();
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
     const handleBlur = useCallback(() => {
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
-        setValue(v => v.trim());
-    }, [setIsZoomOnScrollEnabled]);
+
+        setValue((v) => {
+            const trimmed = v.trim();
+
+            if (nodeId) {
+                setNodes((nds) =>
+                    nds.map((n) =>
+                        n.id === nodeId
+                            ? {
+                                ...n,
+                                data: {
+                                    ...n.data,
+                                    label: trimmed,
+                                    labelError: trimmed ? null : "No puede estar vacío.",
+                                },
+                            }
+                        : n
+                    )
+                );
+            }
+            return trimmed;
+        });
+    }, [nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
 
     return (
@@ -112,14 +174,19 @@ export default function NoteComponent({data} : DataProps) {
                     className={`node-textarea nowheel ${isEditing
                         ? "node-textarea-editing"
                         : "node-textarea-readonly"
-                        }`}
+                        } ${!isEditing && labelError ? "node-textarea-error" : ""}`}
                 />
+
+                {!isEditing && labelError && (
+                    <p className="node-error-text">{labelError}</p>
+                )}
 
                 {isEditing && (
                     <p className="char-counter char-counter-right">
                         {`${value.length}/${TEXT_AREA_MAX_LEN}`}
                     </p>
                 )}
+                
             </div>
         </div>
     );

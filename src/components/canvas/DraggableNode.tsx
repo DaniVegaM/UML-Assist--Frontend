@@ -6,12 +6,12 @@ import type { Node } from "@xyflow/react";
 import { createPrefixedNodeId, type NodeTypeIdKey } from "../../utils/idGenerator";
 
 
-export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
+function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {    
     const draggableRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
-   const getId = () => createPrefixedNodeId(nodeType as NodeTypeIdKey);
+    const getId = () => createPrefixedNodeId(nodeType as NodeTypeIdKey);
 
 
     useDraggable(draggableRef as React.RefObject<HTMLElement>, {
@@ -54,17 +54,133 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                 if (nodeType === 'exceptionHandling') {
                     incomingEdge = 'exceptionHandlingEdge';
                 }
-
+                
                 const newNodeId = getId();
+                const isAlt = nodeType === "altFragment";
+                const isLoop = nodeType === "loopFragment";
+                const isNote = nodeType === "note";
+                const isSimpleAction = nodeType === "simpleAction";
+                const isCallOperation = nodeType === "callOperation";
+                const isObjectNode = nodeType === "objectNode";
+                const isDataNode = nodeType === "dataNode";
+                const isAcceptEvent = nodeType === "acceptEvent";
+                const isAcceptTimeEvent = nodeType === "acceptTimeEvent";
+                const isSendSignal = nodeType === "sendSignal";
+                const isCallBehavior = nodeType === "callBehavior";
+                const isExceptionHandling = nodeType === "exceptionHandling";
+                const isActivity = nodeType === "activity";
+                const isConnectorNode = nodeType === "connectorNode";
+
+                const needsGuard = ['optFragment', 'loopFragment', 'breakFragment'].includes(nodeType);
 
                 const newNode = {
                     id: newNodeId,
                     type: nodeType,
                     position: flowPosition,
+                    selected: true, 
                     data: {
                         label: "",
-                        incomingEdge: incomingEdge,
-                        outgoingEdge: outgoingEdge
+                        incomingEdge,
+                        outgoingEdge,
+
+                        ...(needsGuard
+                            ? {
+                                guard: "",
+                                mustFillGuard: true,
+                                guardError: null,
+                            }
+                        : {}),
+
+                        ...(isLoop
+                            ? {
+                                minIterations: "0",
+                                maxIterations: "*",
+                            }
+                        : {}),
+
+                        ...(isAlt
+                            ? {
+                                firstOperand: "",
+                                mustFillFirstOperand: true,
+                                firstOperandError: null,
+                                separatorValues: [],
+                                separatorPositions: [],
+                                separatorErrors: [],
+                            }
+                        : {}),
+                        ...(isNote
+                            ? {
+                                // label ya existe arriba y es lo que usa NoteComponent
+                                mustFillText: true,
+                                labelError: null,
+                                }
+                        : {}),
+                        ...(isSimpleAction
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                                }
+                        : {}),
+                        ...(isCallOperation
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                            }
+                        : {}),
+                        ...(isObjectNode
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                            }
+                        : {}),
+                        ...(isDataNode
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                            }
+                        : {}),
+                        ...(isAcceptEvent
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                            }
+                        : {}),
+                        ...(isAcceptTimeEvent
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                            }
+                        : {}),
+                        ...(isSendSignal
+                        ? {
+                            mustFillLabel: true,
+                            labelError: null,
+                        }
+                        : {}),
+                        ...(isCallBehavior
+                        ? {
+                            mustFillLabel: true,
+                            labelError: null,
+                        }
+                        : {}),
+                        ...(isExceptionHandling
+                            ? {
+                                mustFillLabel: true,
+                                labelError: null,
+                            }
+                        : {}),
+                        ...(isActivity
+                        ? {
+                            mustFillLabel: true,
+                            labelError: null,
+                            }
+                        : {}),
+                        ...(isConnectorNode
+                        ? {
+                            mustFillLabel: true,
+                            labelError: null,
+                            }
+                        : {}),
                     },
                     draggable: true,
                     connectable: true,
@@ -75,7 +191,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                         }
                         : undefined,
                     // Fragmentos y activities tienen zIndex bajo para quedar detrás de otros nodos
-                    zIndex: ['activity', 'baseFragment', 'altFragment', 'optFragment', 'loopFragment'].includes(nodeType) ? -1 : 1,
+                    zIndex: ['activity', 'baseFragment', 'altFragment', 'optFragment', 'loopFragment', 'breakFragment', 'note'].includes(nodeType) ? -1 : 1,
                 };
 
                 await setNodes((nds) => {
@@ -87,7 +203,11 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                             parentId: newNodeId,
                             extent: 'parent',
                             position: { x: 260, y: 180 },
-                            data: {},
+                            data: {
+                                label: "",
+                                mustFillLabel: true,
+                                labelError: null,
+                            },
                             draggable: true,
                             connectable: true,
                             zIndex: 2,
@@ -97,7 +217,10 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                         nodesToAdd.push(acceptEventNode);
                     }
 
-                    return nds.concat(nodesToAdd);
+                    return [
+                    ...nds.map((n) => ({ ...n, selected: false } as Node)),
+                    ...nodesToAdd,
+                    ];
                 });
 
 
@@ -140,3 +263,5 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
         </div>
     );
 }
+export { DraggableNode };
+export default DraggableNode;

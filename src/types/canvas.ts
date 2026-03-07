@@ -69,6 +69,9 @@ export interface AltFragmentData {
     firstOperand?: string;
     separatorValues?: string[];
     separatorPositions?: number[];
+    mustFillFirstOperand?: boolean;
+    firstOperandError?: string | null;
+    separatorErrors?: (string | null)[];
     [key: string]: unknown;
 }
 

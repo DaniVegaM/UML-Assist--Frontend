@@ -1,26 +1,33 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
-import { NodeResizer, useReactFlow, useNodeId, type NodeProps, type Node } from "@xyflow/react";
+import { NodeResizer, useReactFlow, useNodeId, type NodeProps} from "@xyflow/react";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import type { AltFragmentData } from "../../../types/canvas";
 
 const TEXT_AREA_MAX_LEN = 30;
 
-const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) => {
+const AltFragmentNode = ({ selected, data }: NodeProps) => {
   const nodeId = useNodeId();
+  const { getZoom, setNodes } = useReactFlow();
+
+  const altData = data as AltFragmentData;
+
+  const mustFillFirstOperand = altData.mustFillFirstOperand ?? false;
+  const firstOperandFromNode = altData.firstOperand ?? "";
+  const firstOperandError = altData.firstOperandError ?? null;
+
   const containerRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const separatorTextareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
-  const [separators, setSeparators] = useState<number[]>(data?.separatorValues?.map((_, i) => i) || []);
-  const [separatorPositions, setSeparatorPositions] = useState<number[]>(data?.separatorPositions || []);
+  const [separators, setSeparators] = useState<number[]>( (altData.separatorValues ?? []).map((_v, i: number) => i));
+  const [separatorPositions, setSeparatorPositions] = useState<number[]>(altData.separatorPositions ?? []);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
-  const [separatorValues, setSeparatorValues] = useState<string[]>(data?.separatorValues || []);
+  const [separatorValues, setSeparatorValues] = useState<string[]>(altData.separatorValues ?? []);
   const [editingSeparatorIndex, setEditingSeparatorIndex] = useState<number | null>(null);
   const [isEditingFirstOperand, setIsEditingFirstOperand] = useState<boolean>(false);
-  const [rawFirstOperand, setRawFirstOperand] = useState<string>(data?.firstOperand || '');
+  const [rawFirstOperand, setRawFirstOperand] = useState<string>(altData.firstOperand ?? '');
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const { setIsZoomOnScrollEnabled } = useCanvas();
-  const { getZoom, setNodes } = useReactFlow();
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -64,6 +71,12 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
   }, [closeContextMenu]);
 
   const onFirstOperandDoubleClick = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, firstOperandError: null } } : n
+      )
+    );
+
     setIsEditingFirstOperand(true);
     setIsZoomOnScrollEnabled(false);
 
@@ -74,18 +87,41 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
         textareaRef.current.select();
       }
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
   const onFirstOperandChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId ? { ...n, data: { ...n.data, firstOperandError: null } } : n
+      )
+    );
     // Quita corchetes por si el usuario los pega
     const raw = evt.target.value.replace(/^\[|\]$/g, '');
     setRawFirstOperand(raw.slice(0, TEXT_AREA_MAX_LEN));
-  }, []);
+  }, [nodeId, setNodes]);
 
   const onFirstOperandBlur = useCallback(() => {
     setIsEditingFirstOperand(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+
+    const trimmed = rawFirstOperand.trim();
+
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                firstOperand: trimmed,
+                firstOperandError: trimmed ? null : "No puede estar vacío.",
+              },
+            }
+          : n
+      )
+    );
+  }, [rawFirstOperand, nodeId, setNodes, setIsZoomOnScrollEnabled]);
+
 
   useEffect(() => {
     if (editingSeparatorIndex !== null) {
@@ -169,6 +205,29 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
     ));
   }, [nodeId, rawFirstOperand, separatorValues, separatorPositions, setNodes]);
 
+  useEffect(() => {
+    if (!nodeId) return;
+
+    const current = String(firstOperandFromNode ?? rawFirstOperand ?? "").trim();
+
+    if (!isEditingFirstOperand && mustFillFirstOperand && current === "") {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, mustFillFirstOperand: false, firstOperandError: null } }
+            : n
+        )
+      );
+
+      setIsEditingFirstOperand(true);
+      setIsZoomOnScrollEnabled(false);
+
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.select();
+      }, 0);
+    }
+  }, [nodeId, mustFillFirstOperand, firstOperandFromNode, rawFirstOperand, isEditingFirstOperand, setNodes, setIsZoomOnScrollEnabled,]);
   // Ref para guardar la altura anterior del contenedor
   const previousHeightRef = useRef<number | null>(null);
 
@@ -260,13 +319,19 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
         <textarea
           ref={textareaRef}
           placeholder={`[condición]`}
-          className={`no-wheel nodrag w-full h-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono ${isEditingFirstOperand ? 'pointer-events-auto' : 'pointer-events-none'}`}
+          className={`no-wheel nodrag w-full h-[25px] placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono
+            ${isEditingFirstOperand ? 'pointer-events-auto' : 'pointer-events-none'}
+            ${!isEditingFirstOperand && data?.firstOperandError ? "node-textarea-error" : ""}
+          `}
           rows={1}
           onMouseDown={e => e.stopPropagation()}
           onChange={onFirstOperandChange}
           onBlur={onFirstOperandBlur}
           value={isEditingFirstOperand ? rawFirstOperand : (rawFirstOperand ? `[${rawFirstOperand}]` : '')}
         />
+        {!isEditingFirstOperand && firstOperandError && (
+          <p className="node-error-text">{firstOperandError}</p>
+        )}
       </div>
 
       <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative">

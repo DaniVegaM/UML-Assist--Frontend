@@ -72,7 +72,7 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
             return updatedNodes.concat([{
                 id: createPrefixedNodeId("lifeLine"),
                 type: 'lifeLine',
-                data: { label: "" },
+                data: { label: "", mustFillLabel: true, labelError: null,},
                 position: { x: newLifeLineX, y: 100 },
                 connectable: true,
                 zIndex: 999,

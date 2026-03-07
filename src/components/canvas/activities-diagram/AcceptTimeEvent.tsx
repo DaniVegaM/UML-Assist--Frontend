@@ -7,11 +7,22 @@ import { useTheme } from "../../../hooks/useTheme";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 
+type AcceptTimeEventData = {
+    label?: string;
+    labelError?: string | null;
+    mustFillLabel?: boolean;
+};
 
 export default function AcceptTimeEvent({data}: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
+
+    const acceptTimeEventData = data as AcceptTimeEventData;
+
+    const labelFromNode = acceptTimeEventData.label ?? "";
+    const labelError = acceptTimeEventData.labelError ?? null;
+    const mustFillLabel = acceptTimeEventData.mustFillLabel ?? false;
     const textareaRef = useRef<HTMLTextAreaElement>(null);
-    const [value, setValue] = useState(data.label || '');
+    const [value, setValue] = useState(labelFromNode);
     const { setIsZoomOnScrollEnabled, isTryingToConnect } = useCanvas();
     const [showSourceHandle, setShowSourceHandle] = useState(true);
     const { isDarkMode } = useTheme();
@@ -19,12 +30,22 @@ export default function AcceptTimeEvent({data}: DataProps) {
     const nodeId = useNodeId();
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (!nodeId) return;
+
+        setNodes((nodes) =>
+            nodes.map((n) =>
+                n.id === nodeId
+                    ? { ...n, data: { ...n.data, labelError: null } }
+                    : n
+            )
+        );
+        
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
+            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
         } else {
             setValue(evt.target.value);
         }
-    }, []);
+    }, [nodeId, setNodes]);
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -34,18 +55,65 @@ export default function AcceptTimeEvent({data}: DataProps) {
     }, [value]);
 
     useEffect(() => {
-        if (!nodeId) return;
+        if (!nodeId || !isEditing) return;
+
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
                 ? { ...n, data: { ...n.data, label: value } }
                 : n
         ));
-    }, [nodeId, setNodes, value]);
+    }, [nodeId, setNodes, value, isEditing]);
+
+    useEffect(() => {
+        setValue(labelFromNode);
+    }, [labelFromNode]);
+
+    useEffect(() => {
+        if (!nodeId) return;
+
+        const current = value.trim();
+
+        if (!isEditing && mustFillLabel && current === "") {
+            setNodes((nodes) =>
+                nodes.map((n) =>
+                    n.id === nodeId
+                        ? {
+                            ...n,
+                            data: {
+                                ...n.data,
+                                mustFillLabel: false,
+                                labelError: null,
+                            },
+                        }
+                        : n
+                )
+            );
+
+            setIsEditing(true);
+            setIsZoomOnScrollEnabled(false);
+
+            setTimeout(() => {
+                textareaRef.current?.focus();
+                textareaRef.current?.select();
+            }, 0);
+        }
+    }, [nodeId, mustFillLabel, labelFromNode, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            if (!nodeId) return;
+
+            setNodes((nodes) =>
+                nodes.map((n) =>
+                    n.id === nodeId
+                        ? { ...n, data: { ...n.data, labelError: null } }
+                        : n
+                )
+            );
+
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
+
             setTimeout(() => {
                 if (textareaRef.current) {
                     textareaRef.current.focus();
@@ -53,12 +121,31 @@ export default function AcceptTimeEvent({data}: DataProps) {
                 }
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
     const handleBlur = useCallback(() => {
+        if (!nodeId) return;
+
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
-    }, [setIsZoomOnScrollEnabled]);
+        const trimmed = value.trim();
+
+        setNodes((nodes) =>
+            nodes.map((n) =>
+                n.id === nodeId
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            mustFillLabel: false,
+                            label: trimmed,
+                            labelError: trimmed ? null : "No puede estar vacío.",
+                        },
+                    }
+                    : n
+            )
+        );
+    }, [nodeId, value, setNodes, setIsZoomOnScrollEnabled]);
 
     return (
         <div
@@ -90,16 +177,24 @@ export default function AcceptTimeEvent({data}: DataProps) {
             <BaseHandle id={1} position={Position.Left} showHandle={isTryingToConnect} className="!absolute !left-12 !top-6" />
 
             {/* Textarea debajo, sin position absolute */}
-            <div className="mt-2 w-full flex justify-center">
+            <div className="mt-2 w-full flex flex-col items-center">
                 <textarea
                     ref={textareaRef}
                     value={value}
                     onChange={onChange}
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
+                    readOnly={!isEditing}
                     placeholder={`(Particiones...)\nEvento de tiempo`}
-                    className={`node-textarea max-w-[120px] w-4/5 ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+                    className={`node-textarea max-w-[120px] w-4/5 ${
+                        isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
+                    } ${
+                        !isEditing && labelError ? 'node-textarea-error' : ''
+                    }`}
                 />
+                {!isEditing && labelError && (
+                    <p className="node-error-text mt-1 text-center">{labelError}</p>
+                )}
                 {isEditing &&
                     <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                 }

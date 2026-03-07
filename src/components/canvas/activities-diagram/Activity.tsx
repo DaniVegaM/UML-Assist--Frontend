@@ -6,10 +6,21 @@ import ActivityHandle from "../ActivityHandle";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 
+type ActivityData = {
+    label?: string;
+    labelError?: string | null;
+    mustFillLabel?: boolean;
+};
+
 export default function Activity({ data } : DataProps) {
+    const activityData = data as ActivityData;
+
+    const labelFromNode = activityData.label ?? "";
+    const labelError = activityData.labelError ?? null;
+    const mustFillLabel = activityData.mustFillLabel ?? false;
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState(data.label || "");
+    const [value, setValue] = useState(labelFromNode);
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const [sourceHandlesIds, setSourceHandlesIds] = useState<string[] | null>(null);
     const [targetHandlesIds, setTargetHandlesIds] = useState<string[] | null>(null);
@@ -22,12 +33,22 @@ export default function Activity({ data } : DataProps) {
     const isSelected = node?.selected ?? false;
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+        if (!nodeId) return;
+
+        setNodes((nodes) =>
+            nodes.map((n) =>
+            n.id === nodeId
+                ? { ...n, data: { ...n.data, labelError: null } }
+                : n
+            )
+        );
+
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
+            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
         } else {
             setValue(evt.target.value);
         }
-    }, []);
+    }, [nodeId, setNodes]);
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -37,16 +58,61 @@ export default function Activity({ data } : DataProps) {
     }, [value]);
 
     useEffect(() => {
-        if (!nodeId) return;
+        if (!nodeId || !isEditing) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
                 ? { ...n, data: { ...n.data, label: value } }
                 : n
         ));
-    }, [nodeId, setNodes, value]);
+    }, [nodeId, setNodes, value, isEditing]);
+
+    useEffect(() => {
+        setValue(labelFromNode);
+    }, [labelFromNode]);
+
+    useEffect(() => {
+        if (!nodeId) return;
+
+        const current = value.trim();
+
+        if (!isEditing && mustFillLabel && current === "") {
+            setNodes((nodes) =>
+            nodes.map((n) =>
+                n.id === nodeId
+                ? {
+                    ...n,
+                    data: {
+                        ...n.data,
+                        mustFillLabel: false,
+                        labelError: null,
+                    },
+                    }
+                : n
+            )
+            );
+
+            setIsEditing(true);
+            setIsZoomOnScrollEnabled(false);
+
+            setTimeout(() => {
+                textareaRef.current?.focus();
+                textareaRef.current?.select();
+            }, 0);
+        }
+    }, [nodeId, mustFillLabel, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            if (!nodeId) return;
+
+            setNodes((nodes) =>
+                nodes.map((n) =>
+                    n.id === nodeId
+                    ? { ...n, data: { ...n.data, labelError: null } }
+                    : n
+                )
+            );
+
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
@@ -56,12 +122,32 @@ export default function Activity({ data } : DataProps) {
                 }
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
     const handleBlur = useCallback(() => {
+        if (!nodeId) return;
+
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
-    }, [setIsZoomOnScrollEnabled]);
+
+        const trimmed = value.trim();
+
+        setNodes((nodes) =>
+            nodes.map((n) =>
+            n.id === nodeId
+                ? {
+                    ...n,
+                    data: {
+                    ...n.data,
+                    mustFillLabel: false,
+                    label: trimmed,
+                    labelError: trimmed ? null : "No puede estar vacío.",
+                    },
+                }
+                : n
+            )
+        );
+    }, [nodeId, value, setNodes, setIsZoomOnScrollEnabled]);
 
     const onClickSourceBtn = () => {
         setSourceHandlesIds((prev) => {
@@ -103,10 +189,17 @@ export default function Activity({ data } : DataProps) {
                         onChange={onChange}
                         onBlur={handleBlur}
                         onWheel={(e) => e.stopPropagation()}
+                        readOnly={!isEditing}
                         placeholder={`Actividad`}
-                        className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
-                        rows={1}
+                        className={`node-textarea ${
+                            isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
+                        } ${
+                            !isEditing && labelError ? 'node-textarea-error' : ''
+                        }`}
                     />
+                    {!isEditing && labelError && (
+                        <p className="node-error-text">{labelError}</p>
+                    )}
                     {isEditing &&
                         <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                     }

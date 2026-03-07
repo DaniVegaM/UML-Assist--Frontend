@@ -7,13 +7,27 @@ import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 
+type ExceptionHandlingData = {
+    label?: string;
+    labelError?: string | null;
+    mustFillLabel?: boolean;
+    handles?: HandleData[];
+};
+
 export default function ExceptionHandling({ data }: DataProps) {
+
+  const exceptionData = data as ExceptionHandlingData;
+
+  const labelFromNode = exceptionData.label ?? "";
+  const labelError = exceptionData.labelError ?? null;
+  const mustFillLabel = exceptionData.mustFillLabel ?? false;
+
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
   const { isTryingToConnect } = useCanvas();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(data.label || "");
+  const [value, setValue] = useState(labelFromNode);
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
   // Manejo de handles
@@ -24,7 +38,7 @@ export default function ExceptionHandling({ data }: DataProps) {
     handleRef, 
     nodeRef, 
     maxHandles: 1,
-    initialHandles: data?.handles as HandleData[] | undefined
+    initialHandles: exceptionData.handles
   });
 
   // Callback ref para actualizar handleRef cuando cambie el último handle
@@ -37,18 +51,40 @@ export default function ExceptionHandling({ data }: DataProps) {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n => 
       n.id === nodeId 
-        ? { ...n, data: { ...n.data, handles, label: value } }
+        ? { ...n, data: { ...n.data, handles } }
         : n
     ));
-  }, [handles, nodeId, setNodes, value]);
+  }, [handles, nodeId, setNodes]);
+
+  useEffect(() => {
+  if (!nodeId || !isEditing) return;
+
+  setNodes((nodes) =>
+      nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, data: { ...n.data, label: value } }
+          : n
+      )
+    );
+  }, [value, nodeId, setNodes, isEditing]);
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+  
+    if (!nodeId) return;
+    
+    setNodes((nodes) =>
+      nodes.map((n) =>
+          n.id === nodeId
+              ? { ...n, data: { ...n.data, labelError: null } }
+              : n
+      )
+    );
     if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-      setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
+      setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
     } else {
       setValue(evt.target.value);
     }
-  }, []);
+  }, [nodeId, setNodes]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -57,10 +93,56 @@ export default function ExceptionHandling({ data }: DataProps) {
     }
   }, [value]);
 
+  useEffect(() => {
+    setValue(labelFromNode);
+  }, [labelFromNode]);
+
+  useEffect(() => {
+    if (!nodeId) return;
+
+    const current = value.trim();
+
+    if (!isEditing && mustFillLabel && current === "") {
+        setNodes((nodes) =>
+            nodes.map((n) =>
+                n.id === nodeId
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            mustFillLabel: false,
+                            labelError: null,
+                        },
+                    }
+                    : n
+            )
+        );
+
+        setIsEditing(true);
+        setIsZoomOnScrollEnabled(false);
+
+        setTimeout(() => {
+            textareaRef.current?.focus();
+            textareaRef.current?.select();
+        }, 0);
+    }
+  }, [nodeId, mustFillLabel, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
+
   const handleDoubleClick = useCallback(() => {
     if (!isEditing) {
+      if (!nodeId) return;
+
+      setNodes((nodes) =>
+        nodes.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, labelError: null } }
+            : n
+        )
+      );
+
       setIsEditing(true);
       setIsZoomOnScrollEnabled(false);
+
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.focus();
@@ -68,12 +150,32 @@ export default function ExceptionHandling({ data }: DataProps) {
         }
       }, 0);
     }
-  }, [isEditing, setIsZoomOnScrollEnabled]);
+  }, [isEditing, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
   const handleBlur = useCallback(() => {
+    if (!nodeId) return;
+
     setIsEditing(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+
+    const trimmed = value.trim();
+
+    setNodes((nodes) =>
+      nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                mustFillLabel: false,
+                label: trimmed,
+                labelError: trimmed ? null : "No puede estar vacío.",
+              },
+            }
+          : n
+      )
+    );
+  }, [nodeId, value, setNodes, setIsZoomOnScrollEnabled]);
 
   return (
     <div
@@ -94,10 +196,18 @@ export default function ExceptionHandling({ data }: DataProps) {
           onChange={onChange}
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
+          readOnly={!isEditing}
           placeholder={`(Particiones...)\nControl de excepciones`}
-          className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+          className={`node-textarea ${
+              isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
+          } ${
+              !isEditing && labelError ? 'node-textarea-error' : ''
+          }`}
           rows={1}
         />
+        {!isEditing && labelError && (
+            <p className="node-error-text">{labelError}</p>
+        )}
         {isEditing &&
           <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
         }

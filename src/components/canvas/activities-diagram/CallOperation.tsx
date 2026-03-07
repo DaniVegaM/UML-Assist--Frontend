@@ -7,14 +7,27 @@ import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 
+type CallOperationData = {
+  label?: string;
+  labelError?: string | null;
+  mustFillLabel?: boolean;
+  handles?: HandleData[];
+};
+
 export default function CallOperation({ data }: DataProps) {
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
 
+  const { setIsZoomOnScrollEnabled } = useCanvas();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(data.label || "");
-  const { setIsZoomOnScrollEnabled } = useCanvas();
+
+  const callOperationData = data as CallOperationData;
+
+  const labelFromNode = callOperationData.label ?? "";
+  const labelError = callOperationData.labelError ?? null;
+  const mustFillLabel = callOperationData.mustFillLabel ?? false;
+  const [value, setValue] = useState(labelFromNode);
 
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
@@ -23,7 +36,7 @@ export default function CallOperation({ data }: DataProps) {
   const { handles, magneticHandle } = useHandle({ 
     handleRef, 
     nodeRef,
-    initialHandles: data?.handles as HandleData[] | undefined
+    initialHandles: callOperationData.handles
   });
 
   // Callback ref para actualizar handleRef cuando cambie el último handle
@@ -36,18 +49,64 @@ export default function CallOperation({ data }: DataProps) {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n => 
       n.id === nodeId 
-        ? { ...n, data: { ...n.data, handles, label: value } }
+        ? { ...n, data: { ...n.data, handles, ...(isEditing ? { label: value } : {}) } }
         : n
     ));
-  }, [handles, nodeId, setNodes, value]);
+  }, [handles, nodeId, setNodes, value,  isEditing]);
 
+  useEffect(() => {
+    setValue(labelFromNode);
+  }, [labelFromNode]);
+
+  useEffect(() => {
+    if (!nodeId) return;
+
+    const current = String(labelFromNode ?? value ?? "").trim();
+
+    if (!isEditing && mustFillLabel && current === "") {
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  mustFillLabel: false,
+                  labelError: null,
+                },
+              }
+            : n
+        )
+      );
+
+      setIsEditing(true);
+      setIsZoomOnScrollEnabled(false);
+
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.select();
+      }, 0);
+    }
+  }, [nodeId, mustFillLabel, labelFromNode, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
+    
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+
+    if (!nodeId) return;
+
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId
+          ? { ...n, data: { ...n.data, labelError: null } }
+          : n
+      )
+    );
+
     if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
       setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
     } else {
       setValue(evt.target.value);
     }
-  }, []);
+  }, [nodeId, setNodes]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -58,6 +117,14 @@ export default function CallOperation({ data }: DataProps) {
 
   const handleDoubleClick = useCallback(() => {
     if (!isEditing) {
+      if (!nodeId) return;
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, labelError: null } }
+            : n
+        )
+      );
       setIsEditing(true);
       setIsZoomOnScrollEnabled(false);
       setTimeout(() => {
@@ -67,12 +134,32 @@ export default function CallOperation({ data }: DataProps) {
         }
       }, 0);
     }
-  }, [isEditing, setIsZoomOnScrollEnabled]);
+  }, [isEditing, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
   const handleBlur = useCallback(() => {
+    if (!nodeId) return;
+
     setIsEditing(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+
+    const trimmed = value.trim();
+
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                mustFillLabel: false,
+                label: trimmed,
+                labelError: trimmed ? null : "No puede estar vacío.",
+              },
+            }
+          : n
+      )
+    );
+  }, [value, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
   return (
     <div
@@ -93,10 +180,14 @@ export default function CallOperation({ data }: DataProps) {
           onChange={onChange}
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
+          readOnly={!isEditing}
           placeholder={`(Particiones...)\nC::O`}
-          className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+          className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'} ${!isEditing && labelError ? 'node-textarea-error' : ''}`}
           rows={1}
         />
+        {!isEditing && labelError && (
+          <p className="node-error-text">{labelError}</p>
+        )}
         {isEditing &&
           <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
         }

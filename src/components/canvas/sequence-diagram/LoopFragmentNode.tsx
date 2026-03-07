@@ -34,27 +34,86 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
     );
   }, [guard, minIterations, maxIterations, id, setNodes]);
 
+  useEffect(() => {
+    const mustFill = (data as any)?.mustFillGuard;
+    const current = String((data as any)?.guard ?? guard ?? "").trim();
+
+    if (!isEditingGuard && mustFill && current === "") {
+      // apagar flag para no entrar en bucle
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === id
+            ? { ...n, data: { ...n.data, mustFillGuard: false, guardError: null } }
+            : n
+        )
+      );
+
+      setIsEditingGuard(true);
+      setIsZoomOnScrollEnabled(false);
+
+      setTimeout(() => {
+        guardTextareaRef.current?.focus();
+        guardTextareaRef.current?.select();
+      }, 0);
+    }
+  }, [
+      id,
+      (data as any)?.mustFillGuard,
+      (data as any)?.guard,
+      guard,
+      isEditingGuard,
+      setNodes,
+      setIsZoomOnScrollEnabled,
+    ]);
+
   const onGuardDoubleClick = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, guardError: null } } : n
+      )
+    );
+
     setIsEditingGuard(true);
     setIsZoomOnScrollEnabled(false);
 
     setTimeout(() => {
-      if (guardTextareaRef.current) {
-        guardTextareaRef.current.focus();
-        guardTextareaRef.current.select();
-      }
+      guardTextareaRef.current?.focus();
+      guardTextareaRef.current?.select();
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [id, setNodes, setIsZoomOnScrollEnabled]);
 
   const onGuardChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, guardError: null } } : n
+      )
+    );
+
     const raw = evt.target.value.replace(/^\[|\]$/g, "");
     setGuard(raw.slice(0, TEXT_AREA_MAX_LEN));
-  }, []);
+  }, [id, setNodes]);
 
   const onGuardBlur = useCallback(() => {
     setIsEditingGuard(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+
+    const trimmed = guard.trim();
+
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === id
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                guard: trimmed,
+                guardError: trimmed ? null : "No puede estar vacío.",
+              },
+            }
+          : n
+      )
+    );
+  }, [guard, id, setNodes, setIsZoomOnScrollEnabled]);
 
   const onMinDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
@@ -172,15 +231,18 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
           <textarea
             ref={guardTextareaRef}
             placeholder="[condición]"
-            className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-sm px-2 py-1 overflow-hidden font-mono ${
-              isEditingGuard ? "pointer-events-auto" : "pointer-events-none"
-            }`}
+            className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-sm px-2 py-1 overflow-hidden font-mono
+              ${isEditingGuard ? "pointer-events-auto" : "pointer-events-none"}
+              ${!isEditingGuard && (data as any)?.guardError ? "node-textarea-error" : ""}`}
             rows={1}
             onMouseDown={(e) => e.stopPropagation()}
             onChange={onGuardChange}
             onBlur={onGuardBlur}
             value={isEditingGuard ? guard : guard ? `[${guard}]` : ""}
           />
+          {!isEditingGuard && (data as any)?.guardError && (
+            <p className="node-error-text">{(data as any).guardError}</p>
+          )}
         </div>
       </div>
 

@@ -6,13 +6,24 @@ import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 
+type ConnectorNodeData = {
+  label?: string;
+  labelError?: string | null;
+  mustFillLabel?: boolean;
+  handles?: HandleData[];
+};
 
 export default function ConnectorNode({ data }: DataProps) {
+  const connectorData = data as ConnectorNodeData;
+
+  const labelFromNode = connectorData.label ?? "";
+  const labelError = connectorData.labelError ?? null;
+  const mustFillLabel = connectorData.mustFillLabel ?? false;
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [value, setValue] = useState(data.label || "");
+  const [value, setValue] = useState(labelFromNode);
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
   // Manejo de handles
@@ -23,7 +34,7 @@ export default function ConnectorNode({ data }: DataProps) {
     handleRef, 
     nodeRef, 
     maxHandles: 1,
-    initialHandles: data?.handles as HandleData[] | undefined
+    initialHandles: connectorData.handles
   });
 
   // Callback ref para actualizar handleRef cuando cambie el último handle
@@ -36,18 +47,77 @@ export default function ConnectorNode({ data }: DataProps) {
     if (!nodeId) return;
     setNodes(nodes => nodes.map(n => 
       n.id === nodeId 
-        ? { ...n, data: { ...n.data, handles, label: value } }
+        ? { ...n, data: { ...n.data, handles} }
         : n
     ));
-  }, [handles, nodeId, setNodes, value]);
+  }, [handles, nodeId, setNodes]);
+
+  useEffect(() => {
+    setValue(labelFromNode);
+  }, [labelFromNode]);
+
+  useEffect(() => {
+    if (!nodeId) return;
+
+    const current = value.trim();
+
+    if (!isEditing && mustFillLabel && current === "") {
+      setNodes((nodes) =>
+        nodes.map((n) =>
+          n.id === nodeId
+            ? {
+                ...n,
+                data: {
+                  ...n.data,
+                  mustFillLabel: false,
+                  labelError: null,
+                },
+              }
+            : n
+        )
+      );
+
+      setIsEditing(true);
+      setIsZoomOnScrollEnabled(false);
+
+      setTimeout(() => {
+        textareaRef.current?.focus();
+        textareaRef.current?.select();
+      }, 0);
+    }
+  }, [nodeId, mustFillLabel, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
+
+  useEffect(() => {
+    if (!nodeId || !isEditing) return;
+
+    setNodes((nodes) =>
+      nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, data: { ...n.data, label: value } }
+          : n
+      )
+    );
+  }, [value, nodeId, setNodes, isEditing]);
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (evt.target.value.length >= 3) {
-      setValue(evt.target.value.trim().toUpperCase().slice(0, 3));
+    if (!nodeId) return;
+
+    setNodes((nodes) =>
+      nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, data: { ...n.data, labelError: null } }
+          : n
+      )
+    );
+
+    const upper = evt.target.value.toUpperCase();
+
+    if (upper.length >= 3) {
+      setValue(upper.slice(0, 3));
     } else {
-      setValue(evt.target.value.toUpperCase().trim());
+      setValue(upper);
     }
-  }, []);
+  }, [nodeId, setNodes]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -58,6 +128,16 @@ export default function ConnectorNode({ data }: DataProps) {
 
   const handleDoubleClick = useCallback(() => {
     if (!isEditing) {
+      if (!nodeId) return;
+
+      setNodes((nodes) =>
+        nodes.map((n) =>
+          n.id === nodeId
+            ? { ...n, data: { ...n.data, labelError: null } }
+            : n
+        )
+      );
+
       setIsEditing(true);
       setIsZoomOnScrollEnabled(false);
       setTimeout(() => {
@@ -67,19 +147,38 @@ export default function ConnectorNode({ data }: DataProps) {
         }
       }, 0);
     }
-  }, [isEditing, setIsZoomOnScrollEnabled]);
+  }, [isEditing, nodeId, setNodes, setIsZoomOnScrollEnabled]);
 
   const handleBlur = useCallback(() => {
+    if (!nodeId) return;
     setIsEditing(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+
+    const trimmed = value.trim().toUpperCase();
+
+    setNodes((nodes) =>
+      nodes.map((n) =>
+        n.id === nodeId
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                mustFillLabel: false,
+                label: trimmed,
+                labelError: trimmed ? null : "No puede estar vacío.",
+              },
+            }
+          : n
+      )
+    );
+  }, [nodeId, value, setNodes, setIsZoomOnScrollEnabled]);
 
   return (
     <div
       onDoubleClick={handleDoubleClick}
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
-      className="bg-transparent p-4"
+      className="bg-transparent p-4 flex flex-col items-center"
       onMouseMove={(evt) => { magneticHandle(evt) }}
     >
       <div ref={nodeRef} className="node-circle-outline w-[70px] h-[70px]">
@@ -93,8 +192,13 @@ export default function ConnectorNode({ data }: DataProps) {
           onChange={onChange}
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
+          readOnly={!isEditing}
           placeholder="ABC"
-          className={`font-black node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
+          className={`font-black node-textarea ${
+            isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
+          } ${
+            !isEditing && labelError ? 'node-textarea-error' : ''
+          }`}
           rows={1}
         />
         {isEditing &&

@@ -9,12 +9,38 @@ import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
+import { useLiveTextValidation } from "../../../hooks/useLiveTextValidation";
 
+type LifeLineData = {
+    label?: string;
+    labelError?: string | null;
+
+    mustFillLabel?: boolean;
+
+    handles?: HandleData[];
+    destroyHandleIndex?: number | null;
+
+    hasDestruction?: boolean;
+};
 
 export default function LifeLine({ data }: DataProps) {
+    const lifeData = data as LifeLineData;
+
+    const labelFromNode = lifeData.label ?? "";
+    const labelError = lifeData.labelError ?? null;
+    const mustFillLabel = lifeData.mustFillLabel ?? false;
+
+    const handlesFromNode = lifeData.handles;
+    const destroyFromNode = lifeData.destroyHandleIndex ?? null;
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const [value, setValue] = useState(data.label || "");
+    const [isManualEdit, setIsManualEdit] = useState(false);
+    const [value, setValue] = useState(labelFromNode);
+    const { isValid, error, roleClassGuide } = useLiveTextValidation(value, {
+        required: true,
+        max: LIFE_LINE_MAX_LEN_TEXT,
+        enableRoleClassGuide: true,
+    });
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const { nodes } = useSequenceDiagram();
     const nodeId = useNodeId();
@@ -26,8 +52,7 @@ export default function LifeLine({ data }: DataProps) {
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
     const isSyncingFromData = useRef(false); // Ref para evitar bucles
-    const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, allowSelfConnection: true, initialHandles: data?.handles as HandleData[] | undefined});
-
+    const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, allowSelfConnection: true, initialHandles: handlesFromNode, });
     // Estados para el menú contextual y destrucción
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
@@ -51,20 +76,20 @@ export default function LifeLine({ data }: DataProps) {
 
     // Sincronizar handles cuando data.handles cambie (al cargar diagrama)
     useEffect(() => {
-        if (data?.handles && data.handles.length > 0) {
+        if (!handlesFromNode || handlesFromNode.length === 0) return;
+
             // Comparar si los handles son diferentes antes de actualizar
             const currentHandlesStr = JSON.stringify(handles);
-            const dataHandlesStr = JSON.stringify(data.handles);
+            const dataHandlesStr = JSON.stringify(handlesFromNode);
             if (currentHandlesStr !== dataHandlesStr) {
                 isSyncingFromData.current = true;
-                setHandles(data.handles as HandleData[]);
+                setHandles(handlesFromNode);
                 // Reset flag después de un ciclo de renderizado
                 setTimeout(() => {
                     isSyncingFromData.current = false;
                 }, 0);
             }
-        }
-    }, [data?.handles]);
+    }, [handlesFromNode, handles, setHandles]);
 
     // Sincronizamos destroyHandleIndex y hasDestruction con node.data cuando cambie
     useEffect(() => {
@@ -78,21 +103,54 @@ export default function LifeLine({ data }: DataProps) {
 
     // Sincronizar destroyHandleIndex cuando data.destroyHandleIndex cambie (al cargar diagrama)
     useEffect(() => {
-        if (data?.destroyHandleIndex !== undefined && data.destroyHandleIndex !== destroyHandleIndex) {
+        if (destroyFromNode !== destroyHandleIndex) {
             isSyncingFromData.current = true;
-            setDestroyHandleIndex(data.destroyHandleIndex);
+            setDestroyHandleIndex(destroyFromNode);
+
             setTimeout(() => {
                 isSyncingFromData.current = false;
             }, 0);
         }
-    }, [data?.destroyHandleIndex]);
+    }, [destroyFromNode, destroyHandleIndex]);
 
     // Sincronizar label cuando data.label cambie (al cargar diagrama)
     useEffect(() => {
-        if (data?.label !== undefined && data.label !== value && !isEditing) {
-            setValue(data.label);
+        if (isEditing) return;
+
+        setValue((prev) => (labelFromNode !== prev ? labelFromNode : prev));
+    }, [labelFromNode, isEditing]);
+
+    useEffect(() => {
+        if (!nodeId) return;
+        
+        const currentLabel = String(labelFromNode ?? value ?? "").trim();
+
+        if (!isEditing && mustFillLabel && currentLabel === "") {
+            setNodes((nodes) =>
+                nodes.map((n) =>
+                    n.id === nodeId
+                        ? {
+                            ...n,
+                            data: {
+                                ...(n.data || {}),
+                                mustFillLabel: false,
+                                labelError: null,
+                            },
+                            }
+                        : n
+                )
+            );
+
+            setIsManualEdit(false);
+            setIsEditing(true);
+            setIsZoomOnScrollEnabled(false);
+
+            setTimeout(() => {
+                textareaRef.current?.focus();
+                textareaRef.current?.select();
+            }, 0);
         }
-    }, [data?.label, isEditing]);
+    }, [nodeId, mustFillLabel, labelFromNode, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
 
     // Forzar actualización de handles cuando se cargan datos con handles
     useEffect(() => {
@@ -121,8 +179,14 @@ export default function LifeLine({ data }: DataProps) {
     }, [value]);
 
     const handleDoubleClick = useCallback(() => {
-        if (!isEditing) {
+            setNodes((nodes) =>
+                nodes.map((n) =>
+                    n.id === nodeId ? { ...n, data: { ...n.data, labelError: null } } : n
+                )
+            );
+
             setIsEditing(true);
+            setIsManualEdit(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
                 if (textareaRef.current) {
@@ -130,13 +194,29 @@ export default function LifeLine({ data }: DataProps) {
                     textareaRef.current.select();
                 }
             }, 0);
-        }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [setIsZoomOnScrollEnabled, nodeId, setNodes]);
 
     const handleBlur = useCallback(() => {
         setIsEditing(false);
+        setIsManualEdit(false);
         setIsZoomOnScrollEnabled(true);
-    }, [setIsZoomOnScrollEnabled]);
+
+        setNodes((nodes) =>
+            nodes.map((n) =>
+            n.id === nodeId
+                ? {
+                    ...n,
+                    data: {
+                    ...n.data,
+                    label: value,
+                    labelError: isValid ? null : (error ?? "Texto inválido."),
+                    },
+                }
+                : n
+            )
+        );
+    }, [setIsZoomOnScrollEnabled, nodeId, setNodes, isValid, error, value]);
+
 
     useEffect(() => {
         if (nodes.length > 0) {
@@ -203,7 +283,7 @@ export default function LifeLine({ data }: DataProps) {
             style={{zIndex: 999}}
         > {/*LIFELINE COMPLETA*/}
             <div
-                onDoubleClick={handleDoubleClick}
+                onClick={handleDoubleClick}
                 className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
 
             > {/*HEAD DE LA LIFELINE*/}
@@ -214,13 +294,38 @@ export default function LifeLine({ data }: DataProps) {
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
                     placeholder={`Rol : Clase`}
-                    className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                        }`}
+                    className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden
+                    ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}
+                    ${!isEditing && labelError ? "node-textarea-error" : ""}`}
                     rows={1}
                 />
-                {isEditing &&
-                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
-                }
+                
+                {isEditing && isManualEdit && (
+                    <p className="w-full text-[10px] text-right text-neutral-400">
+                        {`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}
+                    </p>
+                )}
+                
+                {isEditing && isManualEdit && roleClassGuide && (
+                    <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+                        <span className={roleClassGuide.roleOk ? "text-green-600" : "text-gray-400"}>
+                            {roleClassGuide.roleOk ? roleClassGuide.role : "ROL"}
+                        </span>
+
+                        <span className={roleClassGuide.hasColon ? "text-green-600" : "text-gray-400"}>
+                            {" : "}
+                        </span>
+
+                        <span className={roleClassGuide.classOk ? "text-green-600" : "text-gray-400"}>
+                            {roleClassGuide.classOk ? roleClassGuide.clazz : "CLASE"}
+                        </span>
+                    </div>
+                )}
+
+                {/* Error solo cuando ya NO estás editando */}
+                {!isEditing && labelError && (
+                    <p className="node-error-text">{labelError}</p>
+                )}
             </div>
             {/*DASHED LINE DE LA LIFELINE*/}
             <div
@@ -294,4 +399,3 @@ export default function LifeLine({ data }: DataProps) {
         </div>
     )
 }
-

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ElementsBarProps } from '../../types/canvas';
-import { DraggableNode } from './DraggableNode';
+import  DraggableNode  from './DraggableNode';
 
 export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
     const [isVisible, setIsVisible] = useState(true);

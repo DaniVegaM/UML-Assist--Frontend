@@ -230,3 +230,15 @@
 .dark .interruptible-region.selected {
   box-shadow: 0 0 0 1px #e4e4e7;
 }
+
+.node-textarea-error {
+  @apply ring-2 ring-red-500 rounded-md;
+}
+
+.node-error-text {
+  @apply w-full text-[10px] text-red-600 mt-1 text-center;
+}
+
+.dark .node-error-text {
+  @apply text-red-400;
+}
