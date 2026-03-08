@@ -74,8 +74,8 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
                             height: 260,
                         }
                         : undefined,
-                    // Fragmentos y activities tienen zIndex bajo para quedar detrás de otros nodos
-                    zIndex: ['activity', 'baseFragment', 'altFragment', 'optFragment', 'loopFragment'].includes(nodeType) ? -1 : 1,
+                    // activities tienen zIndex bajo para quedar detrás de otros nodos
+                    zIndex: ['activity'].includes(nodeType) ? -1 : 1,
                 };
 
                 await setNodes((nds) => {

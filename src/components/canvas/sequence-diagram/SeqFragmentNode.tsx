@@ -4,17 +4,31 @@ import { NodeResizer, useReactFlow, useNodeId, type NodeProps } from "@xyflow/re
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
+import SuggestionTooltip from "../SuggestionTooltip";
 
-const SeqFragmentNode = ({ selected }: NodeProps) => {
+const SeqFragmentNode = ({ selected, data }: NodeProps) => {
   const nodeId = useNodeId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [separators, setSeparators] = useState<number[]>([]);
   const [separatorPositions, setSeparatorPositions] = useState<number[]>([]);
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+  const [showSuggestion, setShowSuggestion] = useState(false);
   const { setIsZoomOnScrollEnabled } = useCanvas();
   const { getZoom, getNodesBounds, getInternalNode } = useReactFlow();
   const { nodes: allNodes, edges, setNodes, setEdges } = useSequenceDiagram();
+
+  const clearSuggestion = useCallback(() => {
+    if (!nodeId) return;
+    setShowSuggestion(false);
+    setNodes(prev => prev.map(n =>
+      n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
+    ));
+  }, [nodeId, setNodes]);
+
+  useEffect(() => {
+    if ((data as any)?.suggestion) setShowSuggestion(true);
+  }, [(data as any)?.suggestion]);
 
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
   const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
@@ -233,6 +247,27 @@ const SeqFragmentNode = ({ selected }: NodeProps) => {
         style={{ pointerEvents: 'auto' }}
         onContextMenu={handleContextMenu}
       />
+      {(data as any)?.suggestion && (
+        <>
+          <button
+            onDoubleClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setShowSuggestion(prev => !prev); }}
+            title="Ver sugerencia de IA"
+            className="absolute -top-2 -right-2 z-20 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0m-9 5.25h.008v.008H12z"/>
+            </svg>
+          </button>
+          <SuggestionTooltip
+            isVisible={showSuggestion}
+            suggestionText={(data as any).suggestion}
+            onMinimize={() => setShowSuggestion(false)}
+            onDiscard={clearSuggestion}
+          />
+        </>
+      )}
       
       <NodeResizer
         minWidth={350}

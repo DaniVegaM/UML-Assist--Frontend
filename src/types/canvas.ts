@@ -72,10 +72,12 @@ export interface AltFragmentData {
     firstOperand?: string;
     separatorValues?: string[];
     separatorPositions?: number[];
+    suggestion?: string;
     [key: string]: unknown;
 }
 
 export interface ParFragmentData {
     separatorPositions?: number[];
+    suggestion?: string;
     [key: string]: unknown;
 }

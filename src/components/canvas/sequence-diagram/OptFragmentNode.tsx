@@ -4,6 +4,7 @@ import { NodeResizer, type NodeProps, useReactFlow, useNodeId } from "@xyflow/re
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
+import SuggestionTooltip from "../SuggestionTooltip";
 
 const TEXT_AREA_MAX_LEN = 30;
 
@@ -21,6 +22,19 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
   const [guard, setGuard] = useState((data as any)?.guard || "");
   const [isEditingGuard, setIsEditingGuard] = useState(false);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+  const [showSuggestion, setShowSuggestion] = useState(false);
+
+  const clearSuggestion = useCallback(() => {
+    if (!nodeId) return;
+    setShowSuggestion(false);
+    setNodes(prev => prev.map(n =>
+      n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
+    ));
+  }, [nodeId, setNodes]);
+
+  useEffect(() => {
+    if ((data as any)?.suggestion) setShowSuggestion(true);
+  }, [(data as any)?.suggestion]);
 
   // Estado para los IDs de edges contenidos dentro del fragmento
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
@@ -143,7 +157,7 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full relative"
-      style={{ minWidth: "300px", minHeight: "100px", pointerEvents: selected ? 'auto' : 'none' }}
+      style={{ minWidth: "300px", minHeight: "100px", zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
       onContextMenu={handleContextMenu}
     >
       {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
@@ -152,6 +166,27 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
         style={{ pointerEvents: 'auto' }}
         onContextMenu={handleContextMenu}
       />
+      {(data as any)?.suggestion && (
+        <>
+          <button
+            onDoubleClick={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); setShowSuggestion(prev => !prev); }}
+            title="Ver sugerencia de IA"
+            className="absolute -top-2 -right-2 z-20 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
+            style={{ pointerEvents: 'auto' }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0m-9 5.25h.008v.008H12z"/>
+            </svg>
+          </button>
+          <SuggestionTooltip
+            isVisible={showSuggestion}
+            suggestionText={(data as any).suggestion}
+            onMinimize={() => setShowSuggestion(false)}
+            onDiscard={clearSuggestion}
+          />
+        </>
+      )}
       
       <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
 
