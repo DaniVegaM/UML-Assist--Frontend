@@ -58,6 +58,6 @@ export type ReviewDiagramData = {
 }
 
 export type ReviewDiagramResponse = {
-    general_description: string;
-    suggestions: Record<string, string>;
+    generalDescription: string;
+    suggestions: Array<Record<string, string>>;
 }
