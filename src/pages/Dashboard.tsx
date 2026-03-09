@@ -6,6 +6,7 @@ import type { Diagram } from "../types/diagramsModel";
 import MenuWithOptions from "../components/ui/MenuWithOptions";
 import '../components/layout/MainLayout/Header.css';
 
+
 export default function Dashboard() {
     const navigate = useNavigate();
 
@@ -20,6 +21,11 @@ export default function Dashboard() {
     const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const menuRef = useRef<HTMLDivElement>(null);
     const inputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+    const [page, setPage] = useState(1);
+    const [ordering, setOrdering] = useState("title");
+    const [nextPage, setNextPage] = useState<string | null>(null);
+    const [prevPage, setPrevPage] = useState<string | null>(null);
+    
 
     useEffect(() => {
         const loadDiagrams = async () => {
@@ -27,9 +33,10 @@ export default function Dashboard() {
             setError(null);
 
             try {
-                const response = await fetchDiagrams();
-                const data: Diagram[] = response.data;
-                setDiagrams(data || []);
+                const response = await fetchDiagrams(page, ordering);
+                setDiagrams(response.data.results || []);
+                setNextPage(response.data.next);
+                setPrevPage(response.data.previous);
             } catch {
                 setError("Error al cargar los diagramas.");
                 setDiagrams([]);
@@ -39,7 +46,7 @@ export default function Dashboard() {
         };
 
         loadDiagrams();
-    }, []);
+    }, [page, ordering]);
 
     useEffect(() => {
         const handleEscape = (event: KeyboardEvent) => {
@@ -247,20 +254,68 @@ export default function Dashboard() {
                         padding: '40px'
                     }}
                     >
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                            <h1 className="text-3xl font-black leading-tight dark:text-white text-center md:text-left uppercase text-gray-800 md:text-4xl mb-3">
-                                Mis diagramas
-                            </h1>
-                            <button
-                                onClick={() => setShowModal(true)}
-                                className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 cursor-pointer"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
-                                </svg>
-                                Nuevo diagrama
-                            </button>
-                        </div>
+                    <div className="mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <h1 className="text-3xl font-black leading-tight dark:text-white text-center md:text-left uppercase text-gray-800 md:text-4xl">
+                            Mis diagramas
+                        </h1>
+                        <button
+                            onClick={() => setShowModal(true)}
+                            className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 cursor-pointer"
+                        >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                            </svg>
+                            Nuevo diagrama
+                        </button>
+                    </div>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => setOrdering("title")}
+                            className={`p-2 rounded-lg transition-all duration-200
+                            ${
+                            ordering === "title"
+                            ? "bg-sky-600 text-white"
+                            : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                            }`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fillRule="evenodd" d="M10.082 5.629 9.664 7H8.598l1.789-5.332h1.234L13.402 7h-1.12l-.419-1.371zm1.57-.785L11 2.687h-.047l-.652 2.157z"/>
+                                <path d="M12.96 14H9.028v-.691l2.579-3.72v-.054H9.098v-.867h3.785v.691l-2.567 3.72v.054h2.645zM4.5 2.5a.5.5 0 0 0-1 0v9.793l-1.146-1.147a.5.5 0 0 0-.708.708l2 1.999.007.007a.497.497 0 0 0 .7-.006l2-2a.5.5 0 0 0-.707-.708L4.5 12.293z"/>
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() => setOrdering("-title")}
+                            className={`p-2 rounded-lg transition-all duration-200
+                            ${
+                            ordering === "-title"
+                            ? "bg-sky-600 text-white"
+                            : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                            }`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path fillRule="evenodd" d="M10.082 5.629 9.664 7H8.598l1.789-5.332h1.234L13.402 7h-1.12l-.419-1.371zm1.57-.785L11 2.687h-.047l-.652 2.157z"/>
+                                <path d="M12.96 14H9.028v-.691l2.579-3.72v-.054H9.098v-.867h3.785v.691l-2.567 3.72v.054h2.645zm-8.46-.5a.5.5 0 0 1-1 0V3.707L2.354 4.854a.5.5 0 1 1-.708-.708l2-1.999.007-.007a.5.5 0 0 1 .7.006l2 2a.5.5 0 1 1-.707.708L4.5 3.707z"/>
+                            </svg>
+                        </button>
+                        <button
+                            onClick={() =>
+                                setOrdering(ordering === "-created_at" ? "created_at" : "-created_at")
+                            }
+                            className={`p-2 rounded-lg transition-all duration-200
+                            ${
+                            ordering === "-created_at" || ordering === "created_at"
+                            ? "bg-sky-600 text-white"
+                            : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600"
+                            }`}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                                <path d="M8 1a7 7 0 1 0 4.95 11.95l.707.707A8.001 8.001 0 1 1 8 0z"/>
+                                <path d="M7.5 3a.5.5 0 0 1 .5.5v5.21l3.248 1.856a.5.5 0 0 1-.496.868l-3.5-2A.5.5 0 0 1 7 9V3.5a.5.5 0 0 1 .5-.5"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
 
                         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 p-10">
                             {diagrams.map((diagram) => (
@@ -351,6 +406,32 @@ export default function Dashboard() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                        <div className="flex justify-center items-center gap-6 mt-10">
+
+                            <button
+                                disabled={!prevPage}
+                                onClick={() => setPage(page - 1)}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-sky-600 hover:bg-sky-700 text-white transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7"/>
+                                </svg>
+                            </button>
+
+                            <span className="text-lg font-bold dark:text-white">
+                                Página {page}
+                            </span>
+
+                            <button
+                                disabled={!nextPage}
+                                onClick={() => setPage(page + 1)}
+                                className="w-12 h-12 flex items-center justify-center rounded-full bg-sky-600 hover:bg-sky-700 text-white transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
                 )}
