@@ -81,3 +81,8 @@ export interface ParFragmentData {
     suggestion?: string;
     [key: string]: unknown;
 }
+
+export interface EdgeDataProps {
+    suggestion?: string;
+    [key: string]: unknown;
+}
