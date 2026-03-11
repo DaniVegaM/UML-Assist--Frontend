@@ -22,13 +22,13 @@ export default function EdgeSuggestionTooltip({
   return (
     <EdgeLabelRenderer>
       <div 
+        className="absolute nodrag nopan"
         style={{
           position: 'absolute',
           transform: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 30}px)`,
           pointerEvents: 'all',
           zIndex: 1000,
         }}
-        className="nodrag nopan"
       >
         <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-xl shadow-lg p-3 w-64 text-sm">
           {/* Header */}

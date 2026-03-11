@@ -1,5 +1,3 @@
-import { NodeToolbar, Position } from "@xyflow/react";
-
 interface SuggestionTooltipProps {
   isVisible: boolean;
   suggestionText: string;
@@ -13,8 +11,19 @@ export default function NodeSuggestionTooltip({
   onMinimize,
   onDiscard,
 }: SuggestionTooltipProps) {
+  if (!isVisible) return null;
+
   return (
-    <NodeToolbar isVisible={isVisible} position={Position.Top} offset={8}>
+    <div 
+      className="absolute nodrag nopan"
+      style={{
+        bottom: 'calc(100% + 8px)',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        pointerEvents: 'all',
+        zIndex: 1000
+      }}
+    >
       <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-xl shadow-lg p-3 w-64 text-sm">
         {/* Header */}
         <div className="flex justify-between items-center mb-2 gap-2">
@@ -69,6 +78,6 @@ export default function NodeSuggestionTooltip({
           {suggestionText}
         </p>
       </div>
-    </NodeToolbar>
+    </div>
   );
 }
