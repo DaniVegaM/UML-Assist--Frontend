@@ -6,7 +6,7 @@ import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
-import SuggestionTooltip from "../SuggestionTooltip";
+import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
 
 export type Data = {
     label: string;
@@ -130,7 +130,7 @@ export default function SimpleAction({data} : DataProps) {
 
           </button>
 
-          <SuggestionTooltip
+          <NodeSuggestionTooltip
             isVisible={showSuggestion}
             suggestionText={data.suggestion}
             onMinimize={() => setShowSuggestion(false)}

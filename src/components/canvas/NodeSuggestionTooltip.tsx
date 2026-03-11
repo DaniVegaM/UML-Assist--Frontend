@@ -7,7 +7,7 @@ interface SuggestionTooltipProps {
   onDiscard: () => void;
 }
 
-export default function SuggestionTooltip({
+export default function NodeSuggestionTooltip({
   isVisible,
   suggestionText,
   onMinimize,
