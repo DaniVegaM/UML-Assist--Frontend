@@ -36,10 +36,6 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
     ));
   }, [nodeId, setNodes]);
 
-  useEffect(() => {
-    if (data.suggestion) setShowSuggestion(true);
-  }, [data.suggestion]);
-
   // Estado para los IDs de edges contenidos dentro del fragmento
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
   // Estado para las asignaciones de operandos: [edgeId, operandLabel][]
@@ -452,7 +448,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
             onDoubleClick={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); setShowSuggestion(prev => !prev); }}
             title="Ver sugerencia de IA"
-            className="absolute -top-2 -right-2 z-20 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
+            className="absolute -top-6 -right-6 z-20 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
             style={{ pointerEvents: 'auto' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
@@ -464,6 +460,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
             suggestionText={data.suggestion}
             onMinimize={() => setShowSuggestion(false)}
             onDiscard={clearSuggestion}
+            bottomValue={25}
           />
         </>
       )}

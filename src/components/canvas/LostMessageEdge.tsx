@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     BaseEdge,
     EdgeLabelRenderer,
@@ -25,16 +25,7 @@ export function LostMessageEdge({
     const { setEdges } = useReactFlow();
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
-
     const [showSuggestion, setShowSuggestion] = useState(false);
-
-    useEffect(() => {
-        if (data?.suggestion) {
-            setShowSuggestion(true);
-        } else {
-            setShowSuggestion(false);
-        }
-    }, [data?.suggestion]);
 
     const clearSuggestion = () => {
         setEdges((eds) =>

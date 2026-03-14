@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     BaseEdge,
     EdgeLabelRenderer,
@@ -81,16 +81,7 @@ export function SelfMessageEdge({
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
-
     const [showSuggestion, setShowSuggestion] = useState(false);
-
-    useEffect(() => {
-        if (data?.suggestion) {
-            setShowSuggestion(true);
-        } else {
-            setShowSuggestion(false);
-        }
-    }, [data?.suggestion]);
 
     const clearSuggestion = () => {
         setEdges((eds) =>

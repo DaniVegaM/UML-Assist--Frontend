@@ -30,10 +30,6 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
     ));
   }, [nodeId, setNodes]);
 
-  useEffect(() => {
-    if ((data as any)?.suggestion) setShowSuggestion(true);
-  }, [(data as any)?.suggestion]);
-
   const [containedEdgeIds, setContainedEdgeIds] = useState<string[]>([]);
   const [operandAssignments, setOperandAssignments] = useState<[string, string][]>([]);
   const lastFragmentBoundsRef = useRef<{ x: number; y: number; w: number; h: number } | null>(null);
@@ -169,7 +165,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
             onDoubleClick={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); setShowSuggestion(prev => !prev); }}
             title="Ver sugerencia de IA"
-            className="absolute -top-2 -right-2 z-20 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
+            className="absolute -top-6 -right-6 z-20 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
             style={{ pointerEvents: 'auto' }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
@@ -181,6 +177,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
             suggestionText={(data as any).suggestion}
             onMinimize={() => setShowSuggestion(false)}
             onDiscard={clearSuggestion}
+            bottomValue={25}
           />
         </>
       )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
     BaseEdge,
     EdgeLabelRenderer,
@@ -24,16 +24,7 @@ export function CreateLifeLineEdge({
     data
 }: CreateLifeLineEdgeProps) {
     const { setEdges } = useReactFlow();
-    
     const [showSuggestion, setShowSuggestion] = useState(false);
-
-    useEffect(() => {
-        if (data?.suggestion) {
-            setShowSuggestion(true);
-        } else {
-            setShowSuggestion(false);
-        }
-    }, [data?.suggestion]);
 
     const clearSuggestion = () => {
         setEdges((eds) =>

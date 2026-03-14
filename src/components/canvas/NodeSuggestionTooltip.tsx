@@ -3,6 +3,7 @@ interface SuggestionTooltipProps {
   suggestionText: string;
   onMinimize: () => void;
   onDiscard: () => void;
+  bottomValue?: number;
 }
 
 export default function NodeSuggestionTooltip({
@@ -10,6 +11,7 @@ export default function NodeSuggestionTooltip({
   suggestionText,
   onMinimize,
   onDiscard,
+  bottomValue = 8
 }: SuggestionTooltipProps) {
   if (!isVisible) return null;
 
@@ -17,7 +19,7 @@ export default function NodeSuggestionTooltip({
     <div 
       className="absolute nodrag nopan"
       style={{
-        bottom: 'calc(100% + 8px)',
+        bottom: `calc(100% + ${bottomValue}px)`,
         left: '50%',
         transform: 'translateX(-50%)',
         pointerEvents: 'all',

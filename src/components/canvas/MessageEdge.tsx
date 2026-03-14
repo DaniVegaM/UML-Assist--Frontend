@@ -87,16 +87,7 @@ export function MessageEdge({
         null
     );
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
     const [showSuggestion, setShowSuggestion] = useState(false);
-
-    useEffect(() => {
-        if (data?.suggestion) {
-            setShowSuggestion(true);
-        } else {
-            setShowSuggestion(false);
-        }
-    }, [data?.suggestion]);
 
     const clearSuggestion = () => {
         setEdges((eds) =>
