@@ -32,11 +32,6 @@ export default function SimpleAction({data} : DataProps) {
     ));
   }, [nodeId, setNodes]);
 
-  // Abre el tooltip automáticamente cuando llega una nueva sugerencia
-  useEffect(() => {
-    if (data.suggestion) setShowSuggestion(true);
-  }, [data.suggestion]);
-
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);

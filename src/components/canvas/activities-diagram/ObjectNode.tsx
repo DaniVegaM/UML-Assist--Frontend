@@ -15,8 +15,6 @@ export default function ObjectNode({ data }: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
-
-    // Manejo de sugerencias IA
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -26,10 +24,6 @@ export default function ObjectNode({ data }: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);

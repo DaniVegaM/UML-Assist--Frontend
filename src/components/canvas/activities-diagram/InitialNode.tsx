@@ -13,6 +13,7 @@ export default function InitialNode({ data }: DataProps) {
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
     const { openContextMenu } = useCanvas();
+    const [showSuggestion, setShowSuggestion] = useState(false);
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -39,8 +40,6 @@ export default function InitialNode({ data }: DataProps) {
         ));
     }, [handles, nodeId, setNodes]);
 
-    const [showSuggestion, setShowSuggestion] = useState(false);
-
     const clearSuggestion = useCallback(() => {
         if (!nodeId) return;
         setShowSuggestion(false);
@@ -48,10 +47,6 @@ export default function InitialNode({ data }: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();

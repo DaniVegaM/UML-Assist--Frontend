@@ -18,8 +18,6 @@ export default function AcceptTimeEvent({data}: DataProps) {
     const { isDarkMode } = useTheme();
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
-
-    // Manejo de sugerencias IA
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -29,10 +27,6 @@ export default function AcceptTimeEvent({data}: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {

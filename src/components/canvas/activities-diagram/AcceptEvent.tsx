@@ -15,8 +15,6 @@ export default function AcceptEvent({data}: DataProps) {
     const [showSourceHandle, setShowSourceHandle] = useState(true);
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
-
-    // Manejo de sugerencias IA
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -26,10 +24,6 @@ export default function AcceptEvent({data}: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -92,7 +86,7 @@ export default function AcceptEvent({data}: DataProps) {
                         onDoubleClick={(e) => e.stopPropagation()}
                         onClick={(e) => { e.stopPropagation(); setShowSuggestion(prev => !prev); }}
                         title="Ver sugerencia de IA"
-                        className="absolute -top-2 -right-2 z-10 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
+                        className="absolute -top-6 -right-6 z-10 w-5 h-5 rounded-full bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold flex items-center justify-center shadow-md transition-colors cursor-pointer"
                     >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0m-9 5.25h.008v.008H12z"/>
@@ -103,6 +97,7 @@ export default function AcceptEvent({data}: DataProps) {
                         suggestionText={data.suggestion}
                         onMinimize={() => setShowSuggestion(false)}
                         onDiscard={clearSuggestion}
+                        bottomValue={25}
                     />
                 </>
             )}

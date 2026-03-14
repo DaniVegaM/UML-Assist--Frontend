@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import BaseHandle from "../BaseHandle";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { Position, useNodeId, useReactFlow } from "@xyflow/react";
@@ -12,7 +12,6 @@ export default function MergeNodel({ data }: DataProps) {
     const { setNodes } = useReactFlow();
     const [showHandles, setShowHandles] = useState(false);
     const { isTryingToConnect, openContextMenu } = useCanvas();
-
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -22,10 +21,6 @@ export default function MergeNodel({ data }: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();

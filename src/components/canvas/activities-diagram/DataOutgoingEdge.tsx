@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Position, BaseEdge, getSmoothStepPath, EdgeLabelRenderer, useReactFlow } from "@xyflow/react";
 import type { EdgeProps } from '@xyflow/react';
 import { useTheme } from "../../../hooks/useTheme";
@@ -75,14 +75,6 @@ export default function DataOutgoingEdge ({
   });
 
   const [showSuggestion, setShowSuggestion] = useState(false);
-
-  useEffect(() => {
-      if (data?.suggestion) {
-          setShowSuggestion(true);
-      } else {
-          setShowSuggestion(false);
-      }
-  }, [data?.suggestion]);
 
   const clearSuggestion = () => {
       setEdges((eds) =>

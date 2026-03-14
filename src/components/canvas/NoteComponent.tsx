@@ -28,10 +28,6 @@ export default function NoteComponent({data} : DataProps) {
         ));
     }, [nodeId, setNodes]);
 
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
-
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);

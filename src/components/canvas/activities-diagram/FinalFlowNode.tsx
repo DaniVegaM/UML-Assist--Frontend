@@ -13,6 +13,7 @@ export default function FinalFlowNode({ data }: DataProps) {
     const { setNodes } = useReactFlow();
     const { isTryingToConnect, openContextMenu } = useCanvas();
     const { isDarkMode } = useTheme();
+    const [showSuggestion, setShowSuggestion] = useState(false);
 
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
@@ -40,8 +41,6 @@ export default function FinalFlowNode({ data }: DataProps) {
         ));
     }, [handles, nodeId, setNodes]);
 
-    const [showSuggestion, setShowSuggestion] = useState(false);
-
     const clearSuggestion = useCallback(() => {
         if (!nodeId) return;
         setShowSuggestion(false);
@@ -49,10 +48,6 @@ export default function FinalFlowNode({ data }: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();

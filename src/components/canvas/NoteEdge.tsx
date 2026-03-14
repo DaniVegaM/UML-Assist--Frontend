@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath, useReactFlow } from "@xyflow/react";
 import type { EdgeProps } from "@xyflow/react";
 import EdgeSuggestionTooltip from './EdgeSuggestionTooltip';
@@ -21,14 +21,6 @@ export function NoteEdge({
 }: NoteEdgeProps) {
     const { setEdges } = useReactFlow();
     const [showSuggestion, setShowSuggestion] = useState(false);
-
-    useEffect(() => {
-        if (data?.suggestion) {
-            setShowSuggestion(true);
-        } else {
-            setShowSuggestion(false);
-        }
-    }, [data?.suggestion]);
 
     const clearSuggestion = () => {
         setEdges((eds) =>

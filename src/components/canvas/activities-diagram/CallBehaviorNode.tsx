@@ -17,7 +17,6 @@ export default function CallBehaviorNode({ data }: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
-
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -28,9 +27,6 @@ export default function CallBehaviorNode({ data }: DataProps) {
         ));
     }, [nodeId, setNodes]);
 
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);

@@ -1,6 +1,6 @@
 import { Position, useNodeId, useReactFlow } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
@@ -12,7 +12,6 @@ export default function DecitionControl({ data }: DataProps) {
     const {isTryingToConnect, openContextMenu} = useCanvas();
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
-
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -22,10 +21,6 @@ export default function DecitionControl({ data }: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();

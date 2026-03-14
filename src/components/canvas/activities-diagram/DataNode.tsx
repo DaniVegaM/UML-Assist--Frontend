@@ -16,10 +16,7 @@ export default function DataNode({ data }: DataProps) {
     const nodeId = useNodeId();
     const node = useInternalNode(nodeId ? nodeId : '');
     const { setNodes } = useReactFlow();
-
     const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
-
-    // Manejo de sugerencias IA
     const [showSuggestion, setShowSuggestion] = useState(false);
 
     const clearSuggestion = useCallback(() => {
@@ -29,10 +26,6 @@ export default function DataNode({ data }: DataProps) {
             n.id === nodeId ? { ...n, data: { ...n.data, suggestion: undefined } } : n
         ));
     }, [nodeId, setNodes]);
-
-    useEffect(() => {
-        if (data.suggestion) setShowSuggestion(true);
-    }, [data.suggestion]);
 
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
