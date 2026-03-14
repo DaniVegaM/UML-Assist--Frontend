@@ -10,7 +10,7 @@ export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const [initialContext, setInitialContext] = useState("");
     const nodes = useNodes();
     const edges = useEdges();
-    const { setNodes } = useReactFlow();
+    const { setNodes, setEdges } = useReactFlow();
     const TEXT_AREA_MAX_LEN = 100;
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -87,13 +87,26 @@ ${edges
         
         console.log("Respuesta de la IA:", responseData.suggestions);
 
-        // Inyectar cada sugerencia directamente en el data del nodo correspondiente
-        if (responseData.suggestions && typeof responseData.suggestions === 'object') {
+        // Aplanar el array de objetos unitarios a un mapa completo
+        const suggestionsMap: Record<string, string> = {};
+        for (const entry of responseData.suggestions) {
+            const [id, text] = Object.entries(entry)[0];
+            suggestionsMap[id] = text;
+        }
+
+        if (Object.keys(suggestionsMap).length > 0) {
             setNodes(prevNodes =>
                 prevNodes.map(n =>
-                    responseData.suggestions[n.id]
-                        ? { ...n, data: { ...n.data, suggestion: responseData.suggestions[n.id] } }
+                    suggestionsMap[n.id]
+                        ? { ...n, data: { ...n.data, suggestion: suggestionsMap[n.id] } }
                         : n
+                )
+            );
+            setEdges(prevEdges =>
+                prevEdges.map(e =>
+                    suggestionsMap[e.id]
+                        ? { ...e, data: { ...e.data, suggestion: suggestionsMap[e.id] } }
+                        : e
                 )
             );
         }
