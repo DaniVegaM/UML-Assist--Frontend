@@ -11,7 +11,8 @@ export const ACTIVITY_NODES = [
             </svg>
         ),
         nodeType: 'activity',
-        label: 'Actividad'
+        label: 'Actividad',
+        description: 'Representa la tarea global de alto nivel que se desea lograr, funcionando como el contenedor principal de toda la lógica del proceso.'
     },
     {
         svg: (
@@ -20,7 +21,8 @@ export const ACTIVITY_NODES = [
             </svg>
         ),
         nodeType: 'simpleAction',
-        label: 'Acción simple'
+        label: 'Acción simple',
+        description: 'Constituye el paso de ejecución más básico e indivisible dentro de una actividad que transforma entradas en salidas.'
     },
     {
         separator: 'Eventos',
@@ -36,6 +38,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'acceptEvent',
         label: 'Aceptación de evento',
+        description: 'Establece un punto de espera donde el flujo se detiene voluntariamente hasta que se detecta un suceso externo específico.',
         grouped: true
     },
     {
@@ -47,6 +50,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'acceptTimeEvent',
         label: 'Aceptación de evento de tiempo',
+        description: 'Indica una pausa en el flujo que solo se desbloquea al cumplirse un plazo temporal determinado o alcanzar una hora concreta.',
         grouped: true,
         className: 'text-[12px]'
     },
@@ -61,6 +65,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'sendSignal',
         label: 'Envio de señal',
+        description: 'Realiza el envío de una notificación o aviso hacia otros participantes u objetos que se encuentran fuera del flujo actual.',
         grouped: true,
     },
     {
@@ -81,6 +86,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'callBehavior',
         label: 'Llamada a un comportamiento',
+        description: 'Permite invocar y ejecutar un conjunto de instrucciones definido en una actividad distinta, facilitando la reutilización de procesos.',
         grouped: true,
         className: 'text-[10px]'
     },
@@ -93,6 +99,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'callOperation',
         label: 'Llamada a una operación',
+        description: 'Dispara la ejecución de un servicio o función técnica específica que ha sido previamente definida en el sistema.',
         grouped: true,
         className: 'text-[12px]'
     },
@@ -110,6 +117,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'initialNode',
         label: 'Nodo inicial',
+        description: 'Define el punto de partida único donde se activa la lógica y comienza el movimiento de los testigos de ejecución.',
         grouped: true,
     },
     {
@@ -121,6 +129,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'finalNode',
         label: 'Nodo final',
+        description: 'Provoca la detención absoluta y definitiva de toda la actividad, lo que implica que cualquier otra tarea que se esté realizando en paralelo se cancela de inmediato.',
         grouped: true,
     },
     {
@@ -133,6 +142,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'finalFlowNode',
         label: 'Nodo de final de flujo',
+        description: 'Marca el fin de una ruta de trabajo particular, permitiendo que otros hilos de ejecución sigan activos sin interferencias.',
         grouped: true,
     },
     {
@@ -147,6 +157,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'decisionControl',
         label: 'Control de desición',
+        description: 'Actúa como un punto de elección donde el flujo debe tomar un camino exclusivo basándose en el cumplimiento de una regla lógica.',
         grouped: true,
     },
     {
@@ -160,7 +171,8 @@ export const ACTIVITY_NODES = [
             </svg>
         ),
         nodeType: 'mergeNode',
-        label: 'Unir',
+        label: 'Unión',
+        description: 'Funciona como un punto de reunión para diversas rutas alternativas que se unifican de nuevo en un solo camino común.',
         grouped: true,
     },
     {
@@ -173,6 +185,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'parallelizationNode',
         label: 'Paralelización',
+        description: 'Divide una única línea de trabajo en múltiples tareas que se llevan a cabo de forma simultánea.',
         grouped: true,
     },
     {
@@ -184,6 +197,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'connectorNode',
         label: 'Conector',
+        description: 'Facilita la unión de partes distantes del proceso para mantener la claridad cuando el flujo es demasiado extenso.',
         grouped: true,
     },
     {
@@ -211,6 +225,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'exceptionHandling',
         label: 'Control de excepciones',
+        description: 'Establece el protocolo de recuperación o el comportamiento alternativo que debe activarse cuando surge un error inesperado en una acción.',
         grouped: true,
     },
     {
@@ -250,6 +265,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'InterruptActivityRegion',
         label: 'Región interrumpible',
+        description: 'Delimita un entorno donde todas las acciones internas se terminan de golpe si ocurre un evento de interrupción o una cancelación.',
         grouped: true,
     },
     {
@@ -267,6 +283,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'objectNode',
         label: 'Objeto',
+        description: 'Representan la información digital o los elementos físicos que se mueven entre las acciones y que resultan indispensables para que el proceso avance.',
         grouped: true
     },
     {
@@ -278,6 +295,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'dataNode',
         label: 'Dato',
+        description: 'Representan la información digital o los elementos físicos que se mueven entre las acciones y que resultan indispensables para que el proceso avance.',
         grouped: true
     },
     {
@@ -350,6 +368,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'note',
         label: 'Nota UML',
+        description: 'Espacio destinado a integrar comentarios o descripciones adicionales que ayudan a comprender mejor las reglas del proceso.',
         grouped: true
     }
 ];

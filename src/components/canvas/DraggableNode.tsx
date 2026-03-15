@@ -6,7 +6,7 @@ import type { Node } from "@xyflow/react";
 import { createPrefixedNodeId, type NodeTypeIdKey } from "../../utils/idGenerator";
 
 
-export function DraggableNode({ className, children, nodeType, setExtendedBar }: DraggableNodeProps) {
+export function DraggableNode({ className, children, nodeType, setExtendedBar, title, onMouseEnter, onMouseLeave }: DraggableNodeProps) {
     const draggableRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
@@ -157,7 +157,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar }:
     });
 
     return (
-        <div className="relative w-full h-full">
+        <div className="relative w-full h-full" title={title} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave}>
             {/* Elemento estático que siempre mantiene el espacio en el grid de ElementsBar */}
             <div className={`${className} ${isDragging ? 'opacity-50' : 'opacity-100'}`}>
                 {children}

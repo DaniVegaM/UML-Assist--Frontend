@@ -11,6 +11,9 @@ export interface DraggableNodeProps {
     incomingEdge? : string;
     outgoingEdge? : string;
     setExtendedBar?: React.Dispatch<React.SetStateAction<boolean>>;
+    title?: string;
+    onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    onMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export interface ElementsBarProps {
