@@ -4,6 +4,22 @@ import { DraggableNode } from './DraggableNode';
 
 export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
     const [isVisible, setIsVisible] = useState(true);
+    const [tooltip, setTooltip] = useState<{ label: string; description: string; top: number; svg?: React.ReactNode } | null>(null);
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, label: string, description?: string, svg?: React.ReactNode) => {
+        if (!description) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setTooltip({
+            label,
+            description,
+            top: rect.top,
+            svg
+        });
+    };
+
+    const handleMouseLeave = () => {
+        setTooltip(null);
+    };
 
     const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
@@ -82,8 +98,10 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                             flex-col gap-0 justify-center items-center`}
                                                 nodeType={groupedNode.nodeType}
                                                 key={groupedNode.label.trim()}
+                                                onMouseEnter={(e) => handleMouseEnter(e, groupedNode.label, groupedNode.description, groupedNode.svg)}
+                                                onMouseLeave={handleMouseLeave}
                                             >
-                                                <div className={`h-full`}>
+                                                <div className={`h-full pointer-events-none`}>
                                                     {groupedNode.svg}
                                                 </div>
                                             </DraggableNode>
@@ -98,8 +116,10 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                 gap-0 justify-center items-center`}
                                     nodeType={node.nodeType}
                                     key={node.label.trim()}
+                                    onMouseEnter={(e) => handleMouseEnter(e, node.label, node.description, node.svg)}
+                                    onMouseLeave={handleMouseLeave}
                                 >
-                                    <div className={`h-full`}>
+                                    <div className={`h-full pointer-events-none`}>
                                         {node.svg}
                                     </div>
                                 </DraggableNode>
@@ -109,6 +129,29 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                     })}
                 </div>
             </aside>
+            {tooltip && isVisible && (
+                <div
+                    className="fixed z-50 bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-gray-200 dark:border-zinc-700 w-64 p-4 pointer-events-none transition-opacity duration-200"
+                    style={{
+                        top: `${tooltip.top}px`,
+                        left: '150px'
+                    }}
+                >
+                    <div className="flex items-center justify-between mb-2 border-b border-gray-200 dark:border-zinc-700 pb-2 gap-x-4">
+                        <h4 className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                            {tooltip.label ? tooltip.label.trim() : ''}
+                        </h4>
+                        {tooltip.svg && (
+                            <div className="w-15 h-10 flex items-center justify-center shrink-0 ml-4 scale-150 origin-right">
+                                {tooltip.svg}
+                            </div>
+                        )}
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
+                        {tooltip.description ? tooltip.description.trim() : ''}
+                    </p>
+                </div>
+            )}
         </>
     );
 }
