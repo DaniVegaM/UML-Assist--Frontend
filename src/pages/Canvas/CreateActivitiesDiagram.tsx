@@ -24,7 +24,7 @@ function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
-    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu, closeEdgeContextMenu } = useCanvas();
+    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
@@ -122,8 +122,14 @@ function DiagramContent() {
             let defaultLabel = '';
 
 
-            // Definir el tipo de edge según el tipo de nodo conectado
             if (
+                sourceNode?.type === 'note' ||
+                targetNode?.type === 'note'
+            ) {
+                edgeType = 'noteEdge';
+            }
+            // Definir el tipo de edge según el tipo de nodo conectado
+            else if (
                 (sourceNode?.type === 'acceptEvent' &&
                     nodes.find(
                         n => n.id === sourceNode.parentId && n.type === 'InterruptActivityRegion'
@@ -143,12 +149,6 @@ function DiagramContent() {
             }
             else if (targetNode?.type === 'exceptionHandling') {
                 edgeType = 'exceptionHandlingEdge';
-            }
-            else if (
-                sourceNode?.type === 'note' ||
-                targetNode?.type === 'note'
-            ) {
-                edgeType = 'noteEdge';
             }
             else {
                 edgeType = 'labeledEdge'; // tipo por defecto
@@ -284,7 +284,7 @@ function DiagramContent() {
                     <EdgeContextMenu />
                 </ReactFlow>
                 <ElementsBar nodes={ACTIVITY_NODES} />
-                <AIChatBar type="actividades"/>
+                <AIChatBar type="actividades" />
             </section>
         </div>
     )
