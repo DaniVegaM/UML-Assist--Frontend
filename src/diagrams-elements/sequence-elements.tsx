@@ -13,6 +13,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'altFragment',
         label: 'Alt (Alternativa)',
+        grouped: true,
     },
     {
         svg: (
@@ -23,6 +24,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'optFragment',
         label: 'Opt (Opcional)',
+        grouped: true,
     },
     {
         svg: (
@@ -33,6 +35,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'loopFragment',
         label: 'Loop (Bucle)',
+        grouped: true,
     },
     {
         svg: (
@@ -43,6 +46,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'breakFragment',
         label: 'Break (Interrupción)',
+        grouped: true,
     },
     {
         svg: (
@@ -54,6 +58,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'seqFragment',
         label: 'Seq (Orden Débil)',
+        grouped: true,
     },
     {
         svg: (
@@ -65,6 +70,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'strictFragment',
         label: 'Strict (Orden Estricto)',
+        grouped: true,
     },
     {
         svg: (
@@ -76,6 +82,7 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'parFragment',
         label: 'Par (Concurrente)',
+        grouped: true,
     },
     {
         separator: 'Otros',

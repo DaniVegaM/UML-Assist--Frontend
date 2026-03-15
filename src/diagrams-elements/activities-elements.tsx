@@ -250,6 +250,7 @@ export const ACTIVITY_NODES = [
         ),
         nodeType: 'InterruptActivityRegion',
         label: 'Región interrumpible',
+        grouped: true,
     },
     {
         separator: 'Flujo de objetos',

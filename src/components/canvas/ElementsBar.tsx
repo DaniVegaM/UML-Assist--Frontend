@@ -4,6 +4,7 @@ import { DraggableNode } from './DraggableNode';
 
 export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
     const [isVisible, setIsVisible] = useState(true);
+
     const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
         nodes.forEach(node => {
@@ -39,8 +40,12 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                 </svg>
             </button>
 
-            <aside className={`[&::-webkit-scrollbar]:hidden absolute inset-y-3 left-3 z-10 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg py-4 px-2 transition-all duration-300 ease-in-out ${isVisible ? 'w-32 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
-                <div className={oneColumn ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
+            <aside 
+                className={`[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-gray-300 dark:[&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar-thumb]:rounded-full absolute inset-y-3 left-3 z-10 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg py-4 px-2 transition-all duration-300 ease-in-out overflow-y-auto overflow-x-hidden ${isVisible ? 'w-33.5 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}
+            >
+                <div 
+                    className={oneColumn ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}
+                >
                     {nodes.map((node, index) => {
                         if (node.separator) {
                             const groupedNodes = [];
@@ -73,7 +78,7 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                     <div className={`${oneColumn ? 'flex flex-col' : 'grid grid-cols-2'} gap-2 transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
                                         {groupedNodes.map(groupedNode => (
                                             <DraggableNode
-                                                className={`${groupedNode.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex h-10 text-zinc-400
+                                                className={`${groupedNode.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex ${oneColumn ? 'h-[60px]' : 'h-10'} text-zinc-400
                                             flex-col gap-0 justify-center items-center`}
                                                 nodeType={groupedNode.nodeType}
                                                 key={groupedNode.label.trim()}
