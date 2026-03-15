@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useViewport, useNodeId, useReactFlow } from "@xyflow/react";
+import { useViewport, useNodeId } from "@xyflow/react";
 
 interface SuggestionTooltipProps {
   isVisible: boolean;
@@ -22,18 +22,22 @@ export default function NodeSuggestionTooltip({
 
   const { zoom } = useViewport();
   const nodeId = useNodeId();
-  const { setNodes } = useReactFlow();
 
-  // Asegurar que el nodo actual esté siempre por encima de los demás cuando la sugerencia está visible
   useEffect(() => {
     if (!isVisible || !nodeId) return;
 
-    setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, zIndex: 10000 } : n));
+    const reactFlowNodeWrapper = document.querySelector(`[data-id="${nodeId}"]`) as HTMLElement;
+    if (reactFlowNodeWrapper) {
+      reactFlowNodeWrapper.style.setProperty('z-index', '10000', 'important');
+    }
 
     return () => {
-      setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, zIndex: undefined } : n));
+      const currentFlowNode = document.querySelector(`[data-id="${nodeId}"]`) as HTMLElement;
+      if (currentFlowNode) {
+        currentFlowNode.style.removeProperty('z-index');
+      }
     };
-  }, [isVisible, nodeId, setNodes]);
+  }, [isVisible, nodeId]);
 
   useEffect(() => {
     if (!isDragging) return;
@@ -80,7 +84,7 @@ export default function NodeSuggestionTooltip({
         bottom: `calc(100% + ${bottomValue}px)`,
         left: '50%',
         transform: `translateX(-50%) translate(${positionOffset.x}px, ${positionOffset.y}px)`,
-        pointerEvents: 'all',
+        pointerEvents: 'auto',
         zIndex: 999999999
       }}
     >
