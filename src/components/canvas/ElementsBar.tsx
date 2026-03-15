@@ -7,7 +7,7 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
     const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
         const initial: Record<string, boolean> = {};
         nodes.forEach(node => {
-            if (node.separator) {
+            if ('separator' in node) {
                 initial[node.separator] = true;
             }
         });
@@ -42,10 +42,10 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
             <aside className={`[&::-webkit-scrollbar]:hidden absolute inset-y-3 left-3 z-10 bg-white dark:bg-zinc-800 rounded-2xl shadow-lg py-4 px-2 transition-all duration-300 ease-in-out ${isVisible ? 'w-32 opacity-100' : 'w-0 opacity-0 pointer-events-none'}`}>
                 <div className={oneColumn ? 'flex flex-col gap-2' : 'grid grid-cols-2 gap-2'}>
                     {nodes.map((node, index) => {
-                        if (node.separator) {
+                        if ('separator' in node) {
                             const groupedNodes = [];
                             let i = index + 1;
-                            while (i < nodes.length && nodes[i].grouped) {
+                            while (i < nodes.length && 'grouped' in nodes[i] && nodes[i].grouped) {
                                 groupedNodes.push(nodes[i]);
                                 i++;
                             }
@@ -71,9 +71,11 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                         </svg>
                                     </button>
                                     <div className={`${oneColumn ? 'flex flex-col' : 'grid grid-cols-2'} gap-2 transition-all duration-300 ${isOpen ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-                                        {groupedNodes.map(groupedNode => (
+                                        {groupedNodes.map(groupedNode => {
+                                            if ('separator' in groupedNode) return null;
+                                            return (
                                             <DraggableNode
-                                                className={`${groupedNode.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex h-10 text-zinc-400
+                                                className={`${groupedNode.className || ''} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex h-10 text-zinc-400
                                             flex-col gap-0 justify-center items-center`}
                                                 nodeType={groupedNode.nodeType}
                                                 key={groupedNode.label.trim()}
@@ -82,14 +84,14 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                                     {groupedNode.svg}
                                                 </div>
                                             </DraggableNode>
-                                        ))}
+                                        )})}
                                     </div>
                                 </div>
                             );
-                        } else if (!node.grouped) {
+                        } else if (!('grouped' in node) || !node.grouped) {
                             return (
                                 <DraggableNode
-                                    className={`${node.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex ${oneColumn ? 'h-[60px]' : 'h-10'} text-zinc-400
+                                    className={`${node.className || ''} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex ${oneColumn ? 'h-[60px]' : 'h-10'} text-zinc-400
                                 gap-0 justify-center items-center`}
                                     nodeType={node.nodeType}
                                     key={node.label.trim()}

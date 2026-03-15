@@ -1,9 +1,9 @@
 import type { Diagram, ReviewDiagramData } from "../types/diagramsModel";
 import api from "./baseApiService";
 
-export const fetchDiagrams = async () => {
+export const fetchDiagrams = async (page = 1, ordering = "title") => {
     try {
-        const response = await api.get("api/diagram/");
+        const response = await api.get(`api/diagram/?page=${page}&ordering=${ordering}`);
         return response;
     } catch (error) {
         console.error("Error al obtener los diagramas:", error);

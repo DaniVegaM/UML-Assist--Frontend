@@ -39,7 +39,7 @@ function parseMessageParts(value: string) {
     const paramsText = (g.params ?? '').trim();
     const paramsOk =
         paramsText === '' ||
-        paramsText.split(',').every((p) => /^[A-Za-z_]\w*$/.test(p.trim()));
+        paramsText.split(',').every((p: string) => /^[A-Za-z_]\w*$/.test(p.trim()));
 
     return {
         hasEquals,
