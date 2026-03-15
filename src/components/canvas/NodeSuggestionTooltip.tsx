@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import { useViewport, useNodeId, useReactFlow } from "@xyflow/react";
+
 interface SuggestionTooltipProps {
   isVisible: boolean;
   suggestionText: string;
@@ -13,6 +16,61 @@ export default function NodeSuggestionTooltip({
   onDiscard,
   bottomValue = 8
 }: SuggestionTooltipProps) {
+  const [positionOffset, setPositionOffset] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  const { zoom } = useViewport();
+  const nodeId = useNodeId();
+  const { setNodes } = useReactFlow();
+
+  // Asegurar que el nodo actual esté siempre por encima de los demás cuando la sugerencia está visible
+  useEffect(() => {
+    if (!isVisible || !nodeId) return;
+
+    setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, zIndex: 10000 } : n));
+
+    return () => {
+      setNodes((nds) => nds.map((n) => n.id === nodeId ? { ...n, zIndex: undefined } : n));
+    };
+  }, [isVisible, nodeId, setNodes]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleMouseMove = (event: MouseEvent) => {
+      setPositionOffset({
+        x: (event.clientX - dragStart.x) / zoom,
+        y: (event.clientY - dragStart.y) / zoom
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isDragging, dragStart, zoom]);
+
+  const handleHeaderMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    const targetElement = event.target as HTMLElement;
+    if (targetElement.closest("button") || targetElement.closest("svg")) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDragging(true);
+    setDragStart({ 
+      x: event.clientX - positionOffset.x * zoom, 
+      y: event.clientY - positionOffset.y * zoom 
+    });
+  };
+
   if (!isVisible) return null;
 
   return (
@@ -21,21 +79,24 @@ export default function NodeSuggestionTooltip({
       style={{
         bottom: `calc(100% + ${bottomValue}px)`,
         left: '50%',
-        transform: 'translateX(-50%)',
+        transform: `translateX(-50%) translate(${positionOffset.x}px, ${positionOffset.y}px)`,
         pointerEvents: 'all',
-        zIndex: 1000
+        zIndex: 999999999
       }}
     >
       <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-600 rounded-xl shadow-lg p-3 w-64 text-sm">
         {/* Header */}
-        <div className="flex justify-between items-center mb-2 gap-2">
-          <div className="flex items-center gap-1.5">
+        <div
+          className="flex justify-between items-center mb-2 gap-2"
+          onMouseDown={handleHeaderMouseDown}
+        >
+          <div className={`flex items-center gap-1.5 flex-1 ${isDragging ? "cursor-grabbing" : "cursor-grab"}`}>
             
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="size-3.5 text-sky-500 shrink-0"
+              className="size-3.5 text-sky-500 shrink-0 pointer-events-none"
             >
               <path
                 fillRule="evenodd"
@@ -43,16 +104,17 @@ export default function NodeSuggestionTooltip({
                 clipRule="evenodd"
               />
             </svg>
-            <span className="font-semibold text-sky-600 dark:text-sky-400 text-xs uppercase tracking-wide leading-none">
+            <span className="font-semibold text-sky-600 dark:text-sky-400 text-xs uppercase tracking-wide leading-none pointer-events-none select-none">
               Sugerencia IA
             </span>
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
             <button
+              onMouseDown={(event) => event.stopPropagation()}
               onClick={onMinimize}
               title="Minimizar"
-              className="w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors text-base font-bold leading-none"
+              className="cursor-pointer w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-700 dark:hover:text-zinc-200 transition-colors text-base font-bold leading-none"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14"/>
@@ -61,9 +123,10 @@ export default function NodeSuggestionTooltip({
             </button>
 
             <button
+              onMouseDown={(event) => event.stopPropagation()}
               onClick={onDiscard}
               title="Descartar sugerencia"
-              className="w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/40 dark:hover:text-red-400 transition-colors text-xs font-bold leading-none"
+              className="cursor-pointer w-5 h-5 flex items-center justify-center rounded text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/40 dark:hover:text-red-400 transition-colors text-xs font-bold leading-none"
             >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-6" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12"/>
@@ -76,7 +139,7 @@ export default function NodeSuggestionTooltip({
         <div className="border-t border-zinc-100 dark:border-zinc-700 mb-2" />
 
         {/* Suggestion text */}
-        <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-xs">
+        <p className="text-zinc-700 dark:text-zinc-300 leading-relaxed text-xs select-text cursor-text" style={{ userSelect: 'text' }}>
           {suggestionText}
         </p>
       </div>

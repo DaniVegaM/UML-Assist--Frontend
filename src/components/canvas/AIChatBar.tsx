@@ -12,7 +12,7 @@ export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const edges = useEdges();
     const { setNodes, setEdges } = useReactFlow();
     const [generalDescription, setGeneralDescription] = useState<string | null>(null);
-    const TEXT_AREA_MAX_LEN = 100;
+    const TEXT_AREA_MAX_LEN = 300;
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
