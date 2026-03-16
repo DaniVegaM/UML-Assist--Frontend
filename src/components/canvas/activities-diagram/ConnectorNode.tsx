@@ -26,6 +26,13 @@ export default function ConnectorNode({ data }: DataProps) {
   const [value, setValue] = useState(labelFromNode);
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
+  const rawConnector = value.trim().toUpperCase().slice(0, 3);
+  const connectorTemplate = "ABC";
+
+  const connectorGuide = {
+    completed: rawConnector,
+    remaining: connectorTemplate.slice(rawConnector.length),
+  };
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -196,14 +203,18 @@ export default function ConnectorNode({ data }: DataProps) {
           placeholder="ABC"
           className={`font-black node-textarea ${
             isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-          } ${
-            !isEditing && labelError ? 'node-textarea-error' : ''
           }`}
           rows={1}
         />
         {isEditing &&
           <p className="font-black char-counter char-counter-right">{`${value.length}/3`}</p>
         }
+        {isEditing && (
+          <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+            <span className="text-green-600">{connectorGuide.completed}</span>
+            <span className="text-gray-400">{connectorGuide.remaining}</span>
+          </div>
+        )}
       </div>
     </div>
   )

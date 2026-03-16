@@ -296,7 +296,7 @@ export default function LifeLine({ data }: DataProps) {
                     placeholder={`Rol : Clase`}
                     className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden
                     ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'}
-                    ${!isEditing && labelError ? "node-textarea-error" : ""}`}
+                    `}
                     rows={1}
                 />
                 

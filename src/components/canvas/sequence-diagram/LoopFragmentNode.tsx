@@ -19,6 +19,11 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   const [isEditingMin, setIsEditingMin] = useState(false);
   const [isEditingMax, setIsEditingMax] = useState(false);
 
+  const guardGuide = {
+    hasContent: guard.trim().length > 0,
+    content: guard.trim(),
+  };
+
   // Sincronizar datos con el nodo de React Flow
   useEffect(() => {
     setNodes((nds) =>
@@ -233,7 +238,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
             placeholder="[condición]"
             className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-sm px-2 py-1 overflow-hidden font-mono
               ${isEditingGuard ? "pointer-events-auto" : "pointer-events-none"}
-              ${!isEditingGuard && (data as any)?.guardError ? "node-textarea-error" : ""}`}
+              `}
             rows={1}
             onMouseDown={(e) => e.stopPropagation()}
             onChange={onGuardChange}
@@ -242,6 +247,15 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
           />
           {!isEditingGuard && (data as any)?.guardError && (
             <p className="node-error-text">{(data as any).guardError}</p>
+          )}
+          {isEditingGuard && (
+            <div className="text-[11px] leading-3 font-mono text-left pl-2 mt-[-6px] select-none">
+              <span className="text-gray-400">[</span>
+              <span className={guardGuide.hasContent ? "text-green-600" : "text-gray-400"}>
+                {guardGuide.hasContent ? guardGuide.content : "condición"}
+              </span>
+              <span className="text-gray-400">]</span>
+            </div>
           )}
         </div>
       </div>

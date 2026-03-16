@@ -28,6 +28,42 @@ export default function SendSignal({data}: DataProps) {
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
 
+    const raw = value.trim();
+
+    let partitionsText = "";
+    let signalText = "";
+    let isOpenPartitions = false;
+
+    if (raw.startsWith("(")) {
+        const closeIndex = raw.indexOf(")");
+
+        if (closeIndex === -1) {
+            isOpenPartitions = true;
+            partitionsText = raw.slice(1).trim();
+            signalText = "";
+        } else {
+            partitionsText = raw.slice(1, closeIndex).trim();
+            signalText = raw.slice(closeIndex + 1).trim();
+        }
+    } else {
+        signalText = raw;
+    }
+
+    const parsedPartitions = partitionsText
+        ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+        : [];
+
+    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+    const sendSignalGuide = {
+        partitionsOk: parsedPartitions.length > 0,
+        partitionsText: parsedPartitions.join(", "),
+        isOpenPartitions,
+        nextPartitionLabel,
+        signalOk: signalText.length > 0,
+        signalText,
+    };
+
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
@@ -171,8 +207,6 @@ export default function SendSignal({data}: DataProps) {
                 placeholder={`(Particiones...)\nEnvio de señal`}
                 className={`node-textarea w-4/5 pr-4 ${
                     isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-                } ${
-                    !isEditing && labelError ? 'node-textarea-error' : ''
                 }`}
                 rows={1}
             />
@@ -182,6 +216,41 @@ export default function SendSignal({data}: DataProps) {
             {isEditing &&
                 <p className="char-counter char-counter-left">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
             }
+            {isEditing && (
+                <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+                    <span className="text-gray-400">(</span>
+
+                    {sendSignalGuide.partitionsOk ? (
+                        <>
+                            <span className="text-green-600">
+                                {sendSignalGuide.partitionsText}
+                            </span>
+
+                            {sendSignalGuide.isOpenPartitions && (
+                                <>
+                                    <span className="text-gray-400">, </span>
+                                    <span className="text-gray-400">{sendSignalGuide.nextPartitionLabel}</span>
+                                </>
+                            )}
+
+                            {!sendSignalGuide.isOpenPartitions && (
+                                <span className="text-gray-400">)</span>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <span className="text-gray-400">P1, P2...</span>
+                            <span className="text-gray-400">)</span>
+                        </>
+                    )}
+
+                    <span className="text-gray-400">{" "}</span>
+
+                    <span className={sendSignalGuide.signalOk ? "text-green-600" : "text-gray-400"}>
+                        {sendSignalGuide.signalOk ? sendSignalGuide.signalText : "Señal"}
+                    </span>
+                </div>
+            )}
         </div >
     )
 }

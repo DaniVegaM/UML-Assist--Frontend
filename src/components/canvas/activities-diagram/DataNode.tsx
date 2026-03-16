@@ -30,6 +30,47 @@ export default function DataNode({ data }: DataProps) {
     const node = useInternalNode(nodeId ? nodeId : '');
     const { setNodes } = useReactFlow();
 
+    const raw = value.trim();
+
+    let partitionsText = "";
+    let dataText = "";
+    let isOpenPartitions = false;
+
+    if (raw.startsWith("(")) {
+        const closeIndex = raw.indexOf(")");
+
+        if (closeIndex === -1) {
+            isOpenPartitions = true;
+            partitionsText = raw.slice(1).trim();
+            dataText = "";
+        } else {
+            partitionsText = raw.slice(1, closeIndex).trim();
+            dataText = raw.slice(closeIndex + 1).trim();
+        }
+    } else {
+        dataText = raw;
+    }
+
+    const parsedPartitions = partitionsText
+        ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+        : [];
+
+    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+    const dataGuide = {
+        partitionsOk: parsedPartitions.length > 0,
+        partitionsText: parsedPartitions.join(", "),
+        isOpenPartitions,
+        nextPartitionLabel,
+        dataOk: dataText.length > 0,
+        dataText,
+    };
+
+    const dataPlaceholderText =
+        node?.data?.objectVariant === 'centralBuffer'
+            ? 'Búfer'
+            : 'Datastore';
+            
     const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -218,8 +259,6 @@ export default function DataNode({ data }: DataProps) {
                         maxLength={TEXT_AREA_MAX_LEN}
                         className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${
                             isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                        } ${
-                            !isEditing && labelError ? 'node-textarea-error' : ''
                         }`}
                     />
                     {!isEditing && labelError && (
@@ -228,6 +267,41 @@ export default function DataNode({ data }: DataProps) {
                     {isEditing &&
                         <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                     }
+                    {isEditing && (
+                        <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+                            <span className="text-gray-400">(</span>
+
+                            {dataGuide.partitionsOk ? (
+                                <>
+                                    <span className="text-green-600">
+                                        {dataGuide.partitionsText}
+                                    </span>
+
+                                    {dataGuide.isOpenPartitions && (
+                                        <>
+                                            <span className="text-gray-400">, </span>
+                                            <span className="text-gray-400">{dataGuide.nextPartitionLabel}</span>
+                                        </>
+                                    )}
+
+                                    {!dataGuide.isOpenPartitions && (
+                                        <span className="text-gray-400">)</span>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-gray-400">P1, P2...</span>
+                                    <span className="text-gray-400">)</span>
+                                </>
+                            )}
+
+                            <span className="text-gray-400">{" "}</span>
+
+                            <span className={dataGuide.dataOk ? "text-green-600" : "text-gray-400"}>
+                                {dataGuide.dataOk ? dataGuide.dataText : dataPlaceholderText}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

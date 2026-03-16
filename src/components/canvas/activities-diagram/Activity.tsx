@@ -193,8 +193,6 @@ export default function Activity({ data } : DataProps) {
                         placeholder={`Actividad`}
                         className={`node-textarea ${
                             isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-                        } ${
-                            !isEditing && labelError ? 'node-textarea-error' : ''
                         }`}
                     />
                     {!isEditing && labelError && (

@@ -28,6 +28,48 @@ export default function ObjectNode({ data }: DataProps) {
     const [value, setValue] = useState(labelFromNode);
     const { setIsZoomOnScrollEnabled } = useCanvas();
 
+    const raw = value.trim();
+
+    let partitionsText = "";
+    let objectText = "";
+    let isOpenPartitions = false;
+
+    if (raw.startsWith("(")) {
+        const closeIndex = raw.indexOf(")");
+
+        if (closeIndex === -1) {
+            isOpenPartitions = true;
+            partitionsText = raw.slice(1).trim();
+            objectText = "";
+        } else {
+            partitionsText = raw.slice(1, closeIndex).trim();
+            objectText = raw.slice(closeIndex + 1).trim();
+        }
+    } else {
+        objectText = raw;
+    }
+
+    const parsedPartitions = partitionsText
+        ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+        : [];
+
+    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+    const rawName = objectText.split(":")[0]?.trim() ?? "";
+    const rawType = objectText.includes(":") ? objectText.split(":")[1]?.trim() ?? "" : "";
+
+    const objectGuide = {
+        partitionsOk: parsedPartitions.length > 0,
+        partitionsText: parsedPartitions.join(", "),
+        isOpenPartitions,
+        nextPartitionLabel,
+        nameOk: rawName.length > 0,
+        typeOk: rawType.length > 0,
+        name: rawName,
+        type: rawType,
+        hasColon: objectText.includes(":"),
+    };
+
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -176,16 +218,6 @@ export default function ObjectNode({ data }: DataProps) {
         );
     }, [nodeId, value, setNodes, setIsZoomOnScrollEnabled]);
 
-    const rawName = value.split(":")[0]?.trim() ?? "";
-    const rawType = value.includes(":") ? value.split(":")[1]?.trim() ?? "" : "";
-
-    const objectGuide = {
-        nameOk: rawName.length > 0,
-        typeOk: rawType.length > 0,
-        name: rawName,
-        type: rawType,
-    };
-
     return (
         <div
             onDoubleClick={handleDoubleClick}
@@ -202,8 +234,6 @@ export default function ObjectNode({ data }: DataProps) {
                 <textarea
                     className={`node-textarea nowheel ${
                         isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-                    } ${
-                        !isEditing && labelError ? 'node-textarea-error' : ''
                     }`}
                     ref={textareaRef}
                     value={value}
@@ -221,11 +251,39 @@ export default function ObjectNode({ data }: DataProps) {
                 }
                 {isEditing && (
                     <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+                        <span className="text-gray-400">(</span>
+
+                        {objectGuide.partitionsOk ? (
+                            <>
+                                <span className="text-green-600">
+                                    {objectGuide.partitionsText}
+                                </span>
+
+                                {objectGuide.isOpenPartitions && (
+                                    <>
+                                        <span className="text-gray-400">, </span>
+                                        <span className="text-gray-400">{objectGuide.nextPartitionLabel}</span>
+                                    </>
+                                )}
+
+                                {!objectGuide.isOpenPartitions && (
+                                    <span className="text-gray-400">)</span>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <span className="text-gray-400">P1, P2...</span>
+                                <span className="text-gray-400">)</span>
+                            </>
+                        )}
+
+                        <span className="text-gray-400">{" "}</span>
+
                         <span className={objectGuide.nameOk ? "text-green-600" : "text-gray-400"}>
                             {objectGuide.nameOk ? objectGuide.name : "nombre"}
                         </span>
 
-                        <span className={value.includes(":") ? "text-green-600" : "text-gray-400"}>
+                        <span className={objectGuide.hasColon ? "text-green-600" : "text-gray-400"}>
                             :
                         </span>
 

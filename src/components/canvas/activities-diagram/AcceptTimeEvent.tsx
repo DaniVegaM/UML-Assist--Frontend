@@ -29,6 +29,42 @@ export default function AcceptTimeEvent({data}: DataProps) {
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
 
+    const raw = value.trim();
+
+    let partitionsText = "";
+    let eventText = "";
+    let isOpenPartitions = false;
+
+    if (raw.startsWith("(")) {
+        const closeIndex = raw.indexOf(")");
+
+        if (closeIndex === -1) {
+            isOpenPartitions = true;
+            partitionsText = raw.slice(1).trim();
+            eventText = "";
+        } else {
+            partitionsText = raw.slice(1, closeIndex).trim();
+            eventText = raw.slice(closeIndex + 1).trim();
+        }
+    } else {
+        eventText = raw;
+    }
+
+    const parsedPartitions = partitionsText
+        ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+        : [];
+
+    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+    const acceptTimeGuide = {
+        partitionsOk: parsedPartitions.length > 0,
+        partitionsText: parsedPartitions.join(", "),
+        isOpenPartitions,
+        nextPartitionLabel,
+        eventOk: eventText.length > 0,
+        eventText,
+    };
+
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
@@ -188,8 +224,6 @@ export default function AcceptTimeEvent({data}: DataProps) {
                     placeholder={`(Particiones...)\nEvento de tiempo`}
                     className={`node-textarea max-w-[120px] w-4/5 ${
                         isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-                    } ${
-                        !isEditing && labelError ? 'node-textarea-error' : ''
                     }`}
                 />
                 {!isEditing && labelError && (
@@ -198,6 +232,41 @@ export default function AcceptTimeEvent({data}: DataProps) {
                 {isEditing &&
                     <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
                 }
+                {isEditing && (
+                    <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+                        <span className="text-gray-400">(</span>
+
+                        {acceptTimeGuide.partitionsOk ? (
+                            <>
+                                <span className="text-green-600">
+                                    {acceptTimeGuide.partitionsText}
+                                </span>
+
+                                {acceptTimeGuide.isOpenPartitions && (
+                                    <>
+                                        <span className="text-gray-400">, </span>
+                                        <span className="text-gray-400">{acceptTimeGuide.nextPartitionLabel}</span>
+                                    </>
+                                )}
+
+                                {!acceptTimeGuide.isOpenPartitions && (
+                                    <span className="text-gray-400">)</span>
+                                )}
+                            </>
+                        ) : (
+                            <>
+                                <span className="text-gray-400">P1, P2...</span>
+                                <span className="text-gray-400">)</span>
+                            </>
+                        )}
+
+                        <span className="text-gray-400">{" "}</span>
+
+                        <span className={acceptTimeGuide.eventOk ? "text-green-600" : "text-gray-400"}>
+                            {acceptTimeGuide.eventOk ? acceptTimeGuide.eventText : "Tiempo"}
+                        </span>
+                    </div>
+                )}
             </div>
         </div>
     )

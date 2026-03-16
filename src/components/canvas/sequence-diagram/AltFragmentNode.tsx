@@ -100,6 +100,11 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
     setRawFirstOperand(raw.slice(0, TEXT_AREA_MAX_LEN));
   }, [nodeId, setNodes]);
 
+  const firstOperandGuide = {
+    hasContent: rawFirstOperand.trim().length > 0,
+    content: rawFirstOperand.trim(),
+  };
+
   const onFirstOperandBlur = useCallback(() => {
     setIsEditingFirstOperand(false);
     setIsZoomOnScrollEnabled(true);
@@ -321,7 +326,6 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
           placeholder={`[condición]`}
           className={`no-wheel nodrag w-full h-[25px] placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono
             ${isEditingFirstOperand ? 'pointer-events-auto' : 'pointer-events-none'}
-            ${!isEditingFirstOperand && data?.firstOperandError ? "node-textarea-error" : ""}
           `}
           rows={1}
           onMouseDown={e => e.stopPropagation()}
@@ -329,8 +333,18 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
           onBlur={onFirstOperandBlur}
           value={isEditingFirstOperand ? rawFirstOperand : (rawFirstOperand ? `[${rawFirstOperand}]` : '')}
         />
+        
         {!isEditingFirstOperand && firstOperandError && (
           <p className="node-error-text">{firstOperandError}</p>
+        )}
+        {isEditingFirstOperand && (
+          <div className="text-[11px] leading-5 font-mono text-center select-none">
+            <span className="text-gray-400">[</span>
+            <span className={firstOperandGuide.hasContent ? "text-green-600" : "text-gray-400"}>
+              {firstOperandGuide.hasContent ? firstOperandGuide.content : "condición"}
+            </span>
+            <span className="text-gray-400">]</span>
+          </div>
         )}
       </div>
 
@@ -340,6 +354,10 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
         {separators.map((_, index) => {
           const isEditingThis = editingSeparatorIndex === index;
           const rawValue = separatorValues[index] || '';
+          const separatorGuide = {
+            hasContent: rawValue.trim().length > 0,
+            content: rawValue.trim(),
+          };
 
           return (
             <div
@@ -388,6 +406,15 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
                   `}
                   rows={1}
                 />
+                {isEditingThis && (
+                  <div className="text-[11px] leading-5 font-mono text-center select-none">
+                    <span className="text-gray-400">[</span>
+                    <span className={separatorGuide.hasContent ? "text-green-600" : "text-gray-400"}>
+                      {separatorGuide.hasContent ? separatorGuide.content : "condición"}
+                    </span>
+                    <span className="text-gray-400">]</span>
+                  </div>
+                )}
               </div>
             </div>
           );

@@ -37,13 +37,48 @@ export default function SimpleAction({data} : DataProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(labelFromNode);
-  const { isValid, error, verbGuide } = useLiveTextValidation(value, {
+  const { isValid, error } = useLiveTextValidation(value, {
     required: true,
     max: TEXT_AREA_MAX_LEN,
     forbiddenChars: /[¿?]/,
     forbiddenMessage: "No es recomendable signos de interrogación en una acción.",
-    enableVerbGuide: true,
   });
+
+  const raw = value.trim();
+
+  let partitionsText = "";
+  let actionText = "";
+  let isOpenPartitions = false;
+
+  if (raw.startsWith("(")) {
+    const closeIndex = raw.indexOf(")");
+
+    if (closeIndex === -1) {
+      isOpenPartitions = true;
+      partitionsText = raw.slice(1).trim();
+      actionText = "";
+    } else {
+      partitionsText = raw.slice(1, closeIndex).trim();
+      actionText = raw.slice(closeIndex + 1).trim();
+    }
+  } else {
+    actionText = raw;
+  }
+
+  const parsedPartitions = partitionsText
+    ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+    : [];
+
+  const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+  const actionGuide = {
+    partitionsOk: parsedPartitions.length > 0,
+    partitionsText: parsedPartitions.join(", "),
+    actionOk: actionText.length > 0,
+    actionText,
+    isOpenPartitions,
+    nextPartitionLabel,
+  };
 
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
@@ -116,7 +151,7 @@ export default function SimpleAction({data} : DataProps) {
     );
 
     if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-      setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
+      setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
     } else {
       setValue(evt.target.value);
     }
@@ -192,25 +227,41 @@ export default function SimpleAction({data} : DataProps) {
           placeholder={`(Particiones...)\nAcción`}
           className={`node-textarea ${
             isEditing ? "node-textarea-editing" : "node-textarea-readonly"
-          } ${
-            !isEditing && labelError ? "node-textarea-error" : ""
           }`}
           rows={1}
         />
         {isEditing && (
-          <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-        )}
-
-        {isEditing && verbGuide && (
           <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-            <span className={verbGuide.verbOk ? "text-green-600" : "text-gray-400"}>
-              {verbGuide.verbOk ? verbGuide.verb : "VERBO"}
-            </span>
+            <span className="text-gray-400">(</span>
+
+            {actionGuide.partitionsOk ? (
+              <>
+                <span className="text-green-600">
+                  {actionGuide.partitionsText}
+                </span>
+
+                {actionGuide.isOpenPartitions && (
+                  <>
+                    <span className="text-gray-400">, </span>
+                    <span className="text-gray-400">{actionGuide.nextPartitionLabel}</span>
+                  </>
+                )}
+
+                {!actionGuide.isOpenPartitions && (
+                  <span className="text-gray-400">)</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400">Partición 1, Partición 2...</span>
+                <span className="text-gray-400">)</span>
+              </>
+            )}
 
             <span className="text-gray-400">{" "}</span>
 
-            <span className={verbGuide.complementOk ? "text-green-600" : "text-gray-400"}>
-              {verbGuide.complementOk ? verbGuide.complement : "Complemento"}
+            <span className={actionGuide.actionOk ? "text-green-600" : "text-gray-400"}>
+              {actionGuide.actionOk ? actionGuide.actionText : "Acción"}
             </span>
           </div>
         )}

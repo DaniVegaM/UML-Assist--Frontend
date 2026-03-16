@@ -29,6 +29,51 @@ export default function CallOperation({ data }: DataProps) {
   const mustFillLabel = callOperationData.mustFillLabel ?? false;
   const [value, setValue] = useState(labelFromNode);
 
+  const raw = value.trim();
+
+let partitionsText = "";
+let operationText = "";
+let isOpenPartitions = false;
+
+if (raw.startsWith("(")) {
+  const closeIndex = raw.indexOf(")");
+
+  if (closeIndex === -1) {
+    isOpenPartitions = true;
+    partitionsText = raw.slice(1).trim();
+    operationText = "";
+  } else {
+    partitionsText = raw.slice(1, closeIndex).trim();
+    operationText = raw.slice(closeIndex + 1).trim();
+  }
+} else {
+  operationText = raw;
+}
+
+const parsedPartitions = partitionsText
+  ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+  : [];
+
+const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+const [classPartRaw, operationPartRaw] = operationText.split("::");
+
+const classPart = classPartRaw?.trim() ?? "";
+const operationPart = operationPartRaw?.trim() ?? "";
+const hasDoubleColon = operationText.includes("::");
+
+const callOperationGuide = {
+  partitionsOk: parsedPartitions.length > 0,
+  partitionsText: parsedPartitions.join(", "),
+  isOpenPartitions,
+  nextPartitionLabel,
+  classOk: classPart.length > 0,
+  classText: classPart,
+  hasDoubleColon,
+  operationOk: operationPart.length > 0,
+  operationText: operationPart,
+};
+
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -102,7 +147,7 @@ export default function CallOperation({ data }: DataProps) {
     );
 
     if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-      setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
+      setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
     } else {
       setValue(evt.target.value);
     }
@@ -182,7 +227,7 @@ export default function CallOperation({ data }: DataProps) {
           onWheel={(e) => e.stopPropagation()}
           readOnly={!isEditing}
           placeholder={`(Particiones...)\nC::O`}
-          className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'} ${!isEditing && labelError ? 'node-textarea-error' : ''}`}
+          className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
           rows={1}
         />
         {!isEditing && labelError && (
@@ -191,6 +236,49 @@ export default function CallOperation({ data }: DataProps) {
         {isEditing &&
           <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
         }
+        {isEditing && (
+          <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+            <span className="text-gray-400">(</span>
+
+            {callOperationGuide.partitionsOk ? (
+              <>
+                <span className="text-green-600">
+                  {callOperationGuide.partitionsText}
+                </span>
+
+                {callOperationGuide.isOpenPartitions && (
+                  <>
+                    <span className="text-gray-400">, </span>
+                    <span className="text-gray-400">{callOperationGuide.nextPartitionLabel}</span>
+                  </>
+                )}
+
+                {!callOperationGuide.isOpenPartitions && (
+                  <span className="text-gray-400">)</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400">Partición 1, Partición 2...</span>
+                <span className="text-gray-400">)</span>
+              </>
+            )}
+
+            <span className="text-gray-400">{" "}</span>
+
+            <span className={callOperationGuide.classOk ? "text-green-600" : "text-gray-400"}>
+              {callOperationGuide.classOk ? callOperationGuide.classText : "C"}
+            </span>
+
+            <span className={callOperationGuide.hasDoubleColon ? "text-green-600" : "text-gray-400"}>
+              :: 
+            </span>
+
+            <span className={callOperationGuide.operationOk ? "text-green-600" : "text-gray-400"}>
+              {callOperationGuide.operationOk ? callOperationGuide.operationText : "O"}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

@@ -29,6 +29,42 @@ export default function CallBehaviorNode({ data }: DataProps) {
     const [value, setValue] = useState(labelFromNode);
     const { setIsZoomOnScrollEnabled } = useCanvas();
 
+    const raw = value.trim();
+
+    let partitionsText = "";
+    let behaviorText = "";
+    let isOpenPartitions = false;
+
+    if (raw.startsWith("(")) {
+        const closeIndex = raw.indexOf(")");
+
+        if (closeIndex === -1) {
+            isOpenPartitions = true;
+            partitionsText = raw.slice(1).trim();
+            behaviorText = "";
+        } else {
+            partitionsText = raw.slice(1, closeIndex).trim();
+            behaviorText = raw.slice(closeIndex + 1).trim();
+        }
+    } else {
+        behaviorText = raw;
+    }
+
+    const parsedPartitions = partitionsText
+        ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+        : [];
+
+    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+    const callBehaviorGuide = {
+        partitionsOk: parsedPartitions.length > 0,
+        partitionsText: parsedPartitions.join(", "),
+        isOpenPartitions,
+        nextPartitionLabel,
+        behaviorOk: behaviorText.length > 0,
+        behaviorText,
+    };
+
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -200,22 +236,60 @@ export default function CallBehaviorNode({ data }: DataProps) {
                     placeholder={`(Particiones...)\nLlamada a un comportamiento`}
                     className={`node-textarea ${
                         isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-                    } ${
-                        !isEditing && labelError ? 'node-textarea-error' : ''
                     }`}
                     rows={1}
                 />
                 {!isEditing && labelError && (
                     <p className="node-error-text">{labelError}</p>
                 )}
-                <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'} gap-6 w-full`}>
-                    {isEditing &&
-                        <p className="char-counter char-counter-left">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-                    }
-                    <div className={`w-5 h-5 ${isDarkMode ? 'bg-neutral-300' : 'bg-neutral-700'}`}
-                        style={{
-                            clipPath: 'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
-                        }}></div>
+                <div className="w-full">
+                    <div className={`flex ${isEditing ? 'justify-between' : 'justify-end'} gap-6 w-full`}>
+                        {isEditing &&
+                            <p className="char-counter char-counter-left">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
+                        }
+                        <div
+                            className={`w-5 h-5 ${isDarkMode ? 'bg-neutral-300' : 'bg-neutral-700'}`}
+                            style={{
+                                clipPath: 'polygon(40% 0, 60% 0, 60% 45%, 100% 45%, 100% 100%, 80% 100%, 80% 60%, 60% 60%, 59% 100%, 40% 100%, 40% 60%, 20% 60%, 20% 100%, 0 100%, 0 45%, 40% 45%)'
+                            }}
+                        ></div>
+                    </div>
+
+                    {isEditing && (
+                        <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+                            <span className="text-gray-400">(</span>
+
+                            {callBehaviorGuide.partitionsOk ? (
+                                <>
+                                    <span className="text-green-600">
+                                        {callBehaviorGuide.partitionsText}
+                                    </span>
+
+                                    {callBehaviorGuide.isOpenPartitions && (
+                                        <>
+                                            <span className="text-gray-400">, </span>
+                                            <span className="text-gray-400">{callBehaviorGuide.nextPartitionLabel}</span>
+                                        </>
+                                    )}
+
+                                    {!callBehaviorGuide.isOpenPartitions && (
+                                        <span className="text-gray-400">)</span>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    <span className="text-gray-400">Partición 1, Partición 2...</span>
+                                    <span className="text-gray-400">)</span>
+                                </>
+                            )}
+
+                            <span className="text-gray-400">{" "}</span>
+
+                            <span className={callBehaviorGuide.behaviorOk ? "text-green-600" : "text-gray-400"}>
+                                {callBehaviorGuide.behaviorOk ? callBehaviorGuide.behaviorText : "Comportamiento"}
+                            </span>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

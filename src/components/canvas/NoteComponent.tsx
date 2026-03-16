@@ -173,8 +173,7 @@ export default function NoteComponent({data} : DataProps) {
                     rows={1}
                     className={`node-textarea nowheel ${isEditing
                         ? "node-textarea-editing"
-                        : "node-textarea-readonly"
-                        } ${!isEditing && labelError ? "node-textarea-error" : ""}`}
+                        : "node-textarea-readonly"}`}
                 />
 
                 {!isEditing && labelError && (

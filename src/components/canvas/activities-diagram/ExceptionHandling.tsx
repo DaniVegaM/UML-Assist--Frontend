@@ -30,6 +30,42 @@ export default function ExceptionHandling({ data }: DataProps) {
   const [value, setValue] = useState(labelFromNode);
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
+  const raw = value.trim();
+
+  let partitionsText = "";
+  let exceptionText = "";
+  let isOpenPartitions = false;
+
+  if (raw.startsWith("(")) {
+    const closeIndex = raw.indexOf(")");
+
+    if (closeIndex === -1) {
+      isOpenPartitions = true;
+      partitionsText = raw.slice(1).trim();
+      exceptionText = "";
+    } else {
+      partitionsText = raw.slice(1, closeIndex).trim();
+      exceptionText = raw.slice(closeIndex + 1).trim();
+    }
+  } else {
+    exceptionText = raw;
+  }
+
+  const parsedPartitions = partitionsText
+    ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+    : [];
+
+  const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+
+  const exceptionGuide = {
+    partitionsOk: parsedPartitions.length > 0,
+    partitionsText: parsedPartitions.join(", "),
+    isOpenPartitions,
+    nextPartitionLabel,
+    exceptionOk: exceptionText.length > 0,
+    exceptionText,
+  };
+
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
@@ -200,8 +236,6 @@ export default function ExceptionHandling({ data }: DataProps) {
           placeholder={`(Particiones...)\nControl de excepciones`}
           className={`node-textarea ${
               isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'
-          } ${
-              !isEditing && labelError ? 'node-textarea-error' : ''
           }`}
           rows={1}
         />
@@ -211,6 +245,41 @@ export default function ExceptionHandling({ data }: DataProps) {
         {isEditing &&
           <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
         }
+        {isEditing && (
+          <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
+            <span className="text-gray-400">(</span>
+
+            {exceptionGuide.partitionsOk ? (
+              <>
+                <span className="text-green-600">
+                  {exceptionGuide.partitionsText}
+                </span>
+
+                {exceptionGuide.isOpenPartitions && (
+                  <>
+                    <span className="text-gray-400">, </span>
+                    <span className="text-gray-400">{exceptionGuide.nextPartitionLabel}</span>
+                  </>
+                )}
+
+                {!exceptionGuide.isOpenPartitions && (
+                  <span className="text-gray-400">)</span>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-gray-400">P1, P2...</span>
+                <span className="text-gray-400">)</span>
+              </>
+            )}
+
+            <span className="text-gray-400">{" "}</span>
+
+            <span className={exceptionGuide.exceptionOk ? "text-green-600" : "text-gray-400"}>
+              {exceptionGuide.exceptionOk ? exceptionGuide.exceptionText : "Excepción"}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   )

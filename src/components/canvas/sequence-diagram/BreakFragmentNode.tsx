@@ -24,6 +24,11 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   const [guard, setGuard] = useState<string>(guardFromNode);
   const [isEditingGuard, setIsEditingGuard] = useState(false);
 
+  const guardGuide = {
+    hasContent: guard.trim().length > 0,
+    content: guard.trim(),
+  };
+
   // Si el nodo cambia externamente (undo/redo, load, etc.), sincroniza el state local
   useEffect(() => {
     setGuard(guardFromNode);
@@ -136,7 +141,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
             placeholder="[condición]"
             className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-sm px-2 py-1 overflow-hidden font-mono
               ${isEditingGuard ? "pointer-events-auto" : "pointer-events-none"}
-              ${!isEditingGuard && guardError ? "node-textarea-error" : ""}`}
+              `}
             rows={1}
             onMouseDown={(e) => e.stopPropagation()}
             onChange={onGuardChange}
@@ -146,6 +151,15 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
 
           {!isEditingGuard && guardError && (
             <p className="node-error-text">{guardError}</p>
+          )}
+          {isEditingGuard && (
+            <div className="text-[11px] leading-3 font-mono text-left pl-2 mt-[-6px] select-none">
+              <span className="text-gray-400">[</span>
+              <span className={guardGuide.hasContent ? "text-green-600" : "text-gray-400"}>
+                {guardGuide.hasContent ? guardGuide.content : "condición"}
+              </span>
+              <span className="text-gray-400">]</span>
+            </div>
           )}
         </div>
       </div>
