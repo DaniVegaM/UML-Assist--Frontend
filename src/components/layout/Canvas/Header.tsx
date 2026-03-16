@@ -78,10 +78,13 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                 const newId = response.data.id;
 
                 if (newId) {
-                    const basePath =
-                        type === 'activity'
-                            ? '/crear-diagrama-de-actividades'
-                            : '/crear-diagrama-de-secuencia';
+                    let basePath = '/crear-diagrama-de-secuencia';
+
+                    if (type === 'actividades') {
+                        basePath = '/crear-diagrama-de-actividades';
+                    } else if (type === 'secuencia') {
+                        basePath = '/crear-diagrama-de-secuencia';
+                    }
 
                     navigate(`${basePath}/${newId}`, { replace: true });
                 }
