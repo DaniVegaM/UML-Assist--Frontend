@@ -18,6 +18,10 @@ import AIChatBar from "../../components/canvas/AIChatBar";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
+import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
+
+
+
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -37,7 +41,7 @@ function DiagramContent() {
         [openEdgeContextMenu],
     );
 
-    useEffect(() => {
+        useEffect(() => {
         const loadDiagram = async () => {
             if (diagramId) {
                 const response = await fetchDiagramById(diagramId);
@@ -54,6 +58,33 @@ function DiagramContent() {
             setEdges(diagram.content.canvas.edges || []);
         }
     }, [diagram]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
+    useEffect(() => {
+        window.history.pushState(null, '', window.location.href);
+        const handlePopState = async () => {
+            const result = await confirmExitWithoutSaving();
+            if (!result.isConfirmed) {
+                window.history.pushState(null, '', window.location.href);
+            } else {
+                window.removeEventListener('popstate', handlePopState);
+                window.history.back();
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
