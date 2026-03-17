@@ -6,7 +6,7 @@ import Header from "../../components/layout/Canvas/Header";
 import { sequenceNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { SEQUENCE_NODES } from "../../diagrams-elements/sequence-elements";
 import { CanvasProvider as SequenceCanvasProvider } from "../../contexts/SequenceDiagramContext";
@@ -18,6 +18,7 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import type { Diagram } from "../../types/diagramsModel";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 
@@ -29,7 +30,25 @@ function DiagramContent() {
     const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
 
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
-    const { isValidSequenceConnection } = useLocalValidations(nodes, edges);
+    const { validateSequenceConnection } = useLocalValidations(nodes, edges);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    const isValidSequenceConnectionWithFeedback = useCallback(
+        (conn: Connection) => {
+            const result = validateSequenceConnection(conn);
+
+            if (!result.ok) {
+            lastInvalidAttemptRef.current = {
+                ts: Date.now(),
+                message: result.reason ?? "Conexión inválida.",
+                type: result.severity ?? "info",
+            };
+            }
+
+            return result.ok;
+        },
+        [validateSequenceConnection]
+    );
 
     useEffect(() => {
         const loadDiagram = async () => {
@@ -98,8 +117,7 @@ function DiagramContent() {
     );
 
     const onConnect = useCallback(
-        (params: Connection) => {
-
+        (params: Connection) => {          
             const sourceNode = nodes.find(n => n.id === params.source);
             const targetNode = nodes.find(n => n.id === params.target);
 
@@ -188,6 +206,20 @@ function DiagramContent() {
         );
     }, [isDarkMode, setEdges]);
 
+    const handleConnectEnd = useCallback(() => {
+        setIsTryingToConnect(false);
+
+        const info = lastInvalidAttemptRef.current;
+        if (info && Date.now() - info.ts < 700) {
+            notify(info.type, "Conexión inválida", info.message);
+        }
+        lastInvalidAttemptRef.current = null;
+    }, [setIsTryingToConnect]);
+
+    const handleConnectStart = useCallback(() => {
+        setIsTryingToConnect(true);
+    }, [setIsTryingToConnect]);
+
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
             <Header
@@ -200,7 +232,6 @@ function DiagramContent() {
 
             <section className="h-full w-full relative" onMouseMove={handleMouseMove}>
 
-                
                 <ReactFlow
                     deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
@@ -234,9 +265,9 @@ function DiagramContent() {
                     onEdgesChange={onEdgesChange}
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
-                    isValidConnection={isValidSequenceConnection}
-                    onConnectStart={() => setIsTryingToConnect(true)}
-                    onConnectEnd={() => setIsTryingToConnect(false)}
+                    isValidConnection={isValidSequenceConnectionWithFeedback}
+                    onConnectEnd={handleConnectEnd}
+                    onConnectStart={handleConnectStart}
                     onConnect={onConnect}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -260,7 +291,7 @@ export default function CreateSequenceDiagram() {
         <ReactFlowProvider>
             <CanvasProvider>
                 <SequenceCanvasProvider>
-                    <DiagramContent />
+                        <DiagramContent />
                 </SequenceCanvasProvider>
             </CanvasProvider>
         </ReactFlowProvider>

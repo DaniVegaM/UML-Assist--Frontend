@@ -1,5 +1,4 @@
-
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useTheme } from '../../../hooks/useTheme';
 import type { HeaderProps } from '../../../types/canvas';
 import { useEffect, useState } from 'react';
@@ -7,8 +6,10 @@ import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import { toPng } from 'html-to-image';
 import './Header.css';
 
+
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
+    const navigate = useNavigate();
     const [title, setTitle] = useState<string>('')
     const [saving, setSaving] = useState<boolean>(false)
     const [loading, setLoading] = useState({ showLoading: false, showConfirmation: false, showError: false });
@@ -69,11 +70,28 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
             if (previewBlob) {
                 formData.append("preview_image", previewBlob, "preview.png");
             }
-            const savePromise = !diagramId
-                ? createDiagram(formData)
-                : updateDiagram(diagramId, formData);
+            let response;
 
-            await Promise.all([savePromise, minLoadingTime]);
+            if (!diagramId) {
+                response = await createDiagram(formData);
+                const newId = response.data.id;
+
+                if (newId) {
+                    let basePath = '/crear-diagrama-de-secuencia';
+
+                    if (type === 'actividades') {
+                        basePath = '/crear-diagrama-de-actividades';
+                    } else if (type === 'secuencia') {
+                        basePath = '/crear-diagrama-de-secuencia';
+                    }
+
+                    navigate(`${basePath}/${newId}`, { replace: true });
+                }
+            } else {
+                response = await updateDiagram(diagramId, formData);
+            }
+
+            await minLoadingTime;
 
             setLoading({ showLoading: false, showConfirmation: true, showError: false });
             setTimeout(() => {
