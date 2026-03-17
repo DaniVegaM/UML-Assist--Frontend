@@ -399,6 +399,11 @@ export function MessageEdge({
                         e.stopPropagation();
                         startEditing();
                     }}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleContextMenu(e);
+                    }}
                     style={{
                         ...labelStyle,
                         background: '#F3F4F6',
@@ -408,6 +413,8 @@ export function MessageEdge({
                         : '2px 4px',
                         fontSize: '12px',
                         borderRadius: labelBgBorderRadius,
+                        maxWidth: '200px',       
+                        wordWrap: 'break-word',   
                     }}
                     >
                     {label}
