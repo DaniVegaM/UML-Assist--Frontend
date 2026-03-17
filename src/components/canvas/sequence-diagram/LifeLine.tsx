@@ -140,17 +140,8 @@ export default function LifeLine({ data }: DataProps) {
                         : n
                 )
             );
-
-            setIsManualEdit(false);
-            setIsEditing(true);
-            setIsZoomOnScrollEnabled(false);
-
-            setTimeout(() => {
-                textareaRef.current?.focus();
-                textareaRef.current?.select();
-            }, 0);
         }
-    }, [nodeId, mustFillLabel, labelFromNode, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
+    }, [nodeId, mustFillLabel, labelFromNode, value, isEditing, setNodes]);
 
     // Forzar actualización de handles cuando se cargan datos con handles
     useEffect(() => {
@@ -164,11 +155,26 @@ export default function LifeLine({ data }: DataProps) {
     }, [nodeId, data?.handles, updateNodeInternals]);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (evt.target.value.length >= LIFE_LINE_MAX_LEN_TEXT) {
-            setValue(evt.target.value.trim().slice(0, LIFE_LINE_MAX_LEN_TEXT));
-        } else {
-            setValue(evt.target.value);
+        let newValue = evt.target.value;
+
+        //Solo permitir letras, espacios y :
+        newValue = newValue.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ:\s]/g, "");
+
+        //Permitir solo un :
+        const firstColonIndex = newValue.indexOf(":");
+        if (firstColonIndex !== -1) {
+            newValue =
+                newValue.slice(0, firstColonIndex + 1) +
+                newValue.slice(firstColonIndex + 1).replace(/:/g, "");
         }
+
+        //Evitar espacios dobles
+        newValue = newValue.replace(/\s+/g, " ");
+
+        //Limitar longitud máxima
+        newValue = newValue.slice(0, LIFE_LINE_MAX_LEN_TEXT);
+
+        setValue(newValue);
     }, []);
 
     useEffect(() => {
@@ -309,15 +315,15 @@ export default function LifeLine({ data }: DataProps) {
                 {isEditing && isManualEdit && roleClassGuide && (
                     <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
                         <span className={roleClassGuide.roleOk ? "text-green-600" : "text-gray-400"}>
-                            {roleClassGuide.roleOk ? roleClassGuide.role : "ROL"}
+                            {roleClassGuide.roleOk ? roleClassGuide.role.trim() : "Rol"}
                         </span>
 
                         <span className={roleClassGuide.hasColon ? "text-green-600" : "text-gray-400"}>
-                            {" : "}
+                            {":"}
                         </span>
 
                         <span className={roleClassGuide.classOk ? "text-green-600" : "text-gray-400"}>
-                            {roleClassGuide.classOk ? roleClassGuide.clazz : "CLASE"}
+                            {roleClassGuide.classOk ? roleClassGuide.clazz.trim() : "Clase"}
                         </span>
                     </div>
                 )}

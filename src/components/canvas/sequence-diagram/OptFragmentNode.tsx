@@ -132,17 +132,23 @@ const onGuardDoubleClick = useCallback(() => {
         </div>
 
         {/* Guard del fragmento opcional */}
-        <div className="flex-1 cursor-text" onDoubleClick={onGuardDoubleClick}>
+        <div className="flex-1 cursor-text relative h-[25px]" onDoubleClick={onGuardDoubleClick}>
           <textarea
             ref={textareaRef}
             placeholder="[condición]"
-            className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-sm px-2 py-1 overflow-hidden font-mono
+            className={`no-wheel nodrag w-full h-[25px] placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-sm px-2 py-1 overflow-hidden font-mono
               ${isEditingGuard ? "pointer-events-auto" : "pointer-events-none"}
               `}
             rows={1}
             onMouseDown={(e) => e.stopPropagation()}
             onChange={onGuardChange}
             onBlur={onGuardBlur}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                textareaRef.current?.blur();
+              }
+            }}
             value={isEditingGuard ? guard : guard ? `[${guard}]` : ""}
           />
 
@@ -151,7 +157,7 @@ const onGuardDoubleClick = useCallback(() => {
           )}
 
           {isEditingGuard && (
-            <div className="text-[11px] leading-4 font-mono text-left pl-2 select-none">
+            <div className="absolute left-2 top-full mt-[-2px] text-[11px] leading-3 font-mono text-left select-none pointer-events-none whitespace-nowrap">
               <span className="text-gray-400">[</span>
               <span className={guardGuide.hasContent ? "text-green-600" : "text-gray-400"}>
                 {guardGuide.hasContent ? guardGuide.content : "condición"}

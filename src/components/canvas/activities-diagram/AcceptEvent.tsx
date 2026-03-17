@@ -29,6 +29,8 @@ export default function AcceptEvent({data}: DataProps) {
     const nodeId = useNodeId();
 
     const raw = value.trim();
+    const hasOpenParen = raw.startsWith("(");
+    const hasCloseParen = raw.includes(")");
 
     let partitionsText = "";
     let eventText = "";
@@ -39,6 +41,7 @@ export default function AcceptEvent({data}: DataProps) {
 
         if (closeIndex === -1) {
             isOpenPartitions = true;
+
             partitionsText = raw.slice(1).trim();
             eventText = "";
         } else {
@@ -53,13 +56,15 @@ export default function AcceptEvent({data}: DataProps) {
         ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
         : [];
 
-    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+    const nextPartitionLabel = `P${parsedPartitions.length + 1}...`;
+    const hasTrailingComma = /,\s*$/.test(partitionsText);
 
     const acceptEventGuide = {
         partitionsOk: parsedPartitions.length > 0,
         partitionsText: parsedPartitions.join(", "),
         isOpenPartitions,
         nextPartitionLabel,
+        hasTrailingComma,
         eventOk: eventText.length > 0,
         eventText,
     };
@@ -67,19 +72,30 @@ export default function AcceptEvent({data}: DataProps) {
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
+        let newValue = evt.target.value;
+
+        if (newValue.length > TEXT_AREA_MAX_LEN) {
+            newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+        }
+
+        const normalizedValue = newValue.trim() ? newValue : "";
+
+        setValue(normalizedValue);
+
         setNodes((nodes) =>
             nodes.map((n) =>
                 n.id === nodeId
-                    ? { ...n, data: { ...n.data, labelError: null } }
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            label: normalizedValue ,
+                            labelError: normalizedValue ? null : "No puede estar vacío.",
+                        },
+                    }
                     : n
             )
         );
-
-        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-        } else {
-            setValue(evt.target.value);
-        }
     }, [nodeId, setNodes]);
 
     useEffect(() => {
@@ -118,7 +134,7 @@ export default function AcceptEvent({data}: DataProps) {
                             data: {
                                 ...n.data,
                                 mustFillLabel: false,
-                                labelError: null,
+                                labelError: n.data.labelError ?? null,
                             },
                         }
                         : n
@@ -205,6 +221,12 @@ export default function AcceptEvent({data}: DataProps) {
                 onChange={onChange}
                 onBlur={handleBlur}
                 onWheel={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        textareaRef.current?.blur();
+                    }
+                }}
                 readOnly={!isEditing}
                 placeholder={`(Particiones...)\nEvento general`}
                 className={`node-textarea w-4/5 pl-4 ${
@@ -212,15 +234,15 @@ export default function AcceptEvent({data}: DataProps) {
                 }`}
                 rows={1}
             />
-            {!isEditing && labelError && (
-                <p className="node-error-text">{labelError}</p>
+            {!isEditing && labelError && value.trim() === "" && (
+                <p className="text-[11px] text-red-600 text-center mt-1">{labelError}</p>
             )}
             {isEditing && (
                 <>
                     <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
 
                     <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-                        <span className="text-gray-400">(</span>
+                        <span className={hasOpenParen ? "text-green-600" : "text-gray-400"}>(</span>
 
                         {acceptEventGuide.partitionsOk ? (
                             <>
@@ -228,21 +250,21 @@ export default function AcceptEvent({data}: DataProps) {
                                     {acceptEventGuide.partitionsText}
                                 </span>
 
-                                {acceptEventGuide.isOpenPartitions && (
+                                {(acceptEventGuide.isOpenPartitions || acceptEventGuide.hasTrailingComma) && (
                                     <>
                                         <span className="text-gray-400">, </span>
                                         <span className="text-gray-400">{acceptEventGuide.nextPartitionLabel}</span>
                                     </>
                                 )}
 
-                                {!acceptEventGuide.isOpenPartitions && (
-                                    <span className="text-gray-400">)</span>
+                                {!acceptEventGuide.isOpenPartitions && !acceptEventGuide.hasTrailingComma && (
+                                    <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                                 )}
                             </>
                         ) : (
                             <>
-                                <span className="text-gray-400">P1, P2..</span>
-                                <span className="text-gray-400">)</span>
+                                <span className="text-gray-400">P1, P2...</span>
+                                <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                             </>
                         )}
 

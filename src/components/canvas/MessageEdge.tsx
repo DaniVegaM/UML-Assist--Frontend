@@ -57,11 +57,26 @@ export function MessageEdge({
 
     const isEmpty = editingLabel.trim().length === 0;
 
+    const openParenIndex = editingLabel.indexOf('(');
+    const closeParenIndex = editingLabel.indexOf(')');
+
+    const liveParams =
+        openParenIndex !== -1
+            ? editingLabel.slice(
+                openParenIndex + 1,
+                closeParenIndex !== -1 ? closeParenIndex : undefined
+            ).trim()
+            : '';
+
+    const rawParamsParts = liveParams.split(',');
+
+    const endsWithComma = liveParams.trim().endsWith(',');
+    const enteredParams = rawParamsParts
+        .map((p) => p.trim())
+        .filter((p) => p.length > 0);
+
     useEffect(() => {
         if (!isEditing && (!label || label === '') && data?.mustFillLabel) {
-            setEditingLabel('');
-            setIsEditing(true);
-            validateLive('');
 
             setEdges((currentEdges) =>
                 currentEdges.map((e) =>
@@ -71,7 +86,7 @@ export function MessageEdge({
                 )
             );
         }
-    }, [data, label, isEditing, id, setEdges, validateLive, sourceY]);
+    }, [data, label, isEditing, id, setEdges]);
 
 
     const startEditing = () => {
@@ -167,7 +182,78 @@ export function MessageEdge({
     };
 
     const onLabelChange = (evt: React.ChangeEvent<HTMLInputElement>) => {
-        const value = evt.target.value.slice(0, MAX_MESSAGE_LENGTH);
+        let value = evt.target.value;
+
+        // Permitir solo un =
+        const firstEqualsIndex = value.indexOf('=');
+        if (firstEqualsIndex !== -1) {
+            value =
+                value.slice(0, firstEqualsIndex + 1) +
+                value.slice(firstEqualsIndex + 1).replace(/=/g, '');
+        }
+
+        // Permitir solo un :
+        const firstColonIndex = value.indexOf(':');
+        if (firstColonIndex !== -1) {
+            value =
+                value.slice(0, firstColonIndex + 1) +
+                value.slice(firstColonIndex + 1).replace(/:/g, '');
+        }
+
+        // Permitir solo un (
+        const firstOpenParenIndex = value.indexOf('(');
+        if (firstOpenParenIndex !== -1) {
+            value =
+                value.slice(0, firstOpenParenIndex + 1) +
+                value.slice(firstOpenParenIndex + 1).replace(/\(/g, '');
+        }
+
+        // Permitir solo un ) y solo si ya existe (
+        const firstCloseParenIndex = value.indexOf(')');
+        const hasOpenParen = value.includes('(');
+
+        if (!hasOpenParen) {
+            value = value.replace(/\)/g, '');
+        } else if (firstCloseParenIndex !== -1) {
+            value =
+                value.slice(0, firstCloseParenIndex + 1) +
+                value.slice(firstCloseParenIndex + 1).replace(/\)/g, '');
+
+            const openIndex = value.indexOf('(');
+            const closeIndex = value.indexOf(')');
+
+            if (closeIndex < openIndex) {
+                value = value.replace(')', '');
+            }
+        }
+        
+        // Si ya cerró parámetros, después de ) solo permitir espacios, : y retorno
+        const closeParenIndex = value.indexOf(')');
+        if (closeParenIndex !== -1) {
+            const beforeClose = value.slice(0, closeParenIndex + 1);
+            let afterClose = value.slice(closeParenIndex + 1);
+
+            // Solo permitir letras, números, guion bajo, espacios y :
+            afterClose = afterClose.replace(/[^A-Za-z0-9_:\s]/g, '');
+
+            // Quitar cualquier texto antes de : si todavía no han puesto :
+            const colonAfterClose = afterClose.indexOf(':');
+            if (colonAfterClose === -1) {
+                afterClose = afterClose.replace(/[A-Za-z0-9_]+/g, '');
+            } else {
+                // Si ya hay :, dejar solo espacios antes de :
+                const beforeColon = afterClose.slice(0, colonAfterClose).replace(/[A-Za-z0-9_]+/g, '');
+                const afterColonText = afterClose.slice(colonAfterClose + 1);
+
+                afterClose = beforeColon + ':' + afterColonText;
+            }
+
+            value = beforeClose + afterClose;
+        }
+
+        // Limitar longitud máxima
+        value = value.slice(0, MAX_MESSAGE_LENGTH);
+
         setEditingLabel(value);
         validateLive(value);
     };
@@ -219,6 +305,7 @@ export function MessageEdge({
                     maxLength={MAX_MESSAGE_LENGTH}
                     onBlur={finishEditing}
                     onKeyDown={onKeyDown}
+                    placeholder="Mensaje"
                     className="
                         py-0.5 px-1
                         border-none
@@ -230,6 +317,8 @@ export function MessageEdge({
                         text-gray-900
                         dark:bg-gray-800
                         dark:text-gray-200
+                        placeholder-gray-400
+                        dark:placeholder-gray-500
                         focus:outline-none
                         focus:ring-1
                         focus:ring-sky-500
@@ -265,31 +354,42 @@ export function MessageEdge({
                             parts.variableOk || parts.hasEquals ? 'text-green-600' : 'text-gray-400'
                         }
                         >
-                        {parts.variableOk ? `${parts.variable} = ` : 'variable = '}
+                        {parts.variableOk ? `${parts.variable} = ` : parts.hasEquals ? `${editingLabel.split('=')[0].trim()} = ` :'variable = '}
                         </span>
 
                         <span
                         className={
-                            parts.nameOk || parts.draftNameOk ? 'text-green-600' : 'text-gray-400'
+                            parts.nameOk || (!parts.hasEquals && parts.draftNameOk) ||
+                            (parts.hasEquals && editingLabel.split('=')[1]?.trim())
+                                ? 'text-green-600'
+                                : 'text-gray-400'
                         }
                         >
-                        {parts.nameOk ? parts.name : parts.draftNameOk ? parts.draftName : 'Name'}
+                        {parts.nameOk ? parts.name : !parts.hasEquals && parts.draftNameOk 
+                            ? parts.draftName
+                            : parts.hasEquals && editingLabel.split('=')[1]?.trim()
+                                ? parts.draftName
+                                : 'Name'}
                         </span>
 
                         <span className={parts.hasOpenParen ? 'text-green-600' : 'text-gray-400'}>
                         (
                         </span>
 
-                        <span
-                        className={
-                            !parts.paramsOk
-                            ? 'text-red-500'
-                            : parts.paramsOk && parts.hasCloseParen
-                                ? 'text-green-600'
-                                : 'text-gray-400'
-                        }
-                        >
-                        {parts.params ? parts.params : 'param1, param2'}
+                        <span>
+                            {enteredParams.length === 0 ? (
+                                <span className="text-gray-400">param1, param2</span>
+                            ) : (
+                                <>
+                                    <span className="text-green-600">{enteredParams.join(', ')}</span>
+                                    {endsWithComma && (
+                                        <>
+                                            <span className="text-green-600">, </span>
+                                            <span className="text-gray-400">{`param${enteredParams.length + 1}`}</span>
+                                        </>
+                                    )}
+                                </>
+                            )}
                         </span>
 
                         <span className={parts.hasCloseParen ? 'text-green-600' : 'text-gray-400'}>
@@ -315,24 +415,39 @@ export function MessageEdge({
                     display: 'inline-block',
                 }}
                 >
-                {label && (
+                {label ? (
                     <div
-                    onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        startEditing();
-                    }}
-                    style={{
-                        ...labelStyle,
-                        background: '#F3F4F6',
-                        opacity: labelBgStyle?.fillOpacity,
-                        padding: labelBgPadding
-                        ? `${labelBgPadding[0]}px ${labelBgPadding[1]}px`
-                        : '2px 4px',
-                        fontSize: '12px',
-                        borderRadius: labelBgBorderRadius,
-                    }}
+                        onDoubleClick={(e) => {
+                            e.stopPropagation();
+                            startEditing();
+                        }}
+                        style={{
+                            ...labelStyle,
+                            background: '#F3F4F6',
+                            opacity: labelBgStyle?.fillOpacity,
+                            padding: labelBgPadding
+                                ? `${labelBgPadding[0]}px ${labelBgPadding[1]}px`
+                                : '2px 4px',
+                            fontSize: '12px',
+                            borderRadius: labelBgBorderRadius,
+                        }}
                     >
-                    {label}
+                        {label}
+                    </div>
+                ) : (
+                    <div
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            startEditing();
+                        }}
+                        className="text-[11px] text-gray-400 italic cursor-text"
+                        style={{
+                            background: '#F3F4F6',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                        }}
+                    >
+                        Mensaje
                     </div>
                 )}
 

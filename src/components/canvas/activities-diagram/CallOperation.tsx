@@ -14,6 +14,7 @@ type CallOperationData = {
   handles?: HandleData[];
 };
 
+
 export default function CallOperation({ data }: DataProps) {
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
@@ -31,48 +32,71 @@ export default function CallOperation({ data }: DataProps) {
 
   const raw = value.trim();
 
-let partitionsText = "";
-let operationText = "";
-let isOpenPartitions = false;
+  let partitionsText = "";
+  let operationText = "";
+  let isOpenPartitions = false;
 
-if (raw.startsWith("(")) {
-  const closeIndex = raw.indexOf(")");
+  if (raw.startsWith("(")) {
+    const closeIndex = raw.indexOf(")");
 
-  if (closeIndex === -1) {
-    isOpenPartitions = true;
-    partitionsText = raw.slice(1).trim();
-    operationText = "";
+    if (closeIndex === -1) {
+      isOpenPartitions = true;
+
+      const afterOpen = raw.slice(1).trim();
+      const signatureMatch = afterOpen.match(/([A-Z][A-Za-z0-9]*)::([a-z][A-Za-z0-9]*)$/);
+
+      if (signatureMatch && signatureMatch.index !== undefined) {
+        partitionsText = afterOpen.slice(0, signatureMatch.index).trim();
+        operationText = signatureMatch[0].trim();
+      } else {
+        partitionsText = afterOpen;
+        operationText = "";
+      }
+    } else {
+      partitionsText = raw.slice(1, closeIndex).trim();
+      operationText = raw.slice(closeIndex + 1).trim();
+    }
   } else {
-    partitionsText = raw.slice(1, closeIndex).trim();
-    operationText = raw.slice(closeIndex + 1).trim();
+    operationText = raw;
   }
-} else {
-  operationText = raw;
-}
 
-const parsedPartitions = partitionsText
-  ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
-  : [];
+  const parsedPartitions = partitionsText
+    ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+    : [];
 
-const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+  const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
 
-const [classPartRaw, operationPartRaw] = operationText.split("::");
+  const colonCount = (operationText.match(/:/g) ?? []).length;
+  const doubleColonCount = (operationText.match(/::/g) ?? []).length;
 
-const classPart = classPartRaw?.trim() ?? "";
-const operationPart = operationPartRaw?.trim() ?? "";
-const hasDoubleColon = operationText.includes("::");
+  const hasValidDoubleColon =
+    colonCount === 2 &&
+    doubleColonCount === 1 &&
+    operationText.indexOf("::") === operationText.lastIndexOf("::");
 
-const callOperationGuide = {
-  partitionsOk: parsedPartitions.length > 0,
-  partitionsText: parsedPartitions.join(", "),
-  isOpenPartitions,
-  nextPartitionLabel,
-  classOk: classPart.length > 0,
-  classText: classPart,
-  hasDoubleColon,
-  operationOk: operationPart.length > 0,
-  operationText: operationPart,
-};
+  const [classPartRaw, operationPartRaw = ""] = operationText.includes("::")
+    ? operationText.split("::")
+    : [operationText.split(":")[0] ?? "", ""];
+
+  const classPart = classPartRaw?.trim() ?? "";
+  const operationPart = operationPartRaw?.trim() ?? "";
+
+  const hasTrailingComma = /,\s*$/.test(partitionsText);
+
+  const CLASS_REGEX = /^[A-Z][A-Za-z0-9]*$/;
+  const OPERATION_REGEX = /^[a-z][A-Za-z0-9]*$/;
+
+  const callOperationGuide = {
+    partitionsOk: parsedPartitions.length > 0,
+    partitionsText: parsedPartitions.join(", "),
+    isOpenPartitions,
+    nextPartitionLabel,
+    classOk: CLASS_REGEX.test(classPart),
+    classText: classPart,
+    hasValidDoubleColon,
+    operationOk: OPERATION_REGEX.test(operationPart),
+    operationText: operationPart,
+  };
 
   // Manejo de handles
   const [showHandles, setShowHandles] = useState(false);
@@ -135,22 +159,71 @@ const callOperationGuide = {
   }, [nodeId, mustFillLabel, labelFromNode, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
     
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-
     if (!nodeId) return;
+
+    let newValue = evt.target.value;
+
+    if (newValue.length > TEXT_AREA_MAX_LEN) {
+      newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+    }
+
+    const trimmed = newValue.trim();
+
+    const operationPartToValidate = trimmed.startsWith("(")
+      ? (() => {
+          const closeIndex = trimmed.indexOf(")");
+
+          if (closeIndex !== -1) {
+            return trimmed.slice(closeIndex + 1).trim();
+          }
+
+          const afterOpen = trimmed.slice(1).trim();
+          const signatureMatch = afterOpen.match(/([A-Z][A-Za-z0-9]*)::([a-z][A-Za-z0-9]*)$/);
+
+          return signatureMatch ? signatureMatch[0].trim() : "";
+        })()
+      : trimmed;
+
+    const colonCount = (operationPartToValidate.match(/:/g) ?? []).length;
+    const doubleColonCount = (operationPartToValidate.match(/::/g) ?? []).length;
+
+    if (colonCount > 2) return;
+    if (doubleColonCount > 1) return;
+    if (operationPartToValidate.includes(":::")) return;
+
+    // No permitir texto entre los dos puntos, por ejemplo: :dd:
+    if (/:[^:\s]+:/.test(operationPartToValidate)) return;
+
+    // Si hay un solo ":" y no está al final, también bloquear
+    if (
+      colonCount === 1 &&
+      !operationPartToValidate.endsWith(":")
+    ) {
+      return;
+    }
+
+    if (!newValue.trim()) {
+      newValue = "";
+    }
+
+    const normalizedValue = newValue.trim() ? newValue : "";
+
+    setValue(normalizedValue);
 
     setNodes((nds) =>
       nds.map((n) =>
         n.id === nodeId
-          ? { ...n, data: { ...n.data, labelError: null } }
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                label: normalizedValue,
+                labelError: normalizedValue ? null : "No puede estar vacío.",
+              },
+            }
           : n
       )
     );
-
-    if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-      setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-    } else {
-      setValue(evt.target.value);
-    }
   }, [nodeId, setNodes]);
 
   useEffect(() => {
@@ -225,20 +298,23 @@ const callOperationGuide = {
           onChange={onChange}
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              textareaRef.current?.blur();
+            }
+          }}
           readOnly={!isEditing}
-          placeholder={`(Particiones...)\nC::O`}
+          placeholder={`(Particiones...)\nC::o`}
           className={`node-textarea ${isEditing ? 'node-textarea-editing' : 'node-textarea-readonly'}`}
           rows={1}
         />
-        {!isEditing && labelError && (
+        {!isEditing && labelError && value.trim() === "" && (
           <p className="node-error-text">{labelError}</p>
         )}
-        {isEditing &&
-          <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
-        }
         {isEditing && (
           <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-            <span className="text-gray-400">(</span>
+            <span className={raw.startsWith("(") ? "text-green-600" : "text-gray-400"}>(</span>
 
             {callOperationGuide.partitionsOk ? (
               <>
@@ -246,21 +322,23 @@ const callOperationGuide = {
                   {callOperationGuide.partitionsText}
                 </span>
 
-                {callOperationGuide.isOpenPartitions && (
+                {(callOperationGuide.isOpenPartitions || hasTrailingComma) && (
                   <>
                     <span className="text-gray-400">, </span>
                     <span className="text-gray-400">{callOperationGuide.nextPartitionLabel}</span>
                   </>
                 )}
 
-                {!callOperationGuide.isOpenPartitions && (
-                  <span className="text-gray-400">)</span>
+                {!callOperationGuide.isOpenPartitions && !hasTrailingComma && (
+                  <span className="text-green-600">)</span>
                 )}
               </>
             ) : (
               <>
                 <span className="text-gray-400">Partición 1, Partición 2...</span>
-                <span className="text-gray-400">)</span>
+                <span className={!callOperationGuide.isOpenPartitions && raw.includes(")") ? "text-green-600" : "text-gray-400"}>
+                  )
+                </span>
               </>
             )}
 
@@ -270,12 +348,12 @@ const callOperationGuide = {
               {callOperationGuide.classOk ? callOperationGuide.classText : "C"}
             </span>
 
-            <span className={callOperationGuide.hasDoubleColon ? "text-green-600" : "text-gray-400"}>
-              :: 
+            <span className={callOperationGuide.hasValidDoubleColon ? "text-green-600" : "text-gray-400"}>
+              ::
             </span>
 
             <span className={callOperationGuide.operationOk ? "text-green-600" : "text-gray-400"}>
-              {callOperationGuide.operationOk ? callOperationGuide.operationText : "O"}
+              {callOperationGuide.operationOk ? callOperationGuide.operationText : "o"}
             </span>
           </div>
         )}

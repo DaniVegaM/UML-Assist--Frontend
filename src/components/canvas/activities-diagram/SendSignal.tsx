@@ -29,6 +29,8 @@ export default function SendSignal({data}: DataProps) {
     const nodeId = useNodeId();
 
     const raw = value.trim();
+    const hasOpenParen = raw.startsWith("(");
+    const hasCloseParen = raw.includes(")");
 
     let partitionsText = "";
     let signalText = "";
@@ -53,13 +55,15 @@ export default function SendSignal({data}: DataProps) {
         ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
         : [];
 
-    const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+    const nextPartitionLabel = `P${parsedPartitions.length + 1}...`;
+    const hasTrailingComma = /,\s*$/.test(partitionsText);
 
     const sendSignalGuide = {
         partitionsOk: parsedPartitions.length > 0,
         partitionsText: parsedPartitions.join(", "),
         isOpenPartitions,
         nextPartitionLabel,
+        hasTrailingComma,
         signalOk: signalText.length > 0,
         signalText,
     };
@@ -67,19 +71,30 @@ export default function SendSignal({data}: DataProps) {
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
+        let newValue = evt.target.value;
+
+        if (newValue.length > TEXT_AREA_MAX_LEN) {
+            newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+        }
+
+        const normalizedValue = newValue.trim() ? newValue : "";
+
+        setValue(normalizedValue);
+
         setNodes((nodes) =>
             nodes.map((n) =>
                 n.id === nodeId
-                    ? { ...n, data: { ...n.data, labelError: null } }
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            label: normalizedValue,
+                            labelError: normalizedValue ? null : "No puede estar vacío.",
+                        },
+                    }
                     : n
             )
         );
-        
-        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-        } else {
-            setValue(evt.target.value);
-        }
     }, [nodeId, setNodes]);
 
     useEffect(() => {
@@ -113,7 +128,7 @@ export default function SendSignal({data}: DataProps) {
                             data: {
                                 ...n.data,
                                 mustFillLabel: false,
-                                labelError: null,
+                                labelError: n.data.labelError ?? null,
                             },
                         }
                         : n
@@ -203,6 +218,12 @@ export default function SendSignal({data}: DataProps) {
                 onChange={onChange}
                 onBlur={handleBlur}
                 onWheel={(e) => e.stopPropagation()}
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault();
+                        textareaRef.current?.blur();
+                    }
+                }}
                 readOnly={!isEditing}
                 placeholder={`(Particiones...)\nEnvio de señal`}
                 className={`node-textarea w-4/5 pr-4 ${
@@ -210,15 +231,15 @@ export default function SendSignal({data}: DataProps) {
                 }`}
                 rows={1}
             />
-            {!isEditing && labelError && (
-                <p className="node-error-text">{labelError}</p>
+            {!isEditing && labelError && value.trim() === "" && (
+                <p className="text-[11px] text-red-600 text-center mt-1">{labelError}</p>
             )}
             {isEditing &&
                 <p className="char-counter char-counter-left">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>
             }
             {isEditing && (
                 <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-                    <span className="text-gray-400">(</span>
+                    <span className={hasOpenParen ? "text-green-600" : "text-gray-400"}>(</span>
 
                     {sendSignalGuide.partitionsOk ? (
                         <>
@@ -226,21 +247,21 @@ export default function SendSignal({data}: DataProps) {
                                 {sendSignalGuide.partitionsText}
                             </span>
 
-                            {sendSignalGuide.isOpenPartitions && (
+                            {(sendSignalGuide.isOpenPartitions || sendSignalGuide.hasTrailingComma) && (
                                 <>
                                     <span className="text-gray-400">, </span>
                                     <span className="text-gray-400">{sendSignalGuide.nextPartitionLabel}</span>
                                 </>
                             )}
 
-                            {!sendSignalGuide.isOpenPartitions && (
-                                <span className="text-gray-400">)</span>
+                            {!sendSignalGuide.isOpenPartitions && !sendSignalGuide.hasTrailingComma && (
+                                <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                             )}
                         </>
                     ) : (
                         <>
                             <span className="text-gray-400">P1, P2...</span>
-                            <span className="text-gray-400">)</span>
+                            <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                         </>
                     )}
 

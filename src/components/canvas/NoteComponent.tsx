@@ -27,6 +27,9 @@ export default function NoteComponent({data} : DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(noteData.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
+    useEffect(() => {
+        setValue(noteData.label ?? "");
+    }, [noteData.label]);
 
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
@@ -59,7 +62,14 @@ export default function NoteComponent({data} : DataProps) {
             setNodes((nds) =>
                 nds.map((n) =>
                     n.id === nodeId
-                        ? { ...n, data: { ...n.data, mustFillText: false } }
+                        ? {
+                            ...n,
+                            data: {
+                                ...n.data,
+                                mustFillText: false,
+                                labelError: n.data.labelError ?? null,
+                            },
+                        }
                         : n
                 )
             );
@@ -75,12 +85,33 @@ export default function NoteComponent({data} : DataProps) {
     }, [nodeId, mustFillText, noteData.label, value, isEditing, setNodes, setIsZoomOnScrollEnabled]);
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
-        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.trim().slice(0, TEXT_AREA_MAX_LEN));
-        } else {
-            setValue(evt.target.value);
+        if (!nodeId) return;
+
+        let newValue = evt.target.value;
+
+        if (newValue.length > TEXT_AREA_MAX_LEN) {
+            newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
         }
-    }, []);
+
+        const normalizedValue = newValue.trim().length === 0 ? "" : newValue;
+
+        setValue(normalizedValue);
+
+        setNodes((nds) =>
+            nds.map((n) =>
+                n.id === nodeId
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            label: normalizedValue,
+                            labelError: normalizedValue ? null : "No puede estar vacío.",
+                        },
+                    }
+                    : n
+            )
+        );
+    }, [nodeId, setNodes]);
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -122,6 +153,7 @@ export default function NoteComponent({data} : DataProps) {
                                 ...n,
                                 data: {
                                     ...n.data,
+                                    mustFillText: false,
                                     label: trimmed,
                                     labelError: trimmed ? null : "No puede estar vacío.",
                                 },
@@ -169,6 +201,13 @@ export default function NoteComponent({data} : DataProps) {
                     onChange={onChange}
                     onBlur={handleBlur}
                     onWheel={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            textareaRef.current?.blur();
+                        }
+                    }}
+                    readOnly={!isEditing}
                     placeholder="Nota"
                     rows={1}
                     className={`node-textarea nowheel ${isEditing
@@ -176,8 +215,8 @@ export default function NoteComponent({data} : DataProps) {
                         : "node-textarea-readonly"}`}
                 />
 
-                {!isEditing && labelError && (
-                    <p className="node-error-text">{labelError}</p>
+                {!isEditing && labelError && value.trim() === "" && (
+                    <p className="text-[11px] text-red-600 text-center mt-1">{labelError}</p>
                 )}
 
                 {isEditing && (

@@ -7,10 +7,14 @@ const SEQUENCE_MESSAGE_REGEX =
 function parseMessageParts(value: string) {
     const trimmed = value.trim();
 
-    const draft = trimmed.match(/^\s*(?:[A-Za-z_]\w*\s*=\s*)?(?<name>[A-Za-z_]\w*)/);
+    const hasEquals = /=/.test(trimmed);
+    const draft = hasEquals
+
+        ? trimmed.match(/^\s*(?:[A-Za-z_]\w*\s*=\s*)?(?<name>[A-Za-z_]\w*)/)
+        : trimmed.match(/^\s*(?<name>[A-Za-z_]\w*)/);
+
     const draftName = (draft?.groups as any)?.name || "";
 
-    const hasEquals = /=/.test(trimmed);
     const hasOpenParen = /\(/.test(trimmed);
     const hasCloseParen = /\)/.test(trimmed);
     const hasColon = /:/.test(trimmed);

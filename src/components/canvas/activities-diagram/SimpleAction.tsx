@@ -48,37 +48,35 @@ export default function SimpleAction({data} : DataProps) {
 
   let partitionsText = "";
   let actionText = "";
-  let isOpenPartitions = false;
+  let hasClosingParen = false;
+  let hasOpeningParen = false;
 
-  if (raw.startsWith("(")) {
-    const closeIndex = raw.indexOf(")");
+  const openIndex = raw.indexOf("(");
+  const closeIndex = raw.indexOf(")");
 
-    if (closeIndex === -1) {
-      isOpenPartitions = true;
-      partitionsText = raw.slice(1).trim();
-      actionText = "";
+  if (openIndex !== -1) {
+    hasOpeningParen = true;
+
+    if (closeIndex !== -1 && closeIndex > openIndex) {
+      hasClosingParen = true;
+      partitionsText = raw.slice(openIndex + 1, closeIndex);
+      actionText = (raw.slice(0, openIndex) + " " + raw.slice(closeIndex + 1)).trim();
     } else {
-      partitionsText = raw.slice(1, closeIndex).trim();
-      actionText = raw.slice(closeIndex + 1).trim();
+      partitionsText = raw.slice(openIndex + 1);
+      actionText = raw.slice(0, openIndex).trim();
     }
   } else {
     actionText = raw;
   }
 
-  const parsedPartitions = partitionsText
-    ? partitionsText.split(",").map((p) => p.trim()).filter(Boolean)
+  const rawPartitions = partitionsText
+    ? partitionsText.split(",").map((p) => p.trim())
     : [];
+    
+  const parsedPartitions = rawPartitions.filter((p) => p.length > 0);
+  const endsWithComma = partitionsText.trim().endsWith(",");
 
   const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
-
-  const actionGuide = {
-    partitionsOk: parsedPartitions.length > 0,
-    partitionsText: parsedPartitions.join(", "),
-    actionOk: actionText.length > 0,
-    actionText,
-    isOpenPartitions,
-    nextPartitionLabel,
-  };
 
   const { setIsZoomOnScrollEnabled } = useCanvas();
 
@@ -150,11 +148,33 @@ export default function SimpleAction({data} : DataProps) {
       )
     );
 
-    if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-      setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-    } else {
-      setValue(evt.target.value);
+    let newValue = evt.target.value;
+
+      // Limitar longitud máxima
+      if (newValue.length > TEXT_AREA_MAX_LEN) {
+        newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+      }
+
+      if (newValue.trim().startsWith("(")) {
+      const openIndex = newValue.indexOf("(");
+      const closeIndex = newValue.indexOf(")");
+
+      const inside =
+        closeIndex !== -1 && closeIndex > openIndex
+          ? newValue.slice(openIndex + 1, closeIndex)
+          : newValue.slice(openIndex + 1);
+
+      const insideTrimmed = inside.trim();
+
+      // No permitir coma al inicio
+      if (insideTrimmed.startsWith(",")) return;
+
+      // No permitir doble coma
+      if (inside.includes(",,")) return;
+
     }
+
+      setValue(newValue);
   }, [nodeId, setNodes]);
 
 
@@ -223,6 +243,12 @@ export default function SimpleAction({data} : DataProps) {
           onChange={onChange}
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              textareaRef.current?.blur();
+            }
+          }}
           readOnly={!isEditing}
           placeholder={`(Particiones...)\nAcción`}
           className={`node-textarea ${
@@ -232,40 +258,31 @@ export default function SimpleAction({data} : DataProps) {
         />
         {isEditing && (
           <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-            <span className="text-gray-400">(</span>
+            <span className={hasOpeningParen ? "text-green-600" : "text-gray-400"}>(</span>
 
-            {actionGuide.partitionsOk ? (
+            {parsedPartitions.length > 0 ? (
               <>
-                <span className="text-green-600">
-                  {actionGuide.partitionsText}
-                </span>
+                <span className="text-green-600">{parsedPartitions.join(", ")}</span>
 
-                {actionGuide.isOpenPartitions && (
+                {endsWithComma && (
                   <>
                     <span className="text-gray-400">, </span>
-                    <span className="text-gray-400">{actionGuide.nextPartitionLabel}</span>
+                    <span className="text-gray-400">{nextPartitionLabel}</span>
                   </>
-                )}
-
-                {!actionGuide.isOpenPartitions && (
-                  <span className="text-gray-400">)</span>
                 )}
               </>
             ) : (
-              <>
-                <span className="text-gray-400">Partición 1, Partición 2...</span>
-                <span className="text-gray-400">)</span>
-              </>
+              <span className="text-gray-400">Partición 1, Partición 2...</span>
             )}
 
+            <span className={hasClosingParen ? "text-green-600" : "text-gray-400"}>)</span>
             <span className="text-gray-400">{" "}</span>
 
-            <span className={actionGuide.actionOk ? "text-green-600" : "text-gray-400"}>
-              {actionGuide.actionOk ? actionGuide.actionText : "Acción"}
+            <span className={actionText.length > 0 ? "text-green-600" : "text-gray-400"}>
+              {actionText.length > 0 ? actionText : "Acción"}
             </span>
           </div>
         )}
-
 
         {!isEditing && labelError && (
           <p className="node-error-text">{labelError}</p>

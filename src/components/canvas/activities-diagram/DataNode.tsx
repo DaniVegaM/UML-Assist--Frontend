@@ -31,6 +31,8 @@ export default function DataNode({ data }: DataProps) {
     const { setNodes } = useReactFlow();
 
     const raw = value.trim();
+    const hasOpenParen = raw.startsWith("(");
+    const hasCloseParen = raw.includes(")");
 
     let partitionsText = "";
     let dataText = "";
@@ -56,12 +58,14 @@ export default function DataNode({ data }: DataProps) {
         : [];
 
     const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+    const hasTrailingComma = /,\s*$/.test(partitionsText);
 
     const dataGuide = {
         partitionsOk: parsedPartitions.length > 0,
         partitionsText: parsedPartitions.join(", "),
         isOpenPartitions,
         nextPartitionLabel,
+        hasTrailingComma,
         dataOk: dataText.length > 0,
         dataText,
     };
@@ -114,7 +118,7 @@ export default function DataNode({ data }: DataProps) {
                             data: {
                                 ...n.data,
                                 mustFillLabel: false,
-                                labelError: null,
+                                labelError: n.data.labelError ?? null,
                             },
                         }
                         : n
@@ -147,19 +151,30 @@ export default function DataNode({ data }: DataProps) {
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
+        let newValue = evt.target.value;
+
+        if (newValue.length > TEXT_AREA_MAX_LEN) {
+            newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+        }
+
+        const normalizedValue = newValue.trim().length === 0 ? "" : newValue;
+
+        setValue(normalizedValue);
+
         setNodes((nodes) =>
             nodes.map((n) =>
                 n.id === nodeId
-                    ? { ...n, data: { ...n.data, labelError: null } }
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            label: normalizedValue,
+                            labelError: normalizedValue ? null : "No puede estar vacío.",
+                        },
+                    }
                     : n
             )
         );
-        
-        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-        } else {
-            setValue(evt.target.value);
-        }
     }, [nodeId, setNodes]);
 
     useEffect(() => {
@@ -254,14 +269,20 @@ export default function DataNode({ data }: DataProps) {
                         onChange={onChange}
                         onBlur={handleBlur}
                         readOnly={!isEditing}
+                        onWheel={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                textareaRef.current?.blur();
+                            }
+                        }}
                         placeholder={`(Particiones...)\n${node?.data?.objectVariant === 'centralBuffer' ? 'Nombre del búfer' : 'Nombre del datastore'}`}
                         rows={1}
-                        maxLength={TEXT_AREA_MAX_LEN}
                         className={`nodrag nowheel w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${
                             isEditing ? 'pointer-events-auto' : 'pointer-events-none'
                         }`}
                     />
-                    {!isEditing && labelError && (
+                    {!isEditing && labelError && value.trim() === "" && (
                         <p className="node-error-text">{labelError}</p>
                     )}
                     {isEditing &&
@@ -269,7 +290,7 @@ export default function DataNode({ data }: DataProps) {
                     }
                     {isEditing && (
                         <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-                            <span className="text-gray-400">(</span>
+                            <span className={hasOpenParen ? "text-green-600" : "text-gray-400"}>(</span>
 
                             {dataGuide.partitionsOk ? (
                                 <>
@@ -277,21 +298,21 @@ export default function DataNode({ data }: DataProps) {
                                         {dataGuide.partitionsText}
                                     </span>
 
-                                    {dataGuide.isOpenPartitions && (
+                                    {(dataGuide.isOpenPartitions || dataGuide.hasTrailingComma) && (
                                         <>
                                             <span className="text-gray-400">, </span>
                                             <span className="text-gray-400">{dataGuide.nextPartitionLabel}</span>
                                         </>
                                     )}
 
-                                    {!dataGuide.isOpenPartitions && (
-                                        <span className="text-gray-400">)</span>
+                                    {!dataGuide.isOpenPartitions && !dataGuide.hasTrailingComma && (
+                                        <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                                     )}
                                 </>
                             ) : (
                                 <>
                                     <span className="text-gray-400">P1, P2...</span>
-                                    <span className="text-gray-400">)</span>
+                                    <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                                 </>
                             )}
 

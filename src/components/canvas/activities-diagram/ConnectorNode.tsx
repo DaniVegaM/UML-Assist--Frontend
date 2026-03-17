@@ -17,7 +17,6 @@ export default function ConnectorNode({ data }: DataProps) {
   const connectorData = data as ConnectorNodeData;
 
   const labelFromNode = connectorData.label ?? "";
-  const labelError = connectorData.labelError ?? null;
   const mustFillLabel = connectorData.mustFillLabel ?? false;
   const nodeId = useNodeId();
   const { setNodes } = useReactFlow();
@@ -108,6 +107,9 @@ export default function ConnectorNode({ data }: DataProps) {
 
   const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!nodeId) return;
+    const upper = evt.target.value.toUpperCase();
+
+    if (!/^[A-Z0-9]*$/.test(upper)) return;
 
     setNodes((nodes) =>
       nodes.map((n) =>
@@ -116,8 +118,6 @@ export default function ConnectorNode({ data }: DataProps) {
           : n
       )
     );
-
-    const upper = evt.target.value.toUpperCase();
 
     if (upper.length >= 3) {
       setValue(upper.slice(0, 3));
@@ -199,6 +199,12 @@ export default function ConnectorNode({ data }: DataProps) {
           onChange={onChange}
           onBlur={handleBlur}
           onWheel={(e) => e.stopPropagation()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              textareaRef.current?.blur();
+            }
+          }}
           readOnly={!isEditing}
           placeholder="ABC"
           className={`font-black node-textarea ${
@@ -206,13 +212,14 @@ export default function ConnectorNode({ data }: DataProps) {
           }`}
           rows={1}
         />
-        {isEditing &&
-          <p className="font-black char-counter char-counter-right">{`${value.length}/3`}</p>
-        }
         {isEditing && (
-          <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-            <span className="text-green-600">{connectorGuide.completed}</span>
-            <span className="text-gray-400">{connectorGuide.remaining}</span>
+          <div className="mt-1 w-full flex items-center justify-between text-[10px] leading-4 font-mono select-none px-1">
+            <span>
+              <span className="text-green-600">{connectorGuide.completed}</span>
+              <span className="text-gray-400">{connectorGuide.remaining}</span>
+            </span>
+
+            <span className="text-neutral-400">{`${value.length}/3`}</span>
           </div>
         )}
       </div>

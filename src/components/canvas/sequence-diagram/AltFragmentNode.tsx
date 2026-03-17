@@ -162,10 +162,18 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
     setIsZoomOnScrollEnabled(false);
   }, [setIsZoomOnScrollEnabled]);
 
-  const handleSeparatorBlur = useCallback(() => {
+  const handleSeparatorBlur = useCallback((index: number) => () => {
+    const trimmed = (separatorValues[index] || '').trim();
+
+    setSeparatorValues(prev => {
+      const newValues = [...prev];
+      newValues[index] = trimmed;
+      return newValues;
+    });
+
     setEditingSeparatorIndex(null);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [separatorValues, setIsZoomOnScrollEnabled]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (draggingIndex !== null && containerRef.current) {
@@ -320,7 +328,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
         alt
       </div>
 
-      <div onDoubleClick={onFirstOperandDoubleClick} className="cursor-text">
+      <div onDoubleClick={onFirstOperandDoubleClick} className="cursor-text relative h-[25px]">
         <textarea
           ref={textareaRef}
           placeholder={`[condición]`}
@@ -331,6 +339,12 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
           onMouseDown={e => e.stopPropagation()}
           onChange={onFirstOperandChange}
           onBlur={onFirstOperandBlur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              textareaRef.current?.blur();
+            }
+          }}
           value={isEditingFirstOperand ? rawFirstOperand : (rawFirstOperand ? `[${rawFirstOperand}]` : '')}
         />
         
@@ -338,7 +352,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
           <p className="node-error-text">{firstOperandError}</p>
         )}
         {isEditingFirstOperand && (
-          <div className="text-[11px] leading-5 font-mono text-center select-none">
+          <div className="absolute left-1/2 -translate-x-1/2 top-full mt-0.5 text-[11px] leading-5 font-mono text-center select-none pointer-events-none whitespace-nowrap ">
             <span className="text-gray-400">[</span>
             <span className={firstOperandGuide.hasContent ? "text-green-600" : "text-gray-400"}>
               {firstOperandGuide.hasContent ? firstOperandGuide.content : "condición"}
@@ -382,6 +396,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
 
               {/* Wrapper para capturar doble clic cuando textarea tiene pointer-events-none */}
               <div 
+                className="relative h-[25px]"
                 onDoubleClick={(e) => {
                   e.stopPropagation();
                   handleSeparatorDoubleClick(index)();
@@ -396,18 +411,24 @@ const AltFragmentNode = ({ selected, data }: NodeProps) => {
                   }
 
                   onChange={handleSeparatorChange(index)}
-                  onBlur={handleSeparatorBlur}
+                  onBlur={handleSeparatorBlur(index)}
 
                   onMouseDown={e => e.stopPropagation()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      separatorTextareaRefs.current[index]?.blur();
+                    }
+                  }}
 
                   placeholder={`[condición]`}
-                  className={`no-wheel nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono
+                  className={`no-wheel nodrag w-full h-[25px] placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden font-mono
                     ${isEditingThis ? 'pointer-events-auto' : 'pointer-events-none'}
                   `}
                   rows={1}
                 />
                 {isEditingThis && (
-                  <div className="text-[11px] leading-5 font-mono text-center select-none">
+                  <div className="absolute left-1/2 -translate-x-1/2 top-full mt-0.5 text-[11px] leading-5 font-mono text-center select-none pointer-events-none whitespace-nowrap  ">
                     <span className="text-gray-400">[</span>
                     <span className={separatorGuide.hasContent ? "text-green-600" : "text-gray-400"}>
                       {separatorGuide.hasContent ? separatorGuide.content : "condición"}

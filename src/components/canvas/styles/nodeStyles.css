@@ -231,12 +231,9 @@
   box-shadow: 0 0 0 1px #e4e4e7;
 }
 
-.node-textarea-error {
-  @apply ring-2 ring-red-500 rounded-md;
-}
 
 .node-error-text {
-  @apply w-full text-[10px] text-red-600 mt-1 text-center;
+  @apply absolute left-1/2 -translate-x-1/2 top-full mt-0 text-[11px] text-red-600 text-center whitespace-nowrap pointer-events-none;
 }
 
 .dark .node-error-text {

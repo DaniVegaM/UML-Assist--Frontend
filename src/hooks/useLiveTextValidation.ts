@@ -20,7 +20,22 @@ export function useLiveTextValidation(value: string, opts?: Options) {
     const hasForbidden =
         !!opts?.forbiddenChars && opts.forbiddenChars.test(value);
 
-    const isValid = !isEmpty && !tooLong && !hasForbidden;
+    const roleClassStructureInvalid = useMemo(() => {
+        if (!opts?.enableRoleClassGuide) return false;
+
+        const t = trimmed;
+        if (!t) return required;
+
+        const hasColon = t.includes(":");
+        if (!hasColon) return false;
+
+        const [, classRaw] = t.split(":", 2);
+        const clazz = (classRaw ?? "").trim();
+
+        return clazz.length === 0;
+    }, [trimmed, opts?.enableRoleClassGuide, required]);
+
+    const isValid = !isEmpty && !tooLong && !hasForbidden && !roleClassStructureInvalid;
 
     const error = isEmpty
         ? "No puede estar vacío."
@@ -81,7 +96,7 @@ export function useLiveTextValidation(value: string, opts?: Options) {
             clazz,
             hasColon,
             roleOk: role.length > 0,
-            classOk: clazz.length > 0,
+            classOk: hasColon && clazz.length > 0,
         };
     }, [trimmed, opts?.enableRoleClassGuide]);
 

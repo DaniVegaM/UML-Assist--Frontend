@@ -35,19 +35,32 @@ export default function Activity({ data } : DataProps) {
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
+        let newValue = evt.target.value;
+
+        if (newValue.length > TEXT_AREA_MAX_LEN) {
+            newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+        }
+
+        if (!newValue.trim()) {
+            newValue = "";
+        }
+
+        setValue(newValue);
+
         setNodes((nodes) =>
             nodes.map((n) =>
-            n.id === nodeId
-                ? { ...n, data: { ...n.data, labelError: null } }
-                : n
+                n.id === nodeId
+                    ? {
+                        ...n,
+                        data: {
+                            ...n.data,
+                            label: newValue,
+                            labelError: newValue.trim() ? null : "No puede estar vacío.",
+                        },
+                    }
+                    : n
             )
         );
-
-        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-        } else {
-            setValue(evt.target.value);
-        }
     }, [nodeId, setNodes]);
 
     useEffect(() => {
@@ -182,13 +195,19 @@ export default function Activity({ data } : DataProps) {
                     minWidth={1000}
                     minHeight={600}
                 />
-                <div className="flex flex-col">
+                <div className="relative flex flex-col w-full">
                     <textarea
                         ref={textareaRef}
                         value={value}
                         onChange={onChange}
                         onBlur={handleBlur}
                         onWheel={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                                e.preventDefault();
+                                textareaRef.current?.blur();
+                            }
+                        }}
                         readOnly={!isEditing}
                         placeholder={`Actividad`}
                         className={`node-textarea ${
@@ -196,7 +215,7 @@ export default function Activity({ data } : DataProps) {
                         }`}
                     />
                     {!isEditing && labelError && (
-                        <p className="node-error-text">{labelError}</p>
+                        <p className="text-[11px] text-red-600 text-center mt-1">{labelError}</p>
                     )}
                     {isEditing &&
                         <p className="char-counter char-counter-right">{`${value.length}/${TEXT_AREA_MAX_LEN}`}</p>

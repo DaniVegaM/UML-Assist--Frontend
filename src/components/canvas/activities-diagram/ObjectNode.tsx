@@ -29,6 +29,8 @@ export default function ObjectNode({ data }: DataProps) {
     const { setIsZoomOnScrollEnabled } = useCanvas();
 
     const raw = value.trim();
+    const hasOpenParen = raw.startsWith("(");
+    const hasCloseParen = raw.includes(")");
 
     let partitionsText = "";
     let objectText = "";
@@ -54,6 +56,7 @@ export default function ObjectNode({ data }: DataProps) {
         : [];
 
     const nextPartitionLabel = `Partición ${parsedPartitions.length + 1}...`;
+    const hasTrailingComma = /,\s*$/.test(partitionsText);
 
     const rawName = objectText.split(":")[0]?.trim() ?? "";
     const rawType = objectText.includes(":") ? objectText.split(":")[1]?.trim() ?? "" : "";
@@ -63,6 +66,7 @@ export default function ObjectNode({ data }: DataProps) {
         partitionsText: parsedPartitions.join(", "),
         isOpenPartitions,
         nextPartitionLabel,
+        hasTrailingComma,
         nameOk: rawName.length > 0,
         typeOk: rawType.length > 0,
         name: rawName,
@@ -128,7 +132,7 @@ export default function ObjectNode({ data }: DataProps) {
                             data: {
                                 ...n.data,
                                 mustFillLabel: false,
-                                labelError: null,
+                                labelError: n.data.labelError ?? null,
                             },
                         }
                         : n
@@ -148,20 +152,31 @@ export default function ObjectNode({ data }: DataProps) {
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (!nodeId) return;
 
-        setNodes((nodes) =>
-            nodes.map((n) =>
-                n.id === nodeId
-                    ? { ...n, data: { ...n.data, labelError: null } }
-                    : n
-            )
-        );
+            let newValue = evt.target.value;
 
-        if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
-            setValue(evt.target.value.slice(0, TEXT_AREA_MAX_LEN));
-        } else {
-            setValue(evt.target.value);
-        }
-    }, [nodeId, setNodes]);
+            if (newValue.length > TEXT_AREA_MAX_LEN) {
+                newValue = newValue.slice(0, TEXT_AREA_MAX_LEN);
+            }
+
+            const normalizedValue = newValue.trim().length === 0 ? "" : newValue;
+
+            setValue(normalizedValue);
+
+            setNodes((nodes) =>
+                nodes.map((n) =>
+                    n.id === nodeId
+                        ? {
+                            ...n,
+                            data: {
+                                ...n.data,
+                                label: normalizedValue,
+                                labelError: normalizedValue ? null : "No puede estar vacío.",
+                            },
+                        }
+                        : n
+                )
+            );
+        }, [nodeId, setNodes]);
 
     useEffect(() => {
         if (textareaRef.current) {
@@ -239,11 +254,18 @@ export default function ObjectNode({ data }: DataProps) {
                     value={value}
                     onChange={onChange}
                     onBlur={handleBlur}
+                    onWheel={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            textareaRef.current?.blur();
+                        }
+                    }}
                     readOnly={!isEditing}
                     placeholder={`(Particiones...)\nnombre:Tipo`}
                     rows={1}
                 />
-                {!isEditing && labelError && (
+                {!isEditing && labelError && value.trim() === "" && (
                     <p className="node-error-text">{labelError}</p>
                 )}
                 {isEditing &&
@@ -251,7 +273,7 @@ export default function ObjectNode({ data }: DataProps) {
                 }
                 {isEditing && (
                     <div className="mt-1 text-[11px] leading-5 font-mono text-center select-none">
-                        <span className="text-gray-400">(</span>
+                        <span className={hasOpenParen ? "text-green-600" : "text-gray-400"}>(</span>
 
                         {objectGuide.partitionsOk ? (
                             <>
@@ -259,21 +281,21 @@ export default function ObjectNode({ data }: DataProps) {
                                     {objectGuide.partitionsText}
                                 </span>
 
-                                {objectGuide.isOpenPartitions && (
+                                {(objectGuide.isOpenPartitions || objectGuide.hasTrailingComma) && (
                                     <>
                                         <span className="text-gray-400">, </span>
                                         <span className="text-gray-400">{objectGuide.nextPartitionLabel}</span>
                                     </>
                                 )}
 
-                                {!objectGuide.isOpenPartitions && (
-                                    <span className="text-gray-400">)</span>
+                                {!objectGuide.isOpenPartitions && !objectGuide.hasTrailingComma && (
+                                    <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                                 )}
                             </>
                         ) : (
                             <>
                                 <span className="text-gray-400">P1, P2...</span>
-                                <span className="text-gray-400">)</span>
+                                <span className={hasCloseParen ? "text-green-600" : "text-gray-400"}>)</span>
                             </>
                         )}
 
