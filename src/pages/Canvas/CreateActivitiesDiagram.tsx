@@ -24,7 +24,7 @@ function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
-    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu, closeEdgeContextMenu } = useCanvas();
+    const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();

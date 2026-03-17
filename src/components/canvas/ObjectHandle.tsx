@@ -4,7 +4,7 @@ import type { BaseHandleProps } from "../../types/canvas";
 
 export default function ObjectHandle({
     id, 
-    type, 
+    type = 'source', 
     position, 
     maxSourceConnections = 1, 
     maxTargetConnections = 1, 
