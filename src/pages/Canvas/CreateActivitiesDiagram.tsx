@@ -19,6 +19,7 @@ import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
+import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -28,6 +29,7 @@ function DiagramContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
+    const { isValidActivityConnection } = useLocalValidations(nodes, edges);
     const { validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
 
@@ -57,7 +59,7 @@ function DiagramContent() {
         [openEdgeContextMenu],
     );
 
-    useEffect(() => {
+        useEffect(() => {
         const loadDiagram = async () => {
             if (diagramId) {
                 const response = await fetchDiagramById(diagramId);
@@ -74,6 +76,33 @@ function DiagramContent() {
             setEdges(diagram.content.canvas.edges || []);
         }
     }, [diagram]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
+    useEffect(() => {
+        window.history.pushState(null, '', window.location.href);
+        const handlePopState = async () => {
+            const result = await confirmExitWithoutSaving();
+            if (!result.isConfirmed) {
+                window.history.pushState(null, '', window.location.href);
+            } else {
+                window.removeEventListener('popstate', handlePopState);
+                window.history.back();
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -210,7 +239,7 @@ function DiagramContent() {
             }))
         );
     }, [isDarkMode]);
-
+    
     const handleConnectEnd = useCallback(() => {
         setIsTryingToConnect(false);
 
@@ -232,7 +261,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative">
-                
+
                 <ReactFlow
                     deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
@@ -294,10 +323,10 @@ export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                    <DiagramContent />
+                <DiagramContent />
             </CanvasProvider>
         </ReactFlowProvider>
-    
+
     );
 }
 

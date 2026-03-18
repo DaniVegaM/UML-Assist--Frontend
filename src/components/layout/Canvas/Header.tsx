@@ -1,4 +1,3 @@
-import { Link, useNavigate } from 'react-router'
 import { useTheme } from '../../../hooks/useTheme';
 import type { HeaderProps } from '../../../types/canvas';
 import { useEffect, useState } from 'react';
@@ -6,13 +5,22 @@ import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import { toPng } from 'html-to-image';
 import './Header.css';
 
+import { useNavigate } from 'react-router';
+import { closeAlert, confirmExitWithoutSaving, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
+
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
-    const navigate = useNavigate();
     const [title, setTitle] = useState<string>('')
     const [saving, setSaving] = useState<boolean>(false)
     const [loading, setLoading] = useState({ showLoading: false, showConfirmation: false, showError: false });
+    const navigate = useNavigate();
+    const handleExit = async (path: string) => {
+        const result = await confirmExitWithoutSaving();
+        if (result.isConfirmed) {
+            navigate(path);
+        }
+    };
 
     useEffect(() => {
         if (diagramTitle?.length > 0)
@@ -40,73 +48,48 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
             return null;
         }
     };
+    
 
+const saveDiagram = async () => {
+  if (saving) return;
+  setSaving(true);
 
-    const saveDiagram = async () => {
-        if (saving) return;
-
-        setLoading({ showLoading: true, showConfirmation: false, showError: false });
-        setSaving(true);
-
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
-
-        try {
-            const previewBlob = await generatePreview();
-            const formData = new FormData();
-            formData.append("title", title);
-            formData.append(
-                "content",
-                JSON.stringify({
-                    type: type,
-                    canvas: {
-                        nodes: nodes,
-                        edges: edges,
-                        totalNodes: nodes.length,
-                        totalEdges: edges.length
-                    }
-                })
-            );
-
-            if (previewBlob) {
-                formData.append("preview_image", previewBlob, "preview.png");
+  try {
+    loadingAlert('Guardando Diagrama...');
+    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
+    const previewBlob = await generatePreview();
+    const formData = new FormData();
+    formData.append("title", title);
+    formData.append(
+        "content",
+        JSON.stringify({
+            type: type,
+            canvas: {
+                nodes: nodes,
+                edges: edges,
+                totalNodes: nodes.length,
+                totalEdges: edges.length
             }
-            let response;
+        })
+        );
 
-            if (!diagramId) {
-                response = await createDiagram(formData);
-                const newId = response.data.id;
+        if (previewBlob) {
+            formData.append("preview_image", previewBlob, "preview.png");
+        }
+        const savePromise = !diagramId
+        ? createDiagram(formData)
+        : updateDiagram(diagramId, formData);
 
-                if (newId) {
-                    let basePath = '/crear-diagrama-de-secuencia';
+        await Promise.all([savePromise, minLoadingTime]);
 
-                    if (type === 'actividades') {
-                        basePath = '/crear-diagrama-de-actividades';
-                    } else if (type === 'secuencia') {
-                        basePath = '/crear-diagrama-de-secuencia';
-                    }
-
-                    navigate(`${basePath}/${newId}`, { replace: true });
-                }
-            } else {
-                response = await updateDiagram(diagramId, formData);
-            }
-
-            await minLoadingTime;
-
-            setLoading({ showLoading: false, showConfirmation: true, showError: false });
-            setTimeout(() => {
-                setLoading({ showLoading: false, showConfirmation: false, showError: false });
-            }, 3000);
-        } catch {
-            await minLoadingTime;
-            setLoading({ showLoading: false, showConfirmation: false, showError: true });
-            setTimeout(() => {
-                setLoading({ showLoading: false, showConfirmation: false, showError: false });
-            }, 3000);
+        closeAlert();
+        await successAlert('Guardado', `Diagrama: <strong>${title}</strong> guardado con éxito`);
+        } catch (err) {
+            closeAlert();
+            await errorAlert('Error', 'No se pudo guardar el diagrama');
         }
         setSaving(false);
-    }
-
+        };
     const closeModal = () => {
         setLoading({ showLoading: false, showConfirmation: false, showError: false });
     }
@@ -115,10 +98,16 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         <>
             <section className="h-full bg-sky-600 grid grid-cols-3 gap-4 p-1 items-center">
                 <div className="flex items-center justify-start gap-2 pl-2">
-                    <Link to="/dashboard" className="mr-4 cursor-pointer">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
-                    </Link>
-                    <Link to="/" className="flex items-center justify-center gap-3">
+                    <div
+                        onClick={() => handleExit('/dashboard')}
+                        className="mr-4 cursor-pointer"
+                    >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+                    </div>
+                    <div
+                        onClick={() => handleExit('/')}
+                        className="flex items-center justify-center gap-3 cursor-pointer"
+                    >
                         <svg
                             className="h-8 w-8 text-white"
                             viewBox="0 0 24 24"
@@ -138,7 +127,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                             <line x1="17.5" y1="10" x2="17.5" y2="14" />
                         </svg>
                         <p className="text-center text-white font-bold uppercase">UML Assist</p>
-                    </Link>
+                    </div>
                 </div>
                 <div>
                     <input
