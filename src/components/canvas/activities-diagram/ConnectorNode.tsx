@@ -14,7 +14,7 @@ export default function ConnectorNode({ data }: DataProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(data.label || "");
-  const { setIsZoomOnScrollEnabled, openContextMenu } = useCanvas();
+  const { setIsZoomOnScrollEnabled, openContextMenu, isTryingToConnect } = useCanvas();
   const [showSuggestion, setShowSuggestion] = useState(false);
 
   const clearSuggestion = useCallback(() => {
@@ -101,7 +101,11 @@ export default function ConnectorNode({ data }: DataProps) {
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
       className="bg-transparent p-4"
-      onMouseMove={(evt) => { magneticHandle(evt) }}
+      onMouseMove={(evt) => {
+                if (isTryingToConnect) {
+                    magneticHandle(evt);
+                }
+            }}
     >
       {data.suggestion && (
         <>

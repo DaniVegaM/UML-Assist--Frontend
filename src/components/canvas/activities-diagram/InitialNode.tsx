@@ -12,7 +12,7 @@ import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
 export default function InitialNode({ data }: DataProps) {
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
-    const { openContextMenu } = useCanvas();
+    const { openContextMenu, isTryingToConnect } = useCanvas();
     const [showSuggestion, setShowSuggestion] = useState(false);
     // Manejo de handles
     const [showHandles, setShowHandles] = useState(false);
@@ -64,7 +64,11 @@ export default function InitialNode({ data }: DataProps) {
             onMouseLeave={() => setShowHandles(false)}
             onContextMenu={handleContextMenu}
             className="bg-transparent p-4"
-            onMouseMove={(evt) => { magneticHandle(evt) }}
+            onMouseMove={(evt) => {
+                if (isTryingToConnect) {
+                    magneticHandle(evt);
+                }
+            }}
         >
             {data.suggestion && (
                 <>

@@ -106,7 +106,7 @@ export function MessageEdge({
     const SNAP_THRESHOLD = 25; //Umbral sobre eje Y para guias horizontales
 
     const deltaY = targetY - sourceY;
-    
+
     // Si estamos dentro del umbral, ajustamos para que sea una linea recta horizontal
     if (Math.abs(deltaY) < SNAP_THRESHOLD) {
         targetY = sourceY;
@@ -118,7 +118,7 @@ export function MessageEdge({
         targetX : targetX -10,
         targetY: targetY,
     });
-  
+
     const inputRef = useRef<HTMLInputElement | null>(null);
 
     const isEmpty = editingLabel.trim().length === 0;
@@ -289,7 +289,7 @@ export function MessageEdge({
             d={edgePath}
             fill="none"
             stroke="transparent"
-            strokeWidth={20}
+            strokeWidth={50}
             onDoubleClick={(e) => {
             e.stopPropagation();
             startEditing();
@@ -420,6 +420,11 @@ export function MessageEdge({
                         e.stopPropagation();
                         startEditing();
                     }}
+                    onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleContextMenu(e);
+                    }}
                     style={{
                         ...labelStyle,
                         background: '#F3F4F6',
@@ -429,6 +434,8 @@ export function MessageEdge({
                         : '2px 4px',
                         fontSize: '12px',
                         borderRadius: labelBgBorderRadius,
+                        maxWidth: '200px',       
+                        wordWrap: 'break-word',   
                     }}
                     >
                     {label}
