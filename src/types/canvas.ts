@@ -11,6 +11,9 @@ export interface DraggableNodeProps {
     incomingEdge? : string;
     outgoingEdge? : string;
     setExtendedBar?: React.Dispatch<React.SetStateAction<boolean>>;
+    title?: string;
+    onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    onMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 export interface ElementsBarProps {
@@ -73,7 +76,8 @@ export interface DataProps{
         isCreatedLifeLine?: boolean,
         orderedHandles?: {id: string, order: number}[],
         sourceBoxesLength?: number,
-        targetBoxesLength?: number
+        targetBoxesLength?: number,
+        suggestion?: string;
     }
 }
 
@@ -81,10 +85,17 @@ export interface AltFragmentData {
     firstOperand?: string;
     separatorValues?: string[];
     separatorPositions?: number[];
+    suggestion?: string;
     [key: string]: unknown;
 }
 
 export interface ParFragmentData {
     separatorPositions?: number[];
+    suggestion?: string;
+    [key: string]: unknown;
+}
+
+export interface EdgeDataProps {
+    suggestion?: string;
     [key: string]: unknown;
 }

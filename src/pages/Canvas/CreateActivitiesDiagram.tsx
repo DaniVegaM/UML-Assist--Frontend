@@ -7,7 +7,7 @@ import { ACTIVITY_NODES } from "../../diagrams-elements/activities-elements";
 import { activitiesNodeTypes } from "../../types/nodeTypes";
 import { CanvasProvider } from "../../contexts/CanvasContext";
 import { useCanvas } from "../../hooks/useCanvas";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { edgeTypes } from "../../types/edgeTypes";
 import { useParams } from "react-router";
 import type { Diagram } from "../../types/diagramsModel";
@@ -15,9 +15,11 @@ import { fetchDiagramById } from "../../services/diagramSerivce";
 import { SnapConnectionLine } from "../../components/canvas/sequence-diagram/SnapConnectionLine";
 import { useLocalValidations } from "../../hooks/useLocalValidations";
 import AIChatBar from "../../components/canvas/AIChatBar";
+import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
+import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -28,6 +30,34 @@ function DiagramContent() {
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
+    const { validateActivityConnection } = useLocalValidations(nodes, edges);
+    const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    const isValidActivityConnectionWithFeedback = useCallback(
+        (conn: Connection) => {
+            const sourceNode = nodes.find(n => n.id === conn.source);
+            const targetNode = nodes.find(n => n.id === conn.target);
+            if (
+                sourceNode?.type === "note" ||
+                targetNode?.type === "note"
+            ) {
+                return true;
+            }
+            const result = validateActivityConnection(conn);
+
+            if (!result.ok) {
+                lastInvalidAttemptRef.current = {
+                    ts: Date.now(),
+                    message: result.reason ?? "Esta relación no cumple las reglas locales del diagrama.",
+                    type: result.severity ?? "info",
+                };
+            }
+
+            return result.ok;
+        },
+        [validateActivityConnection, nodes]
+    );
+
 
     const onEdgeContextMenu = useCallback(
         (event: React.MouseEvent, edge: Edge) => {
@@ -37,7 +67,7 @@ function DiagramContent() {
         [openEdgeContextMenu],
     );
 
-    useEffect(() => {
+        useEffect(() => {
         const loadDiagram = async () => {
             if (diagramId) {
                 const response = await fetchDiagramById(diagramId);
@@ -54,6 +84,33 @@ function DiagramContent() {
             setEdges(diagram.content.canvas.edges || []);
         }
     }, [diagram]);
+
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
+    useEffect(() => {
+        window.history.pushState(null, '', window.location.href);
+        const handlePopState = async () => {
+            const result = await confirmExitWithoutSaving();
+            if (!result.isConfirmed) {
+                window.history.pushState(null, '', window.location.href);
+            } else {
+                window.removeEventListener('popstate', handlePopState);
+                window.history.back();
+            }
+        };
+        window.addEventListener('popstate', handlePopState);
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, []);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -72,7 +129,7 @@ function DiagramContent() {
         [],
     );
 
-    const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node);
         const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
 
@@ -94,15 +151,22 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
+
             const sourceNode = nodes.find((node) => node.id === params.source);
             const targetNode = nodes.find((node) => node.id === params.target);
 
-            let edgeType = {};
+            let edgeType = "labeledEdge";
             let defaultLabel = '';
 
 
-            // Definir el tipo de edge según el tipo de nodo conectado
             if (
+                sourceNode?.type === 'note' ||
+                targetNode?.type === 'note'
+            ) {
+                edgeType = 'noteEdge';
+            }
+            // Definir el tipo de edge según el tipo de nodo conectado
+            else if (
                 (sourceNode?.type === 'acceptEvent' &&
                     nodes.find(
                         n => n.id === sourceNode.parentId && n.type === 'InterruptActivityRegion'
@@ -123,22 +187,11 @@ function DiagramContent() {
             else if (targetNode?.type === 'exceptionHandling') {
                 edgeType = 'exceptionHandlingEdge';
             }
-            else if (
-                sourceNode?.type === 'note' ||
-                targetNode?.type === 'note'
-            ) {
-                edgeType = 'noteEdge';
-            }
-            else {
-                edgeType = 'labeledEdge'; // tipo por defecto
-            }
-
-            // Definir etiqueta por defecto según el tipo de nodo conectado
-            if (targetNode?.type === 'decisionControl') {
+            else if (targetNode?.type === 'decisionControl') {
                 defaultLabel = '[Condición]';
             }
 
-            if (sourceNode?.type === 'decisionControl') {
+            else if (sourceNode?.type === 'decisionControl') {
                 defaultLabel = '[Clausula]';
             }
 
@@ -147,6 +200,7 @@ function DiagramContent() {
                 id: createPrefixedNodeId('edge'),
                 type: edgeType,
                 label: defaultLabel,
+                data: edgeType === "noteEdge" ? { isNoteEdge: true } : undefined,
             };
 
             setEdges((edgesSnapshot) => {
@@ -154,12 +208,12 @@ function DiagramContent() {
                 // console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
-
+            
         },
         [nodes, setEdges],
     );
 
-    useEffect(() => {
+   useEffect(() => {
         setEdges((currentEdges) =>
             currentEdges.map((edge) => ({
                 ...edge,
@@ -189,6 +243,16 @@ function DiagramContent() {
             }))
         );
     }, [isDarkMode]);
+    
+    const handleConnectEnd = useCallback(() => {
+        setIsTryingToConnect(false);
+
+        const info = lastInvalidAttemptRef.current;
+        if (info && Date.now() - info.ts < 700) {
+                notify(info.type, "Conexión inválida", info.message);
+        }
+        lastInvalidAttemptRef.current = null;
+    }, [setIsTryingToConnect]);
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
@@ -201,6 +265,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative">
+
                 <ReactFlow
                     deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
@@ -224,7 +289,7 @@ function DiagramContent() {
                         },
                         type: 'labeledEdge',
                     }}
-                    isValidConnection={isValidActivityConnection}
+                    isValidConnection={isValidActivityConnectionWithFeedback}
                     connectionMode={ConnectionMode.Loose}
                     connectionLineType={ConnectionLineType.SmoothStep}
                     connectionLineComponent={SnapConnectionLine}
@@ -237,8 +302,8 @@ function DiagramContent() {
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
+                    onConnectEnd={handleConnectEnd}
                     onConnectStart={() => setIsTryingToConnect(true)}
-                    onConnectEnd={() => setIsTryingToConnect(false)}
                     onEdgeContextMenu={onEdgeContextMenu}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -265,5 +330,7 @@ export default function CreateActivitiesDiagram() {
                 <DiagramContent />
             </CanvasProvider>
         </ReactFlowProvider>
+
     );
 }
+

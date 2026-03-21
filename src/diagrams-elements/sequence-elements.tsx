@@ -13,6 +13,8 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'altFragment',
         label: 'Alt (Alternativa)',
+        grouped: true,
+        description: 'Define un bloque de selección donde se presentan varias rutas posibles y el sistema elige solo una de ellas según la condición que se cumpla.',
     },
     {
         svg: (
@@ -23,6 +25,8 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'optFragment',
         label: 'Opt (Opcional)',
+        grouped: true,
+        description: 'Encierra una interacción que es puramente facultativa, de modo que solo ocurre si se satisface un requisito previo.',
     },
     {
         svg: (
@@ -33,6 +37,8 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'loopFragment',
         label: 'Loop (Bucle)',
+        description: 'Indica que un conjunto de mensajes debe repetirse de forma cíclica mientras sea válida una instrucción de iteración.',
+        grouped: true,
     },
     {
         svg: (
@@ -43,6 +49,8 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'breakFragment',
         label: 'Break (Interrupción)',
+        description: 'Establece una salida de emergencia que detiene el flujo normal para procesar una situación excepcional o un error.',
+        grouped: true,
     },
     {
         svg: (
@@ -54,6 +62,8 @@ export const SEQUENCE_NODES = [
         ),
         nodeType: 'seqFragment',
         label: 'Seq (Orden Débil)',
+        description: 'Organiza los mensajes siguiendo el orden estándar de la comunicación donde se mantiene una secuencia lógica predecible.',
+        grouped: true,
     },
     {
         svg: (
@@ -64,7 +74,9 @@ export const SEQUENCE_NODES = [
             </svg>
         ),
         nodeType: 'strictFragment',
+        description: 'Impone una restricción de orden total donde cada interacción debe suceder en el instante exacto después de la anterior sin solapamientos temporales.',
         label: 'Strict (Orden Estricto)',
+        grouped: true,
     },
     {
         svg: (
@@ -75,7 +87,9 @@ export const SEQUENCE_NODES = [
             </svg>
         ),
         nodeType: 'parFragment',
+        description: 'Habilita el modelado de múltiples conversaciones o intercambios de mensajes que ocurren exactamente al mismo tiempo entre los participantes.',
         label: 'Par (Concurrente)',
+        grouped: true,
     },
     {
         separator: 'Otros',
@@ -142,6 +156,7 @@ export const SEQUENCE_NODES = [
                 />
             </svg>
         ),
+        description: 'Espacio destinado a integrar comentarios o descripciones adicionales que ayudan a comprender mejor las reglas del proceso.',
         nodeType: 'note',
         label: 'Nota UML',
         grouped: true

@@ -1,7 +1,8 @@
-import { useEdges, useNodes } from "@xyflow/react";
+import { useEdges, useNodes, useReactFlow } from "@xyflow/react";
 import { useCallback, useState } from "react";
 import { reviewDiagramWithAI } from "../../services/diagramSerivce";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
+import type { ReviewDiagramResponse } from "../../types/diagramsModel";
 
 export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const [isVisible, setIsVisible] = useState(false);
@@ -9,7 +10,9 @@ export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const [initialContext, setInitialContext] = useState("");
     const nodes = useNodes();
     const edges = useEdges();
-    const TEXT_AREA_MAX_LEN = 100;
+    const { setNodes, setEdges } = useReactFlow();
+    const [generalDescription, setGeneralDescription] = useState<string | null>(null);
+    const TEXT_AREA_MAX_LEN = 300;
 
     const onChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
         if (evt.target.value.length >= TEXT_AREA_MAX_LEN) {
@@ -80,9 +83,36 @@ ${edges
             intermediateLanguage,
         }
 
-        const reviewDiagramResponse = await reviewDiagramWithAI(reviewDiagramData);
+        const reviewDiagramWithAIResponse = await reviewDiagramWithAI(reviewDiagramData);
+        const reviewDiagramResultsJson = JSON.parse(reviewDiagramWithAIResponse.data) as ReviewDiagramResponse;
         
-        console.log("Respuesta de la IA:", reviewDiagramResponse.data.suggestions);
+        console.log("Respuesta de la IA:", reviewDiagramResultsJson);
+        
+        setGeneralDescription(reviewDiagramResultsJson.generalDescription);
+
+        // Aplanar el array de objetos unitarios a un mapa completo
+        const suggestionsMap: Record<string, string> = {};
+        for (const entry of reviewDiagramResultsJson.suggestions) {
+            const [id, text] = Object.entries(entry)[0];
+            suggestionsMap[id] = text;
+        }
+
+        if (Object.keys(suggestionsMap).length > 0) {
+            setNodes(prevNodes =>
+                prevNodes.map(n =>
+                    suggestionsMap[n.id]
+                        ? { ...n, data: { ...n.data, suggestion: suggestionsMap[n.id] } }
+                        : n
+                )
+            );
+            setEdges(prevEdges =>
+                prevEdges.map(e =>
+                    suggestionsMap[e.id]
+                        ? { ...e, data: { ...e.data, suggestion: suggestionsMap[e.id] } }
+                        : e
+                )
+            );
+        }
         
         setTimeout(() => {
             setIsThinking(false);
@@ -103,6 +133,15 @@ ${edges
                         {
                             <p className="char-counter char-counter-right">{`${initialContext.length}/${TEXT_AREA_MAX_LEN}`}</p>
                         }
+
+                    {generalDescription && (
+                        <>
+                            <h2 className="font-semibold text-sm text-zinc-900 dark:text-white mb-1">Resumen</h2>
+                            <div className="bg-zinc-100 dark:bg-zinc-600 p-3 rounded-lg overflow-y-auto min-h-60 max-h-70 shadow-inner mt-2">
+                                <p className="text-sm text-zinc-800 dark:text-zinc-200">{generalDescription}</p>
+                            </div>
+                        </>
+                    )}
 
                     <button onClick={reviewDiagram} className="flex gap-2 bg-sky-600 p-2 rounded-full cursor-pointer shadow-lg hover:bg-sky-700 transition-colors mt-2 justify-center items-center">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="white" className="size-6" viewBox="0 0 24 24"><path fillRule="evenodd" d="M9 4.5a.75.75 0 0 1 .721.544l.813 2.846a3.75 3.75 0 0 0 2.576 2.576l2.846.813a.75.75 0 0 1 0 1.442l-2.846.813a3.75 3.75 0 0 0-2.576 2.576l-.813 2.846a.75.75 0 0 1-1.442 0l-.813-2.846a3.75 3.75 0 0 0-2.576-2.576l-2.846-.813a.75.75 0 0 1 0-1.442l2.846-.813A3.75 3.75 0 0 0 7.466 7.89l.813-2.846A.75.75 0 0 1 9 4.5m9-3a.75.75 0 0 1 .728.568l.258 1.036a2.63 2.63 0 0 0 1.91 1.91l1.036.258a.75.75 0 0 1 0 1.456l-1.036.258a2.63 2.63 0 0 0-1.91 1.91l-.258 1.036a.75.75 0 0 1-1.456 0l-.258-1.036a2.63 2.63 0 0 0-1.91-1.91l-1.036-.258a.75.75 0 0 1 0-1.456l1.036-.258a2.63 2.63 0 0 0 1.91-1.91l.258-1.036A.75.75 0 0 1 18 1.5M16.5 15a.75.75 0 0 1 .712.513l.394 1.183c.15.447.5.799.948.948l1.183.395a.75.75 0 0 1 0 1.422l-1.183.395a1.5 1.5 0 0 0-.948.948l-.395 1.183a.75.75 0 0 1-1.422 0l-.395-1.183a1.5 1.5 0 0 0-.948-.948l-1.183-.395a.75.75 0 0 1 0-1.422l1.183-.395a1.5 1.5 0 0 0 .948-.948l.395-1.183A.75.75 0 0 1 16.5 15" clipRule="evenodd" /></svg>
