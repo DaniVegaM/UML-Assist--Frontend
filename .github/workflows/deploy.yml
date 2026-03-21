@@ -28,8 +28,8 @@ jobs:
           ECR_REPOSITORY: uml-assist-frontend
           IMAGE_TAG: ${{ github.sha }}
         run: |
-          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
-          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
+          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker build --build-arg VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }} -t $ECR_REGISTRY/$ECR_REPOSITORY:latest .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
@@ -46,4 +46,4 @@ jobs:
             docker rm uml-frontend || true
             
             docker pull ${{ steps.login-ecr.outputs.registry }}/uml-assist-frontend:latest
-            docker run -d --name uml-frontend --env-file /home/ec2-user/app-config/frontend.env -p 80:80 ${{ steps.login-ecr.outputs.registry }}/uml-assist-frontend:latest
+            docker run -d --name uml-frontend --env-file /home/ec2-user/app-config/frontend.env -p 80:80 -p 443:443 -v /home/ec2-user/media:/usr/share/nginx/html/media:ro -v /etc/letsencrypt:/etc/letsencrypt:ro ${{ steps.login-ecr.outputs.registry }}/uml-assist-frontend:latest
