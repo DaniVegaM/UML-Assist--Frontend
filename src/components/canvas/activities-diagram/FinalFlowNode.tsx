@@ -65,7 +65,11 @@ export default function FinalFlowNode({ data }: DataProps) {
             onMouseLeave={() => setShowHandles(false)}
             onContextMenu={handleContextMenu}
             className="bg-transparent p-4"
-            onMouseMove={(evt) => { magneticHandle(evt) }}
+            onMouseMove={(evt) => {
+                if (isTryingToConnect) {
+                    magneticHandle(evt);
+                }
+            }}
         >
             {data.suggestion && (
                 <>

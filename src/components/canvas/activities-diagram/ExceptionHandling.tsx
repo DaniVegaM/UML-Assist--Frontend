@@ -101,7 +101,11 @@ export default function ExceptionHandling({ data }: DataProps) {
       onMouseEnter={() => setShowHandles(isTryingToConnect)}
       onMouseLeave={() => setShowHandles(false)}
       className="bg-transparent p-4"
-      onMouseMove={(evt) => { magneticHandle(evt) }}
+      onMouseMove={(evt) => {
+                if (isTryingToConnect) {
+                    magneticHandle(evt);
+                }
+            }}
     >
       {data.suggestion && (
         <>

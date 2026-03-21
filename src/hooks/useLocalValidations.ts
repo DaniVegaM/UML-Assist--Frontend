@@ -30,7 +30,8 @@ const hasAnyHandleUsed = useCallback(
         if (!sh && !th) return false;
 
         return edges.some((e) => {
-            
+            if (e.data?.isNoteEdge) return false; // ignorar notas
+
             return (
                 (sh && e.sourceHandle === sh) ||
                 (sh && e.targetHandle === sh) ||
@@ -40,29 +41,37 @@ const hasAnyHandleUsed = useCallback(
         });
     },
     [edges]
-    );
+);
 
 
 
     const hasEdge = useCallback(
-        (sourceId: string, targetId: string) =>
-        edges.some((e) => e.source === sourceId && e.target === targetId),
-        [edges]
+    (sourceId: string, targetId: string) =>
+        edges.some((e) => e.source === sourceId && e.target === targetId && !e.data?.isNoteEdge),
+    [edges]
     );
 
     const hasReverseEdge = useCallback(
-        (sourceId: string, targetId: string) =>
-        edges.some((e) => e.source === targetId && e.target === sourceId),
-        [edges]
+    (sourceId: string, targetId: string) =>
+        edges.some((e) => e.source === targetId && e.target === sourceId && !e.data?.isNoteEdge),
+    [edges]
     );
 
     const incomingCount = useCallback(
-        (nodeId: string) => edges.filter((e) => e.target === nodeId).length,
+        (nodeId: string) =>
+            edges.filter(e =>
+                e.target === nodeId &&
+                !e.data?.isNoteEdge
+            ).length,
         [edges]
     );
 
     const outgoingCount = useCallback(
-        (nodeId: string) => edges.filter((e) => e.source === nodeId).length,
+        (nodeId: string) =>
+            edges.filter(e =>
+                e.source === nodeId &&
+                !e.data?.isNoteEdge
+            ).length,
         [edges]
     );
 
@@ -86,6 +95,11 @@ const hasAnyHandleUsed = useCallback(
         const sourceNodeType = sourceNode.type;
         const targetNodeType = targetNode.type;
 
+        //IGNORAR COMPLETAMENTE NOTAS
+        if (sourceNodeType === "note" || targetNodeType === "note") {
+            return { ok: true };
+        }
+
         // Validación base: tipos requeridos
         if (!sourceNodeType || !targetNodeType) {
             return {
@@ -94,6 +108,12 @@ const hasAnyHandleUsed = useCallback(
             reason: "No se pudo determinar el tipo de nodo (origen o destino).",
             };
         }
+
+        if (
+            sourceNodeType !== "note" &&
+            targetNodeType !== "note" &&
+            hasAnyHandleUsed(connection)
+        )
 
         // Un solo handle por conexión
         if (hasAnyHandleUsed(connection)) {
@@ -137,6 +157,7 @@ const hasAnyHandleUsed = useCallback(
 
         // ¿El source YA tiene alguna salida hacia algún final?
         const sourceAlreadyEndsInFinal = edges.some((e) => {
+            if (e.data?.isNoteEdge) return false;
             if (e.source !== sourceNodeId) return false;
             const t = findNode(e.target)?.type;
             return t === "finalNode" || t === "finalFlowNode";
@@ -167,12 +188,14 @@ const hasAnyHandleUsed = useCallback(
 
         // Entradas al target que vengan del grupo de acciones
         const incomingEdgesFromActionGroup = edges.filter((e) => {
+            if (e.data?.isNoteEdge) return false;
             if (e.target !== targetNodeId) return false;
             const sourceType = findNode(e.source)?.type;
             return !!sourceType && actionTypes.includes(sourceType);
         });
 
         const outgoingEdgesToActionGroup = edges.filter((e) => {
+            if (e.data?.isNoteEdge) return false;
             if (e.source !== sourceNodeId) return false;
             const targetType = findNode(e.target)?.type;
             return !!targetType && actionTypes.includes(targetType);

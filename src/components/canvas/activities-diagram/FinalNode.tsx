@@ -65,7 +65,11 @@ export default function FinalNode({ data }: DataProps) {
             onMouseEnter={() => setShowHandles(isTryingToConnect)}
             onMouseLeave={() => setShowHandles(false)}
             onContextMenu={handleContextMenu}
-            onMouseMove={(evt) => { magneticHandle(evt) }}
+            onMouseMove={(evt) => {
+                if (isTryingToConnect) {
+                    magneticHandle(evt);
+                }
+            }}
         >
             {data.suggestion && (
                 <>

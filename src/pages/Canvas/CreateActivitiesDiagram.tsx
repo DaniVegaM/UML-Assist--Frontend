@@ -31,22 +31,30 @@ function DiagramContent() {
     const { validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
 
-        const isValidActivityConnectionWithFeedback = useCallback(
-            (conn: Connection) => {
-                const result = validateActivityConnection(conn);
+    const isValidActivityConnectionWithFeedback = useCallback(
+        (conn: Connection) => {
+            const sourceNode = nodes.find(n => n.id === conn.source);
+            const targetNode = nodes.find(n => n.id === conn.target);
+            if (
+                sourceNode?.type === "note" ||
+                targetNode?.type === "note"
+            ) {
+                return true;
+            }
+            const result = validateActivityConnection(conn);
 
-                if (!result.ok) {
+            if (!result.ok) {
                 lastInvalidAttemptRef.current = {
                     ts: Date.now(),
                     message: result.reason ?? "Esta relación no cumple las reglas locales del diagrama.",
                     type: result.severity ?? "info",
                 };
-                }
+            }
 
-                return result.ok;
-            },
-            [validateActivityConnection]
-        );
+            return result.ok;
+        },
+        [validateActivityConnection, nodes]
+    );
 
 
     const onEdgeContextMenu = useCallback(
@@ -92,7 +100,7 @@ function DiagramContent() {
         [],
     );
 
-    const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
+     const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node);
         const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
 
@@ -122,8 +130,14 @@ function DiagramContent() {
             let defaultLabel = '';
 
 
-            // Definir el tipo de edge según el tipo de nodo conectado
             if (
+                sourceNode?.type === 'note' ||
+                targetNode?.type === 'note'
+            ) {
+                edgeType = 'noteEdge';
+            }
+            // Definir el tipo de edge según el tipo de nodo conectado
+            else if (
                 (sourceNode?.type === 'acceptEvent' &&
                     nodes.find(
                         n => n.id === sourceNode.parentId && n.type === 'InterruptActivityRegion'
@@ -144,22 +158,11 @@ function DiagramContent() {
             else if (targetNode?.type === 'exceptionHandling') {
                 edgeType = 'exceptionHandlingEdge';
             }
-            else if (
-                sourceNode?.type === 'note' ||
-                targetNode?.type === 'note'
-            ) {
-                edgeType = 'noteEdge';
-            }
-            else {
-                edgeType = 'labeledEdge'; // tipo por defecto
-            }
-
-            // Definir etiqueta por defecto según el tipo de nodo conectado
-            if (targetNode?.type === 'decisionControl') {
+            else if (targetNode?.type === 'decisionControl') {
                 defaultLabel = '[Condición]';
             }
 
-            if (sourceNode?.type === 'decisionControl') {
+            else if (sourceNode?.type === 'decisionControl') {
                 defaultLabel = '[Clausula]';
             }
 
@@ -168,6 +171,7 @@ function DiagramContent() {
                 id: createPrefixedNodeId('edge'),
                 type: edgeType,
                 label: defaultLabel,
+                data: edgeType === "noteEdge" ? { isNoteEdge: true } : undefined,
             };
 
             setEdges((edgesSnapshot) => {
@@ -175,12 +179,12 @@ function DiagramContent() {
                 // console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
-
+            
         },
         [nodes, setEdges],
     );
 
-    useEffect(() => {
+   useEffect(() => {
         setEdges((currentEdges) =>
             currentEdges.map((edge) => ({
                 ...edge,
@@ -232,7 +236,7 @@ function DiagramContent() {
             />
 
             <section className="h-full w-full relative">
-                
+
                 <ReactFlow
                     deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
@@ -294,10 +298,10 @@ export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                    <DiagramContent />
+                <DiagramContent />
             </CanvasProvider>
         </ReactFlowProvider>
-    
+
     );
 }
 
