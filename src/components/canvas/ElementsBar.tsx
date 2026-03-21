@@ -96,7 +96,7 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                             if ('separator' in groupedNode) return null;
                                             return (
                                             <DraggableNode
-                                                className={`${groupedNode.className} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex ${oneColumn ? 'h-[60px]' : 'h-10'} text-zinc-400
+                                                className={`${groupedNode.className || ''} border border-gray-300 dark:border-neutral-900 rounded-lg p-2 bg-gray-100 dark:bg-neutral-800 hover:bg-gray-200 dark:hover:bg-zinc-600 flex h-10 text-zinc-400
                                             flex-col gap-0 justify-center items-center`}
                                                 nodeType={groupedNode.nodeType}
                                                 key={groupedNode.label.trim()}
