@@ -80,7 +80,7 @@ export const selectDiagramTypeAlert = async () => {
 
         <!-- TITULO -->
         <h2 class="text-xl font-bold mb-2">
-          ¿Qué tipo de diagrama deseas crear?
+          ¿Qué tipo de diagrama deseas modelar?
         </h2>
 
       </div>
