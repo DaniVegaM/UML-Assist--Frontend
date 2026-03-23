@@ -5,6 +5,7 @@ import Header from "../components/layout/MainLayout/Header";
 import type { Diagram } from "../types/diagramsModel";
 import MenuWithOptions from "../components/ui/MenuWithOptions";
 import '../components/layout/MainLayout/Header.css';
+import { customModal, selectDiagramTypeAlert , loadingAlert, successAlert, errorAlert } from "../utils/sweetAlert";
 
 
 export default function Dashboard() {
@@ -13,14 +14,10 @@ export default function Dashboard() {
     const [diagrams, setDiagrams] = useState<Diagram[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [showModal, setShowModal] = useState<boolean>(false);
     const [selectedDiagramCard, setSelectedDiagramCard] = useState<Diagram | null>(null);
-    const [deleteModal, setDeleteModal] = useState({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
     const [showMenu, setShowMenu] = useState<boolean>(false);
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
-    const [isEditingTitle, setIsEditingTitle] = useState<boolean>(false);
     const menuRef = useRef<HTMLDivElement>(null);
-    const inputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
     const [page, setPage] = useState(1);
     const [ordering, setOrdering] = useState("-created_at");
     const [nextPage, setNextPage] = useState<string | null>(null);
@@ -48,19 +45,6 @@ export default function Dashboard() {
         loadDiagrams();
     }, [page, ordering]);
 
-    useEffect(() => {
-        const handleEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape' && showModal) {
-                setShowModal(false);
-            }
-        };
-
-        document.addEventListener('keydown', handleEscape);
-
-        return () => {
-            document.removeEventListener('keydown', handleEscape);
-        };
-    }, [showModal]);
 
     const formatDate = (date: Date) => {
         return new Date(date).toLocaleDateString('es-MX', {
@@ -89,6 +73,22 @@ export default function Dashboard() {
     };
 
     useEffect(() => {
+        const handler = (e: any) => {
+            if (e.detail === 'secuencia') {
+            navigate('/crear-diagrama-de-secuencia');
+            } else if (e.detail === 'actividades') {
+            navigate('/crear-diagrama-de-actividades');
+            }
+        };
+
+        window.addEventListener('diagram:selected', handler);
+
+        return () => {
+            window.removeEventListener('diagram:selected', handler);
+        };
+        }, []);
+
+    useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
                 setShowMenu(false);
@@ -105,85 +105,97 @@ export default function Dashboard() {
     }, [showMenu]);
 
 
-    useEffect(() => {
-        if (isEditingTitle && selectedDiagramCard?.id) {
-            const input = inputRefs.current[selectedDiagramCard.id];
-            if (input) {
-                input.focus();
-                input.select(); // Opcionalmente seleccionar todo el texto
-            }
+
+const handleRenameModal = async () => {
+    if (!selectedDiagramCard) return;
+
+    const result = await customModal({
+        title: 'Renombrar diagrama',
+        html: `
+            <input 
+                id="diagram-name-input"
+                class="w-full p-3 rounded-xl border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-black dark:text-white outline-none"
+                placeholder="Escribe el nuevo nombre..."
+                value="${selectedDiagramCard.title}"
+            />
+        `,
+        showCancel: true,
+        confirmText: 'Guardar',
+        cancelText: 'Cancelar',
+    });
+
+    if (result.isConfirmed) {
+        const input = document.getElementById('diagram-name-input') as HTMLInputElement;
+        const newTitle = input?.value;
+
+        if (!newTitle || newTitle.trim() === '') {
+            errorAlert('Error', 'El nombre no puede estar vacío');
+            return;
         }
-    }, [isEditingTitle, selectedDiagramCard?.id]);
 
-    const handleRename = async (diagramId: number, diagramTitle: string) => {
-        // TODO: Actualizar el nombre al presiioinar botón enter
-        if (selectedDiagramCard) {
-            const diagramData: Diagram = {
-                id: diagramId ? diagramId : undefined,
-                title: diagramTitle,
+        try {
+            loadingAlert('Renombrando...');
 
-            }
-            try {
-                await patchDiagram(diagramData);
-            } catch (err) {
-                console.error('Error al renombrar el diagrama:', err);
-            }
+            await patchDiagram({
+                id: selectedDiagramCard.id,
+                title: newTitle,
+            });
 
-            setDiagrams(diagrams.map(diagram => {
-                if (diagram.id === selectedDiagramCard.id) {
-                    return { ...diagram, title: diagram.title };
-                } else {
-                    return diagram;
-                }
-            }))
+            setDiagrams(prev =>
+                prev.map(d =>
+                    d.id === selectedDiagramCard.id
+                        ? { ...d, title: newTitle }
+                        : d
+                )
+            );
+
+            await successAlert('Actualizado', 'Nombre cambiado correctamente');
+
+        } catch (err) {
+            console.error(err);
+            await errorAlert('Error', 'No se pudo renombrar');
         }
-        setIsEditingTitle(false)
-    };
+    }
+};
 
-    const handleDeleteClick = () => {
-        if (selectedDiagramCard) {
-            setDeleteModal({ showConfirm: true, showLoading: false, showSuccess: false, showError: false });
+    const handleDeleteClick = async () => {
+        if (!selectedDiagramCard) return;
+
+        const result = await customModal({
+            title: '¿Eliminar diagrama?',
+            text: `Se eliminará "${selectedDiagramCard.title}"`,
+            icon: 'warning',
+            showCancel: true,
+            confirmText: 'Eliminar',
+            cancelText: 'Cancelar',
+            isDanger: true,
+        });
+
+        if (result.isConfirmed) {
+            await confirmDelete();
         }
     };
 
     const confirmDelete = async () => {
         if (!selectedDiagramCard?.id) return;
 
-        setDeleteModal({ showConfirm: false, showLoading: true, showSuccess: false, showError: false });
-
-        const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
-
         try {
-            const deletePromise = deleteDiagram(selectedDiagramCard.id);
-            await Promise.all([deletePromise, minLoadingTime]);
+            loadingAlert('Eliminando...');
+
+            await deleteDiagram(selectedDiagramCard.id);
 
             setDiagrams(diagrams.filter(d => d.id !== selectedDiagramCard.id));
-            setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: true, showError: false });
 
-            setTimeout(() => {
-                setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
-                setSelectedDiagramCard(null);
-            }, 3000);
+            await successAlert('¡Eliminado!', 'El diagrama se eliminó correctamente');
+
         } catch (err) {
-            await minLoadingTime;
-            console.error('Error al eliminar el diagrama:', err);
-            setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: true });
+            console.error('Error al eliminar:', err);
 
-            setTimeout(() => {
-                setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
-            }, 3000);
+            await errorAlert('Error', 'No se pudo eliminar el diagrama');
         }
     };
 
-    const cancelDelete = () => {
-        setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
-        setSelectedDiagramCard(null);
-    };
 
-    const closeDeleteModal = () => {
-        setDeleteModal({ showConfirm: false, showLoading: false, showSuccess: false, showError: false });
-        setSelectedDiagramCard(null);
-    };
 
     return (
         <>
@@ -233,7 +245,7 @@ export default function Dashboard() {
                                 Crea tu primer diagrama UML y comienza a modelar con asistencia inteligente
                             </p>
                             <button
-                                onClick={() => setShowModal(true)}
+                                onClick={() => selectDiagramTypeAlert()}
                                 className="cursor-pointer inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -260,7 +272,7 @@ export default function Dashboard() {
                             Mis diagramas
                         </h1>
                         <button
-                            onClick={() => setShowModal(true)}
+                            onClick={() => selectDiagramTypeAlert()}
                             className="inline-flex items-center gap-2 bg-sky-600 hover:bg-sky-700 text-white px-6 py-3 rounded-xl font-bold transition-all duration-300 cursor-pointer"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -358,60 +370,26 @@ export default function Dashboard() {
                                         </button>
                                     </div>
 
-                                    <div className="flex items-center gap-3 my-2">
-                                        <input
-                                            className={`font-bold text-lg dark:text-white truncate group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors p-1 ${isEditingTitle && selectedDiagramCard?.id === diagram.id ? 'outline-1 outline-sky-600' : 'outline-0'}`}
-                                            disabled={!isEditingTitle} type="text" value={diagram?.title}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onBlur={() => setIsEditingTitle(false)}
-                                            ref={(el) => {
-                                                if (diagram.id) {
-                                                    inputRefs.current[diagram.id] = el;
-                                                }
-                                            }}
-                                            onChange={(evt) => {
-                                                setDiagrams(diagrams => diagrams.map(diagram => {
-                                                    if (diagram.id === selectedDiagramCard?.id) {
-                                                        return { ...diagram, title: evt.target.value }
-                                                    } else {
-                                                        return diagram
-                                                    }
-                                                }))
-                                            }}
+                                    <h3 className="font-bold text-lg dark:text-white truncate">
+                                        {diagram.title}
+                                    </h3>
 
-                                        />
-
-                                        <button
-                                            className={`bg-sky-600 flex justify-center items-center p-2 w-[30px] h-[30px] hover:bg-sky-700 duration-300 cursor-pointer ${isEditingTitle && selectedDiagramCard?.id === diagram.id ? 'opactiy-100' : 'opacity-0'}`}
-                                            onClick={(evt) => {
-                                                evt.stopPropagation();
-                                                handleRename(diagram.id!, diagram.title!);
-                                            }}
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="3" stroke="white" className="size-6">
-                                                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                            </svg>
-
-                                        </button>
-
-                                    </div>
-
-                                    <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400">
-                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                        </svg>
-                                        <span>Modificado: {formatDate(diagram.updated_at!)}</span>
+                                    <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 mt-2">
+                                        <span>
+                                            Modificado: {diagram.updated_at ? formatDate(diagram.updated_at) : '—'}
+                                        </span>
                                     </div>
 
                                     <div className="flex items-center gap-2 text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                                        <svg className="lucide lucide-file-type-icon lucide-file-type w-4 h-4" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                            <path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" />
-                                            <path d="M14 2v5a1 1 0 0 0 1 1h5" />
-                                            <path d="M11 18h2" />
-                                            <path d="M12 12v6" />
-                                            <path d="M9 13v-.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5v.5" />
-                                        </svg>
-                                        <span>Tipo: {diagram.content?.type.toLowerCase() === 'actividades' ? 'Actividades' : diagram.content?.type.toLowerCase() === 'secuencia' ? 'Secuencia' : 'desconocido'}</span>
+                                        <span>
+                                            Tipo: {
+                                                diagram.content?.type?.toLowerCase() === 'actividades'
+                                                    ? 'Actividades'
+                                                    : diagram.content?.type?.toLowerCase() === 'secuencia'
+                                                    ? 'Secuencia'
+                                                    : 'Desconocido'
+                                            }
+                                        </span>
                                     </div>
                                 </div>
                             ))}
@@ -467,7 +445,7 @@ export default function Dashboard() {
                                 ),
                                 onClick: () => {
                                     setShowMenu(false);
-                                    setIsEditingTitle(true);
+                                    handleRenameModal();
                                 }
                             },
                             {
@@ -486,153 +464,6 @@ export default function Dashboard() {
                     />
                 </div>
             )}
-
-            {(deleteModal.showConfirm || deleteModal.showLoading || deleteModal.showSuccess || deleteModal.showError) && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-zinc-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
-                        {deleteModal.showConfirm && selectedDiagramCard && (
-                            <>
-                                <div className="flex items-center gap-3 mb-4">
-                                    <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-                                        <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold dark:text-white">
-                                            ¿Eliminar diagrama?
-                                        </h3>
-                                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                            Esta acción no se puede deshacer
-                                        </p>
-                                    </div>
-                                </div>
-
-                                <p className="text-zinc-700 dark:text-zinc-300 mb-6">
-                                    ¿Estás seguro de que deseas eliminar <span className="font-semibold">"{selectedDiagramCard.title}"</span>?
-                                </p>
-
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={cancelDelete}
-                                        className="cursor-pointer flex-1 py-2 px-4 rounded-lg border-2 border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all"
-                                    >
-                                        Cancelar
-                                    </button>
-                                    <button
-                                        onClick={confirmDelete}
-                                        className="cursor-pointer flex-1 py-2 px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold transition-all"
-                                    >
-                                        Eliminar
-                                    </button>
-                                </div>
-                            </>
-                        )}
-
-                        {deleteModal.showLoading && (
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="header-lds-ring"><div></div><div></div><div></div><div></div></div>
-                                <p className="text-gray-700 dark:text-gray-300 text-2xl">Eliminando...</p>
-                            </div>
-                        )}
-
-                        {deleteModal.showSuccess && (
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="header-dummy-positioning">
-                                    <div className="header-success-icon">
-                                        <div className="header-success-icon__tip"></div>
-                                        <div className="header-success-icon__long"></div>
-                                    </div>
-                                </div>
-                                <p className="text-gray-700 dark:text-gray-300 font-medium text-2xl">¡Eliminado exitosamente!</p>
-                                <button
-                                    onClick={closeDeleteModal}
-                                    className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-full transition-all duration-200 cursor-pointer"
-                                >
-                                    OK
-                                </button>
-                            </div>
-                        )}
-
-                        {deleteModal.showError && (
-                            <div className="flex flex-col items-center gap-4">
-                                <div className="header-icon header-error">
-                                    <span className="header-x-mark">
-                                        <span className="header-errorLine left"></span>
-                                        <span className="header-errorLine right"></span>
-                                    </span>
-                                </div>
-                                <p className="text-gray-700 dark:text-gray-300 font-medium text-2xl">Error al eliminar</p>
-                                <button
-                                    onClick={closeDeleteModal}
-                                    className="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-full transition-all duration-200 cursor-pointer"
-                                >
-                                    OK
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {showModal && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-zinc-800 rounded-2xl max-w-2xl w-full p-8 shadow-2xl">
-                        <div className="text-center mb-8">
-                            <h2 className="text-3xl font-black dark:text-white mb-3">
-                                ¿Qué tipo de diagrama deseas crear?
-                            </h2>
-                            <p className="text-zinc-600 dark:text-zinc-400">
-                                Selecciona el tipo de diagrama UML que necesitas
-                            </p>
-                        </div>
-
-                        <div className="grid md:grid-cols-2 gap-6 mb-6">
-                            <button
-                                onClick={() => navigate('/crear-diagrama-de-secuencia')}
-                                className="group p-6 rounded-2xl border-2 border-sky-200/60 dark:border-sky-700/60 hover:border-sky-400 dark:hover:border-sky-500 transition-all duration-300 hover:shadow-xl text-left cursor-pointer"
-                            >
-                                <div className="w-14 h-14 rounded-xl bg-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                                    </svg>
-                                </div>
-                                <h3 className="font-bold text-xl dark:text-white mb-2 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                                    Diagrama de Secuencia
-                                </h3>
-                                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                    Modela interacciones entre objetos a lo largo del tiempo
-                                </p>
-                            </button>
-
-                            <button
-                                onClick={() => navigate('/crear-diagrama-de-actividades')}
-                                className="group p-6 rounded-2xl border-2 border-sky-200/60 dark:border-sky-700/60 hover:border-sky-400 dark:hover:border-sky-500 transition-all duration-300 hover:shadow-xl text-left cursor-pointer"
-                            >
-                                <div className="w-14 h-14 rounded-xl bg-sky-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                                    <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                    </svg>
-                                </div>
-                                <h3 className="font-bold text-xl dark:text-white mb-2 group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
-                                    Diagrama de Actividades
-                                </h3>
-                                <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                                    Representa flujos de trabajo y procesos de negocio
-                                </p>
-                            </button>
-                        </div>
-
-                        <button
-                            onClick={() => setShowModal(false)}
-                            className="w-full py-3 px-6 rounded-xl border-2 border-zinc-300 dark:border-zinc-600 text-zinc-700 dark:text-zinc-300 font-semibold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition-all duration-300 cursor-pointer"
-                        >
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            )
-            }
         </>
     );
 }
