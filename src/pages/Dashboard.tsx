@@ -19,7 +19,7 @@ export default function Dashboard() {
     const [menuPosition, setMenuPosition] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
     const menuRef = useRef<HTMLDivElement>(null);
     const [page, setPage] = useState(1);
-    const [ordering, setOrdering] = useState("-created_at");
+    const [ordering, setOrdering] = useState("-updated_at");
     const [nextPage, setNextPage] = useState<string | null>(null);
     const [prevPage, setPrevPage] = useState<string | null>(null);
     
@@ -141,12 +141,16 @@ const handleRenameModal = async () => {
                 title: newTitle,
             });
 
-            setDiagrams(prev =>
-                prev.map(d =>
-                    d.id === selectedDiagramCard.id
-                        ? { ...d, title: newTitle }
-                        : d
-                )
+            const response = await fetchDiagrams(page, ordering);
+            setDiagrams(response.data.results || []);
+
+            setDiagrams(prev => 
+                prev
+                    .map(d => ({
+                        ...d,
+                        updated_at: d.updated_at ? new Date(d.updated_at) : undefined
+                    }))
+                    .sort((a, b) => (b.updated_at?.getTime() ?? 0) - (a.updated_at?.getTime() ?? 0))
             );
 
             await successAlert('Actualizado', 'Nombre cambiado correctamente');
@@ -285,18 +289,18 @@ const handleRenameModal = async () => {
                         
                         <button
                             onClick={() => {
-                                if (ordering === "-created_at") setOrdering("created_at")
-                                else setOrdering("-created_at")
+                                if (ordering === "-updated_at") setOrdering("updated_at")
+                                else setOrdering("-updated_at")
                             }}
                             className={`flex items-center gap-2 px-4 py-3 rounded-lg transition-all duration-200
                             ${
-                            ordering === "-created_at" || ordering === "created_at"
+                            ordering === "-updated_at" || ordering === "updated_at"
                             ? "bg-sky-600 text-white"
                             : "bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-300 dark:hover:bg-zinc-600"
                             }`}
                             >
 
-                            {ordering === "created_at" ? (
+                            {ordering === "updated_at" ? (
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor"  viewBox="0 0 16 16">
                                 <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71z"/>
                                 <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16m7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0"/>
