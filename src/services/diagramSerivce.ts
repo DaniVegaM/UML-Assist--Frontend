@@ -84,3 +84,13 @@ export const reviewDiagramWithAI = async (intermediateLanguage: ReviewDiagramDat
     }
 };
 
+export const getAvailableRequests = async () => {
+    try {
+        const response = await api.get(`api/ai/requests/`);
+        return response;
+    } catch (error) {
+        console.error("Error al obtener las peticiones disponibles:", error);
+        throw error;
+    }
+};
+
