@@ -95,7 +95,7 @@ export const notify = (
 
           <button
             onClick={() => toast.dismiss(t.id)}
-            className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+            className="flex-shrink-0 cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
           >
             {CloseIcon}
           </button>
@@ -116,17 +116,23 @@ export const notifyPromise = async <T,>(
     errorDescription?: string;
   }
 ): Promise<T> => {
-  const styles = getNotificationStyles("loading");
+  const loadingStyles = getNotificationStyles("loading");
 
   //Mostrando loading
   const toastId = toast.custom(
-    () => (
-      <div className={`${styles.bg} ${styles.border} rounded-lg shadow-lg p-4 min-w-[320px] max-w-md`}>
+    (t) => (
+      <div className={`${loadingStyles.bg} ${loadingStyles.border} rounded-lg shadow-lg p-4 min-w-[320px] max-w-md`}>
         <div className="flex items-start gap-3">
-          <div className="flex-shrink-0">{styles.icon}</div>
+          <div className="flex-shrink-0">{loadingStyles.icon}</div>
           <div className="flex-1 pt-0.5">
-            <p className={`font-bold text-sm ${styles.titleColor}`}>{messages.loading}</p>
+            <p className={`font-bold text-sm ${loadingStyles.titleColor}`}>{messages.loading}</p>
           </div>
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="flex-shrink-0 cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors"
+          >
+            {CloseIcon}
+          </button>
         </div>
       </div>
     ),
@@ -135,12 +141,20 @@ export const notifyPromise = async <T,>(
 
   try {
     const result = await promise;
+    // Dismissar el toast de cargando antes de mostrar success
     toast.dismiss(toastId);
-    notify("success", messages.success);
+    // Usar setTimeout para asegurar que se renderize correctamente
+    setTimeout(() => {
+      notify("success", messages.success);
+    }, 100);
     return result;
   } catch (error: unknown) {
+    // Dismissar el toast de cargando antes de mostrar error
     toast.dismiss(toastId);
-    notify("error", messages.error, messages.errorDescription);
+    // Usar setTimeout para asegurar que se renderice correctamente
+    setTimeout(() => {
+      notify("error", messages.error, messages.errorDescription);
+    }, 100);
     throw error;
   }
 };
