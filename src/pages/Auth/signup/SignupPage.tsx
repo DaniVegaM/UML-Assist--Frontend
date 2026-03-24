@@ -5,7 +5,6 @@ import { registerWithCredentials } from "../../../services/authService";
 import FormField from "../../../components/auth/shared/FormField";
 import { useForm } from "../hooks/useForm";
 import { notifyPromise } from "../../../components/ui/NotificationComponent";
-import { Toaster } from "react-hot-toast";
 
 export default function SignupPage() {
     const navigate = useNavigate();
@@ -16,7 +15,8 @@ export default function SignupPage() {
         generalError,
         handleFieldChange,
         handleInputBlur,
-        handleSubmit,
+        setLoading,
+        setGeneralError
     } = useForm({
         initialValues: {
             email: '',
@@ -35,40 +35,63 @@ export default function SignupPage() {
                 return '';
             }
         },
-        onSubmit: async (values) => {
-            try {
-                await notifyPromise(
-                    registerWithCredentials(values.email, values.password),
-                    {
-                        loading: "Creando tu cuenta...",
-                        success: "¡Cuenta creada exitosamente!",
-                        error: "No se pudo crear la cuenta",
-                        errorDescription: "Verifica que el email no esté registrado"
-                    }
-                );
-                navigate('/dashboard', { replace: true });
-            } catch (error) {
-                console.error('Error en registro:', error);
-            }
+        onSubmit: async () => {
+            // No hacer nada aquí, usaremos notifyPromise directamente
         }
     });
+
+    // Manejador personalizado de submit que usa notifyPromise
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Validar campos básicos
+        if (!formData.email.value) {
+            setGeneralError('Por favor ingresa tu email');
+            return;
+        }
+        if (!formData.password.value) {
+            setGeneralError('Por favor ingresa tu contraseña');
+            return;
+        }
+        if (!formData.password_confirm.value) {
+            setGeneralError('Por favor confirma tu contraseña');
+            return;
+        }
+        if (formData.password.value !== formData.password_confirm.value) {
+            setGeneralError('Las contraseñas no coinciden');
+            return;
+        }
+
+        setGeneralError('');
+        setLoading(true);
+
+        try {
+            await notifyPromise(
+                registerWithCredentials(formData.email.value, formData.password.value),
+                {
+                    loading: "Creando tu cuenta...",
+                    success: "¡Cuenta creada exitosamente!",
+                    error: "No se pudo crear la cuenta",
+                    errorDescription: "Verifica que el email no esté registrado"
+                }
+            );
+            // Esperar a que el toast se renderice antes de redirigir
+            setTimeout(() => {
+                navigate('/dashboard', { replace: true });
+            }, 1500);
+        } catch (error) {
+            console.error('Error en registro:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     if (isAuthenticated()) {
         return <Navigate to={'/dashboard'} replace />;
     }
 
     return (
-        <>
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 5000,
-                    style: { padding: "0px", margin: "0px" },
-                }}
-                containerStyle={{ top: 20, right: 20 }}
-            />
-            
-            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white dark:bg-zinc-800 p-12 rounded-lg shadow-md my-11">
+        <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto bg-white dark:bg-zinc-800 p-12 rounded-lg shadow-md my-11">
                 <div className="flex items-center w-full justify-start gap-30 mb-4">
                     <button
                         onClick={() => navigate(-1)}
@@ -178,6 +201,5 @@ export default function SignupPage() {
             </div>
 
         </section>
-        </>
     );
 }

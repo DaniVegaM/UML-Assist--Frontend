@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useSearchParams, Link, Navigate } from "react-router";
 import FormField from "../../../components/auth/shared/FormField";
 import { confirmPasswordReset } from "../../../services/passwordService";
+import { notifyPromise } from "../../../components/ui/NotificationComponent";
 
 export default function ResetPasswordPage() {
   const [sp] = useSearchParams();
@@ -16,7 +17,6 @@ export default function ResetPasswordPage() {
 
   const [loading, setLoading] = useState(false);
   const [ok, setOk] = useState(false);
-  const [generalError, setGeneralError] = useState<string | null>(null);
 
   if (!uid || !token) return <Navigate to="/iniciar-sesion" replace />;
 
@@ -41,13 +41,25 @@ export default function ResetPasswordPage() {
     setP2Err(e2);
     if (e1 || e2) return;
 
+    setLoading(true);
+
     try {
-      setLoading(true);
-      setGeneralError(null);
-      await confirmPasswordReset(uid, token, p1, p2);
-      setOk(true);
+      await notifyPromise(
+        confirmPasswordReset(uid, token, p1, p2),
+        {
+          loading: "Cambiando contraseña...",
+          success: "Contraseña cambiada exitosamente",
+          error: "No se pudo cambiar la contraseña",
+          errorDescription: "Verifica el enlace y vuelve a intentar"
+        }
+      );
+      // Esperar a que el toast se renderice antes de redirigir
+      setTimeout(() => {
+        setOk(true);
+      }, 1500);
     } catch (error: any) {
-      setGeneralError(error?.message || "No se pudo cambiar la contraseña.");
+      console.error(error);
+      // El error ya se mostró en el toast del notifyPromise
     } finally {
       setLoading(false);
     }
@@ -98,8 +110,6 @@ export default function ResetPasswordPage() {
           >
             {loading ? "Guardando…" : "Cambiar contraseña"}
           </button>
-
-          {generalError && <p className="text-red-400 text-sm">{generalError}</p>}
         </form>
       )}
     </section>

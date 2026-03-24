@@ -5,6 +5,7 @@ import { CHANGE_PASSWORD_VALIDATION } from "../../../helpers/validation";
 import { Link, useNavigate } from "react-router";
 import { getAccessToken, clearStorage } from "../../../helpers/auth";
 import { changePassword } from "../../../services/authService";
+import { notifyPromise } from "../../../components/ui/NotificationComponent";
 
 export default function ChangePasswordPage() {
   const navigate = useNavigate();
@@ -15,7 +16,6 @@ export default function ChangePasswordPage() {
     generalError,
     handleFieldChange,
     handleInputBlur,
-    handleSubmit,
     setLoading,
     setFieldError,
     setGeneralError,
@@ -26,47 +26,74 @@ export default function ChangePasswordPage() {
       confirmPassword: "",
     },
     validationRules: CHANGE_PASSWORD_VALIDATION,
-    onSubmit: async (values) => {
-      if (values.newPassword !== values.confirmPassword) {
-        setFieldError("confirmPassword", "Las contraseñas no coinciden");
-        return;
-      }
-
-      const token = getAccessToken();
-      if (!token) {
-        setGeneralError("No estás autenticado");
-        navigate("/login");
-        return;
-      }
-
-      try {
-        await changePassword({
-          current_password: values.currentPassword,
-          new_password: values.newPassword,
-          confirm_password: values.confirmPassword,
-        });
-
-        setGeneralError(
-          "Contraseña cambiada exitosamente. Debes iniciar sesión de nuevo."
-        );
-        clearStorage();
-        navigate("/");
-      } catch (error: any) {
-        console.error(error);
-        // Puedes mostrar errores específicos de la API debajo del campo correspondiente
-        if (error?.current_password) {
-          setFieldError("currentPassword", error.current_password);
-        } else {
-          setGeneralError(
-            error.message ||
-              "Ocurrió un error al intentar cambiar la contraseña"
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
+    onSubmit: async () => {
+      // No hacer nada aquí, usaremos notifyPromise directamente
     },
   });
+
+  // Manejador personalizado de submit que usa notifyPromise
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Validar campos
+    if (!formData.currentPassword.value) {
+      setGeneralError("Por favor ingresa tu contraseña actual");
+      return;
+    }
+    if (!formData.newPassword.value) {
+      setGeneralError("Por favor ingresa tu nueva contraseña");
+      return;
+    }
+    if (!formData.confirmPassword.value) {
+      setGeneralError("Por favor confirma tu nueva contraseña");
+      return;
+    }
+
+    if (formData.newPassword.value !== formData.confirmPassword.value) {
+      setFieldError("confirmPassword", "Las contraseñas no coinciden");
+      return;
+    }
+
+    const token = getAccessToken();
+    if (!token) {
+      setGeneralError("No estás autenticado");
+      navigate("/login");
+      return;
+    }
+
+    setGeneralError("");
+    setLoading(true);
+
+    try {
+      await notifyPromise(
+        changePassword({
+          current_password: formData.currentPassword.value,
+          new_password: formData.newPassword.value,
+          confirm_password: formData.confirmPassword.value,
+        }),
+        {
+          loading: "Cambiando contraseña...",
+          success: "Contraseña cambiada exitosamente",
+          error: "No se pudo cambiar la contraseña",
+          errorDescription: "Verifica que tu contraseña actual sea correcta"
+        }
+      );
+
+      // Esperar a que el toast se renderice antes de redirigir
+      setTimeout(() => {
+        clearStorage();
+        navigate("/login", { replace: true });
+      }, 1500);
+    } catch (error: any) {
+      console.error(error);
+      // El error ya se mostró en el toast del notifyPromise
+      if (error?.current_password) {
+        setFieldError("currentPassword", error.current_password[0] || "Contraseña actual incorrecta");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-dots dark:bg-dots-dark">

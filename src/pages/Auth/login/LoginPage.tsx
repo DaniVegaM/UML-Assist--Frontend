@@ -7,7 +7,6 @@ import { LOGIN_VALIDATION_RULES } from "../../../helpers/validation";
 import FormField from "../../../components/auth/shared/FormField";
 import { useForm } from "../hooks/useForm";
 import { notifyPromise } from "../../../components/ui/NotificationComponent";
-import { Toaster } from "react-hot-toast";
 
 
 export default function LoginPage() {
@@ -20,36 +19,61 @@ export default function LoginPage() {
         generalError,
         handleFieldChange,
         handleInputBlur,
-        handleSubmit,
-        setLoading
+        setLoading,
+        setGeneralError
     } = useForm({
         initialValues: {
             email: '',
             password: ''
         },
         validationRules: LOGIN_VALIDATION_RULES,
-        onSubmit: async (values) => {
-            try {
-                const result = await notifyPromise(
-                    loginWithCredentials(values.email, values.password),
-                    {
-                        loading: "Iniciando sesión...",
-                        success: "¡Bienvenido de nuevo!",
-                        error: "No se pudo iniciar sesión",
-                        errorDescription: "Verifica tu email y contraseña"
-                    }
-                );
-
-                // Si llegamos aquí, el login fue exitoso
-                if (result.success) {
-                    navigate('/dashboard', { replace: true });
-                }
-            } catch (error) {
-                // El error ya se mostró en la notificación
-                console.error('Error en login:', error);
-            }
+        onSubmit: async () => {
+            // No hacer nada aquí, usaremos notifyPromise directamente
         }
     });
+
+    // Manejador personalizado de submit que usa notifyPromise
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Validar campos
+        if (!formData.email.value) {
+            setGeneralError('Por favor ingresa tu email');
+            return;
+        }
+        if (!formData.password.value) {
+            setGeneralError('Por favor ingresa tu contraseña');
+            return;
+        }
+
+        setGeneralError('');
+        setLoading(true);
+
+        try {
+            const result = await notifyPromise(
+                loginWithCredentials(formData.email.value, formData.password.value),
+                {
+                    loading: "Iniciando sesión...",
+                    success: "¡Bienvenido de nuevo!",
+                    error: "No se pudo iniciar sesión",
+                    errorDescription: "Verifica tu email y contraseña"
+                }
+            );
+
+            // Si llegamos aquí, el login fue exitoso
+            if (result.success) {
+                // Esperar a que el toast se renderice antes de redirigir
+                setTimeout(() => {
+                    navigate('/dashboard', { replace: true });
+                }, 1500);
+            }
+        } catch (error) {
+            // El error ya se mostró en el toast del notifyPromise
+            console.error('Error en login:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Si el usuario ya está autenticado, redirigir
     if (isAuthenticated()) {
@@ -82,17 +106,7 @@ export default function LoginPage() {
     }
 
     return (
-        <>
-            <Toaster
-                position="top-right"
-                toastOptions={{
-                    duration: 5000,
-                    style: { padding: "0px", margin: "0px" },
-                }}
-                containerStyle={{ top: 20, right: 20 }}
-            />
-
-            <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md my-8">
+        <section className="flex flex-col gap-3 items-center w-96 md:w-xl mx-auto dark:bg-zinc-800 bg-white p-12 rounded-lg shadow-md my-8">
                 <div className="flex items-center w-full justify-start gap-30 mb-4">
                     <button
                         onClick={() => navigate(-1)}
@@ -207,6 +221,5 @@ export default function LoginPage() {
                     {error && <p className="text-red-500">Error de autenticación. Por favor, intenta de nuevo.</p>}
                 </div>
             </section>
-        </>
     )
 }
