@@ -97,13 +97,6 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                 response = await updateDiagram(diagramId, formData);
             }
 
-            await minLoadingTime;
-            const savePromise = !diagramId
-                ? createDiagram(formData)
-                : updateDiagram(diagramId, formData);
-
-            await Promise.all([savePromise, minLoadingTime]);
-
             closeAlert();
             await successAlert('Guardado', `Diagrama: <strong>${title}</strong> guardado con éxito`);
         } catch (err) {
