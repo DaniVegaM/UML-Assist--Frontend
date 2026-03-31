@@ -10,6 +10,7 @@ import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { selectLifeLineHeaderIcon, type LifeLineHeaderIcon } from "../../../utils/sweetAlert";
 
 
 export default function LifeLine({ data }: DataProps) {
@@ -23,6 +24,8 @@ export default function LifeLine({ data }: DataProps) {
     const updateNodeInternals = useUpdateNodeInternals();
 
     const [showSuggestion, setShowSuggestion] = useState(false);
+    const [headerIcon, setHeaderIcon] = useState<LifeLineHeaderIcon>((data?.headerIcon as LifeLineHeaderIcon) || 'rectangle');
+    const prevHeaderIconRef = useRef<LifeLineHeaderIcon>(headerIcon);
 
     const clearSuggestion = useCallback(() => {
         if (!nodeId) return;
@@ -56,10 +59,10 @@ export default function LifeLine({ data }: DataProps) {
         if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
-                ? { ...n, data: { ...n.data, handles, label: value } }
+                ? { ...n, data: { ...n.data, handles, label: value, headerIcon } }
                 : n
         ));
-    }, [handles, nodeId, setNodes, value]);
+    }, [handles, nodeId, setNodes, value, headerIcon]);
 
     // Sincronizar handles cuando data.handles cambie (al cargar diagrama)
     useEffect(() => {
@@ -76,7 +79,7 @@ export default function LifeLine({ data }: DataProps) {
                 }, 0);
             }
         }
-    }, [data?.handles]);
+    }, [data?.handles, handles, setHandles]);
 
     // Sincronizamos destroyHandleIndex y hasDestruction con node.data cuando cambie
     useEffect(() => {
@@ -97,14 +100,25 @@ export default function LifeLine({ data }: DataProps) {
                 isSyncingFromData.current = false;
             }, 0);
         }
-    }, [data?.destroyHandleIndex]);
+    }, [data?.destroyHandleIndex, destroyHandleIndex]);
 
     // Sincronizar label cuando data.label cambie (al cargar diagrama)
     useEffect(() => {
         if (data?.label !== undefined && data.label !== value && !isEditing) {
             setValue(data.label);
         }
-    }, [data?.label, isEditing]);
+    }, [data?.label, isEditing, value]);
+
+    useEffect(() => {
+        if (data?.headerIcon && data.headerIcon !== prevHeaderIconRef.current) {
+            isSyncingFromData.current = true;
+            setHeaderIcon(data.headerIcon as LifeLineHeaderIcon);
+            prevHeaderIconRef.current = data.headerIcon as LifeLineHeaderIcon;
+            setTimeout(() => {
+                isSyncingFromData.current = false;
+            }, 0);
+        }
+    }, [data?.headerIcon]);
 
     // Forzar actualización de handles cuando se cargan datos con handles
     useEffect(() => {
@@ -182,6 +196,21 @@ export default function LifeLine({ data }: DataProps) {
         setShowNodeContextMenu(false);
     };
 
+    const handleHeaderIconContextMenu = useCallback(async (event: React.MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const selectedIcon = await selectLifeLineHeaderIcon(headerIcon);
+        if (selectedIcon) {
+            isSyncingFromData.current = true;
+            setHeaderIcon(selectedIcon);
+            prevHeaderIconRef.current = selectedIcon;
+            setTimeout(() => {
+                isSyncingFromData.current = false;
+            }, 0);
+        }
+    }, [headerIcon]);
+
     // Callback para cuando se selecciona el evento de destrucción
     const handleDestroyEvent = useCallback((action: 'destroy' | 'default') => {
         if (action === 'destroy' && selectedHandleIndex !== null) {
@@ -221,10 +250,76 @@ export default function LifeLine({ data }: DataProps) {
     // Verificar si la lifeline está destruida
     const isDestroyed = destroyPosition !== null;
 
+    const iconClasses = "w-16 h-16 text-neutral-700 dark:text-neutral-200";
+
+    const HeaderIcon = useMemo(() => {
+        switch (headerIcon) {
+            case 'user':
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconClasses}>
+                        <circle cx="12" cy="6.5" r="2.5" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v6m0 0-3.5 4M12 15l3.5 4m-8-7h9" />
+                    </svg>
+                );
+            case 'database':
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconClasses}>
+                        <ellipse cx="12" cy="5.5" rx="7" ry="2.5" />
+                        <path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" />
+                        <path d="M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" />
+                    </svg>
+                );
+            case 'server':
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconClasses}>
+                        <rect x="4" y="4" width="16" height="6" rx="1.5" />
+                        <rect x="4" y="14" width="16" height="6" rx="1.5" />
+                        <circle cx="8" cy="7" r="0.9" fill="currentColor" />
+                        <circle cx="8" cy="17" r="0.9" fill="currentColor" />
+                    </svg>
+                );
+            case 'circle':
+                return (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={iconClasses}>
+                        <circle cx="12" cy="12" r="7" />
+                    </svg>
+                );
+            case 'rectangle':
+            default:
+                return null;
+        }
+    }, [headerIcon]);
+
     return (
         <div className="relative flex flex-col justify-center items-center"
             style={{zIndex: 999}}
         > {/*LIFELINE COMPLETA*/}
+            {headerIcon !== 'rectangle' && HeaderIcon && (
+                <div className="flex flex-col items-center gap-2">
+                    <div 
+                        onContextMenu={handleHeaderIconContextMenu}
+                        className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-neutral-300 dark:border-neutral-600 cursor-pointer hover:shadow-md transition-shadow"
+                        title="Click derecho para cambiar icono"
+                    >
+                        {HeaderIcon}
+                    </div>
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={onChange}
+                        onBlur={handleBlur}
+                        onWheel={(e) => e.stopPropagation()}
+                        onDoubleClick={handleDoubleClick}
+                        placeholder={`Nombre`}
+                        className={`nodrag w-48 placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden pointer-events-auto cursor-text`}
+                        rows={1}
+                    />
+                    {isEditing &&
+                        <p className="text-[10px] text-neutral-400">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
+                    }
+                </div>
+            )}
+            
             {data.suggestion && (
                 <>
                     <button
@@ -246,27 +341,30 @@ export default function LifeLine({ data }: DataProps) {
                     />
                 </>
             )}
-            <div
-                onDoubleClick={handleDoubleClick}
-                onContextMenu={handleNodeContextMenu}
-                className="relative border border-neutral-600 dark:border-neutral-900 p-2 hover:bg-gray-200 dark:hover:bg-zinc-600 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+            
+            {headerIcon === 'rectangle' && (
+                <div
+                    onDoubleClick={handleDoubleClick}
+                    onContextMenu={handleHeaderIconContextMenu}
+                    className="relative border border-neutral-600 dark:border-neutral-300 bg-white dark:bg-zinc-800 p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
 
-            > {/*HEAD DE LA LIFELINE*/}
-                <textarea
-                    ref={textareaRef}
-                    value={value}
-                    onChange={onChange}
-                    onBlur={handleBlur}
-                    onWheel={(e) => e.stopPropagation()}
-                    placeholder={`Rol : Clase`}
-                    className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
-                        }`}
-                    rows={1}
-                />
-                {isEditing &&
-                    <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
-                }
-            </div>
+                > {/*HEAD DE LA LIFELINE*/}
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={onChange}
+                        onBlur={handleBlur}
+                        onWheel={(e) => e.stopPropagation()}
+                        placeholder={`Rol : Clase`}
+                        className={`nodrag w-full placeholder-gray-400 bg-transparent dark:text-white border-none outline-none resize-none text-center text-sm px-2 py-1 overflow-hidden ${isEditing ? 'pointer-events-auto' : 'pointer-events-none'
+                            }`}
+                        rows={1}
+                    />
+                    {isEditing &&
+                        <p className="w-full text-[10px] text-right text-neutral-400">{`${value.length}/${LIFE_LINE_MAX_LEN_TEXT}`}</p>
+                    }
+                </div>
+            )}
             {/*DASHED LINE DE LA LIFELINE*/}
             <div
                 className="bg-transparent px-4 w-6"
@@ -274,6 +372,7 @@ export default function LifeLine({ data }: DataProps) {
                 onMouseMove={(evt) => { magneticHandle(evt) }}
                 onMouseEnter={() => { setShowHandles(true) }}
                 onMouseLeave={() => setShowHandles(false)}
+                onContextMenu={handleNodeContextMenu}
             >
                 <div className={`relative w-[1px] h-full`}
                     ref={nodeRef}

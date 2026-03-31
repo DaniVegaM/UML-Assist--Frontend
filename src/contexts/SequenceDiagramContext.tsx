@@ -31,7 +31,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             id: createPrefixedNodeId("lifeLine"),
             type: 'lifeLine', 
             position: { x: 400, y: 100 }, 
-            data: { label: "" },
+            data: { label: "", headerIcon: 'rectangle' },
             connectable: true,
             zIndex: 999,
             style: {

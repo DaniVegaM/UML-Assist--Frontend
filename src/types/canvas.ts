@@ -74,6 +74,7 @@ export interface DataProps{
         label?: string
         destroyHandleIndex?: number,
         isCreatedLifeLine?: boolean,
+        headerIcon?: 'rectangle' | 'user' | 'database' | 'server' | 'circle',
         orderedHandles?: {id: string, order: number}[],
         sourceBoxesLength?: number,
         targetBoxesLength?: number,
