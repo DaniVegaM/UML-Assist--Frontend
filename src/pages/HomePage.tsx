@@ -185,7 +185,7 @@ export default function HomePage() {
           </div>
 
           <div>
-            <p className="text-center">Ejemplo de diagrama aquí</p>
+            <img src="./diagram-example.png" alt="Ejemplo de diagrama" />
           </div>
         </div>
       </section>
