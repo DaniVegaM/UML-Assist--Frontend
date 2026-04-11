@@ -18,7 +18,7 @@ export default function LifeLine({ data }: DataProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
     const { setIsZoomOnScrollEnabled } = useCanvas();
-    const { nodes } = useSequenceDiagram();
+    const { nodes, setMaxHandlesCount, maxHandlesCount } = useSequenceDiagram();
     const nodeId = useNodeId();
     const { setNodes } = useReactFlow();
     const updateNodeInternals = useUpdateNodeInternals();
@@ -62,7 +62,9 @@ export default function LifeLine({ data }: DataProps) {
                 ? { ...n, data: { ...n.data, handles, label: value, headerIcon } }
                 : n
         ));
-    }, [handles, nodeId, setNodes, value, headerIcon]);
+        // Actualizar el máximo de handles en el contexto
+        setMaxHandlesCount(prev => Math.max(prev, handles.length));
+    }, [handles, nodeId, setNodes, value, headerIcon, setMaxHandlesCount]);
 
     // Sincronizar handles cuando data.handles cambie (al cargar diagrama)
     useEffect(() => {
@@ -235,10 +237,10 @@ export default function LifeLine({ data }: DataProps) {
         }
     }, [selectedHandleIndex, destroyHandleIndex, handles.length, setHandles, updateNodeInternals, nodeId]);
 
-    // Calcular altura dinámica basada en la cantidad de handles
+    // Calcular altura dinámica basada en el máximo de handles global
     const lifeLineHeight = useMemo(() => {
-        return LIFE_LINE_BASE_HEIGHT + (handles.length * LIFE_LINE_HEIGHT_PER_HANDLE);
-    }, [handles.length]);
+        return LIFE_LINE_BASE_HEIGHT + (maxHandlesCount * LIFE_LINE_HEIGHT_PER_HANDLE);
+    }, [maxHandlesCount]);
 
     // Calcular la posición Y del handle de destrucción
     const destroyPosition = useMemo(() => {
@@ -249,6 +251,14 @@ export default function LifeLine({ data }: DataProps) {
 
     // Verificar si la lifeline está destruida
     const isDestroyed = destroyPosition !== null;
+
+    // Calcular la altura final considerando destrucción
+    const finalLifeLineHeight = useMemo(() => {
+        if (isDestroyed && destroyPosition !== null) {
+            return destroyPosition;
+        }
+        return lifeLineHeight;
+    }, [isDestroyed, destroyPosition, lifeLineHeight]);
 
     const iconClasses = "w-16 h-16 text-neutral-700 dark:text-neutral-200";
 
@@ -291,11 +301,11 @@ export default function LifeLine({ data }: DataProps) {
     }, [headerIcon]);
 
     return (
-        <div className="relative flex flex-col justify-center items-center"
-            style={{zIndex: 999}}
-        > {/*LIFELINE COMPLETA*/}
+        <>
             {headerIcon !== 'rectangle' && HeaderIcon && (
-                <div className="flex flex-col items-center gap-2">
+                <div className="relative flex flex-col items-center pointer-events-auto"
+                    style={{zIndex: 999}}
+                >
                     <div 
                         onContextMenu={handleHeaderIconContextMenu}
                         className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-neutral-300 dark:border-neutral-600 cursor-pointer hover:shadow-md transition-shadow"
@@ -346,7 +356,8 @@ export default function LifeLine({ data }: DataProps) {
                 <div
                     onDoubleClick={handleDoubleClick}
                     onContextMenu={handleHeaderIconContextMenu}
-                    className="relative border border-neutral-600 dark:border-neutral-300 bg-white dark:bg-zinc-800 p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150"
+                    className="relative border border-neutral-600 dark:border-neutral-300 bg-white dark:bg-zinc-800 p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150 pointer-events-auto"
+                    style={{zIndex: 999}}
 
                 > {/*HEAD DE LA LIFELINE*/}
                     <textarea
@@ -367,8 +378,8 @@ export default function LifeLine({ data }: DataProps) {
             )}
             {/*DASHED LINE DE LA LIFELINE*/}
             <div
-                className="bg-transparent px-4 w-6"
-                style={{ height: `${lifeLineHeight}px` }}
+                className="absolute left-1/2 -translate-x-1/2 bg-transparent px-4 w-6 pointer-events-auto"
+                style={{ height: `${finalLifeLineHeight}px`, top: headerIcon === 'rectangle' ? '100%' : 'auto', zIndex: 999 }}
                 onMouseMove={(evt) => { magneticHandle(evt) }}
                 onMouseEnter={() => { setShowHandles(true) }}
                 onMouseLeave={() => setShowHandles(false)}
@@ -397,7 +408,7 @@ export default function LifeLine({ data }: DataProps) {
                                 position={handle.position}
                                 left={handle.left}
                                 top={handle.top}
-                                className={`!w-3 !h-3 ${hasDestruction ? '!opacity-0' : ''}`}
+                                className={`!w-3 !h-3 pointer-events-auto ${hasDestruction ? '!opacity-0' : ''}`}
                                 onContextMenu={isLastHandle && !hasDestruction ? (e) => handleContextMenu(e, handle.id.toString(), i) : undefined}
                             />
                         );
@@ -405,7 +416,7 @@ export default function LifeLine({ data }: DataProps) {
 
                     {isDestroyed && destroyHandleIndex !== null && handles[destroyHandleIndex] && (
                         <div
-                            className="absolute left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform z-10"
+                            className="absolute left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform z-10 pointer-events-auto"
                             style={{ top: `${destroyPosition! - 12}px` }}
                             onContextMenu={(e) => handleContextMenu(e, handles[destroyHandleIndex].id.toString(), destroyHandleIndex)}
                         >
@@ -436,7 +447,7 @@ export default function LifeLine({ data }: DataProps) {
                     />
                 </ContextMenuPortal>
             )}
-        </div>
+        </>
     )
 }
 
