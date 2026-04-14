@@ -74,6 +74,16 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
 
                 const newNodeId = getId();
 
+                const isFragment = [
+                    'altFragment',
+                    'optFragment',
+                    'loopFragment',
+                    'breakFragment',
+                    'seqFragment',
+                    'strictFragment',
+                    'parFragment',
+                ].includes(nodeType);
+
                 const newNode = {
                     id: newNodeId,
                     type: nodeType,
@@ -85,12 +95,15 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
                     },
                     draggable: true,
                     connectable: true,
-                    style: nodeType === 'InterruptActivityRegion'
-                        ? {
-                            width: 420,
-                            height: 260,
-                        }
-                        : undefined,
+                    dragHandle: isFragment ? '.fragment-drag-handle' : undefined,
+                    style: isFragment
+                        ? { pointerEvents: 'none' }
+                        : nodeType === 'InterruptActivityRegion'
+                            ? {
+                                width: 420,
+                                height: 260,
+                            }
+                            : undefined,
                     // activities tienen zIndex bajo para quedar detrás de otros nodos
                     zIndex: ['activity'].includes(nodeType) ? -1 : 1,
                 };
