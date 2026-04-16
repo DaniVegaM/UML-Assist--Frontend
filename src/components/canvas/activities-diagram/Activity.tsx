@@ -141,9 +141,10 @@ export default function Activity({ data }: DataProps) {
                     edge.source === nodeId || edge.target === nodeId;
 
                 const usesDeletedHandle =
-                    handlesToDelete.includes(edge.sourceHandle || "") ||
-                    handlesToDelete.includes(edge.targetHandle || "");
-
+                    handlesToDelete.some(handleId =>
+                        edge.sourceHandle === handleId ||
+                        edge.targetHandle === handleId
+                    );
                 return !(isSameNode && usesDeletedHandle);
             })
         );
