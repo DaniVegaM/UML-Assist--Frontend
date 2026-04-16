@@ -271,6 +271,14 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
         minHeight={150}
         color="#0084D1"
         isVisible={selected}
+        handleStyle={{
+            width: 12,   
+            height: 12,
+            borderRadius: 2,
+        }}
+        lineStyle={{
+            borderWidth: 2.5, 
+        }}
       />
       <div
         className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10"
