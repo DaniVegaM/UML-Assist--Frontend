@@ -219,12 +219,12 @@ export default function Activity({ data }: DataProps) {
                 minWidth={1000}
                 minHeight={600}
                 handleStyle={{
-                width: 10,   // 👈 más grande (default es como 8)
+                width: 10,   
                 height: 10,
                 borderRadius: 2,
             }}
             lineStyle={{
-                borderWidth: 2.5, // opcional
+                borderWidth: 2.5, 
             }}
             />
 
