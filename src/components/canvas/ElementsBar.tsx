@@ -2,7 +2,7 @@ import { useState } from 'react';
 import type { ElementsBarProps } from '../../types/canvas';
 import { DraggableNode } from './DraggableNode';
 
-export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
+export function ElementsBar({ nodes, oneColumn, saveToHistory }: ElementsBarProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [tooltip, setTooltip] = useState<{ label: string; description: string; top: number; svg?: React.ReactNode } | null>(null);
 
@@ -102,10 +102,12 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                                 key={groupedNode.label.trim()}
                                                 onMouseEnter={(e) => handleMouseEnter(e, groupedNode.label, groupedNode.description, groupedNode.svg)}
                                                 onMouseLeave={handleMouseLeave}
+                                                saveToHistory={saveToHistory}
                                             >
                                                 <div className={`h-full pointer-events-none`}>
                                                     {groupedNode.svg}
                                                 </div>
+                                            
                                             </DraggableNode>
                                         )})}
                                     </div>
@@ -120,6 +122,7 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
                                     key={node.label.trim()}
                                     onMouseEnter={(e) => handleMouseEnter(e, node.label, node.description, node.svg)}
                                     onMouseLeave={handleMouseLeave}
+                                    saveToHistory={saveToHistory}
                                 >
                                     <div className={`h-full pointer-events-none`}>
                                         {node.svg}

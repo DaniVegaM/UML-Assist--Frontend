@@ -13,6 +13,7 @@ export interface DraggableNodeProps {
     setExtendedBar?: React.Dispatch<React.SetStateAction<boolean>>;
     title?: string;
     onMouseEnter?: (e: React.MouseEvent<HTMLDivElement>) => void;
+    saveToHistory?: (nodes: Node[], edges: Edge[]) => void;
     onMouseLeave?: (e: React.MouseEvent<HTMLDivElement>) => void;
 }
 
@@ -32,6 +33,7 @@ export interface ElementsBarProps {
         grouped?: boolean;
     })[];
     oneColumn?: boolean;
+    saveToHistory?: (nodes: Node[], edges: Edge[]) => void;
 }
 
 export interface BaseHandleProps {

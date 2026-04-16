@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
+import { addEdge, Background, Controls, ControlButton, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -32,6 +32,34 @@ function DiagramContent() {
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
     const { validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+    const [history, setHistory] = useState<{
+        past: { nodes: Node[]; edges: Edge[] }[];
+        present: { nodes: Node[]; edges: Edge[] };
+        future: { nodes: Node[]; edges: Edge[] }[];
+    }>({
+        past: [],
+        present: { nodes: [], edges: [] },
+        future: [],
+    });
+    const MAX_HISTORY = 20;
+    const saveToHistory = (newNodes: Node[], newEdges: Edge[]) => {
+        setHistory((h) => {
+            const isSame =
+                JSON.stringify(h.present.nodes) === JSON.stringify(newNodes) &&
+                JSON.stringify(h.present.edges) === JSON.stringify(newEdges);
+
+            if (isSame) return h; // 👈 evita duplicados
+
+            const newPast = [...h.past, h.present];
+
+            return {
+                past: newPast.slice(-MAX_HISTORY),
+                present: { nodes: newNodes, edges: newEdges },
+                future: [],
+            };
+        });
+    };
+    const prevNodesRef = useRef<Node[]>([]);
 
     const isValidActivityConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -80,8 +108,18 @@ function DiagramContent() {
 
     useEffect(() => {
         if (diagram?.content) {
-            setNodes(diagram.content.canvas.nodes);
-            setEdges(diagram.content.canvas.edges || []);
+            const initialNodes = diagram.content.canvas.nodes;
+            const initialEdges = diagram.content.canvas.edges || [];
+
+            setNodes(initialNodes);
+            setEdges(initialEdges);
+
+            // 👇 AGREGA ESTO
+            setHistory({
+                past: [],
+                present: { nodes: initialNodes, edges: initialEdges },
+                future: [],
+            });
         }
     }, [diagram]);
 
@@ -128,6 +166,38 @@ function DiagramContent() {
         },
         [],
     );
+
+    const undo = () => {
+        setHistory((h) => {
+            if (h.past.length === 0) return h;
+
+            const previous = h.past[h.past.length - 1];
+
+            setNodes([...previous.nodes]);
+            setEdges([...previous.edges]);
+
+            return {
+                past: h.past.slice(0, -1),
+                present: previous,
+                future: [h.present, ...h.future],
+            };
+        });
+    };
+
+    const redo = () => {
+        setHistory((h) => {
+            if (h.future.length === 0) return h;
+
+            const next = h.future[0];
+            setNodes([...next.nodes]);
+            setEdges([...next.edges]);
+            return {
+                past: [...h.past, h.present],
+                present: next,
+                future: h.future.slice(1),
+            };
+        });
+    };
 
      const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node);
@@ -205,6 +275,7 @@ function DiagramContent() {
 
             setEdges((edgesSnapshot) => {
                 const newEdges = addEdge(newEdge, edgesSnapshot);
+                saveToHistory([...nodes], newEdges);
                 // console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
@@ -298,7 +369,13 @@ function DiagramContent() {
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
                     elevateNodesOnSelect={false}
-                    onNodeDrag={onNodeDrag}
+                    onNodeDragStop={(e, node) => {
+                        onNodeDrag(e, node);
+
+                        setTimeout(() => {
+                            saveToHistory([...nodes], [...edges]);
+                        }, 0);
+                    }}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     onConnect={onConnect}
@@ -312,11 +389,23 @@ function DiagramContent() {
                         showInteractive={false}
                         aria-label="Controles de lienzo"
                         position="bottom-right"
-                    />
+                    >
+                        <ControlButton onClick={undo} title="Deshacer (Ctrl+Z)">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                                <path fillRule="evenodd" d="M7.793 2.232a.75.75 0 0 1-.025 1.06L3.622 7.25h10.003a5.375 5.375 0 0 1 0 10.75H10.75a.75.75 0 0 1 0-1.5h2.875a3.875 3.875 0 0 0 0-7.75H3.622l4.146 3.957a.75.75 0 0 1-1.036 1.085l-5.5-5.25a.75.75 0 0 1 0-1.085l5.5-5.25a.75.75 0 0 1 1.06.025Z" clipRule="evenodd" />
+                            </svg>
+                        </ControlButton>
+
+                        <ControlButton onClick={redo} title="Rehacer (Ctrl+Y)">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                                <path fillRule="evenodd" d="M12.207 2.232a.75.75 0 0 0 .025 1.06l4.146 3.958H6.375a5.375 5.375 0 0 0 0 10.75H9.25a.75.75 0 0 0 0-1.5H6.375a3.875 3.875 0 0 1 0-7.75h10.003l-4.146 3.957a.75.75 0 0 0 1.036 1.085l5.5-5.25a.75.75 0 0 0 0-1.085l-5.5-5.25a.75.75 0 0 0-1.06.025Z" clipRule="evenodd" />
+                            </svg>
+                        </ControlButton>
+                    </Controls>
                     <NodeContextMenu />
                     <EdgeContextMenu />
                 </ReactFlow>
-                <ElementsBar nodes={ACTIVITY_NODES} />
+                <ElementsBar nodes={ACTIVITY_NODES} saveToHistory={saveToHistory} />
                 <AIChatBar type="actividades"/>
             </section>
         </div>
