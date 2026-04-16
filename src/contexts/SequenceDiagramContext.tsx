@@ -21,6 +21,8 @@ interface SequenceDiagramContextType {
     setNodes: React.Dispatch<React.SetStateAction<Node<NodeData>[]>>,
     edges: Edge[],
     setEdges: React.Dispatch<React.SetStateAction<Edge[]>>,
+    maxHandlesCount: number,
+    setMaxHandlesCount: React.Dispatch<React.SetStateAction<number>>,
 }
 
 export const SequenceDiagramContext = createContext<SequenceDiagramContextType | undefined>(undefined);
@@ -31,7 +33,7 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
             id: createPrefixedNodeId("lifeLine"),
             type: 'lifeLine', 
             position: { x: 400, y: 100 }, 
-            data: { label: "" },
+            data: { label: "", headerIcon: 'rectangle' },
             connectable: true,
             zIndex: 999,
             style: {
@@ -41,9 +43,10 @@ export function CanvasProvider({ children }: { children: ReactNode }) {
     ]
     const [nodes, setNodes] = useState<Node<NodeData>[]>(initialNodes);
     const [edges, setEdges] = useState<Edge[]>([]);
+    const [maxHandlesCount, setMaxHandlesCount] = useState<number>(1);
 
     return (
-        <SequenceDiagramContext.Provider value={{ nodes, setNodes, edges, setEdges }}>
+        <SequenceDiagramContext.Provider value={{ nodes, setNodes, edges, setEdges, maxHandlesCount, setMaxHandlesCount }}>
             {children}
         </SequenceDiagramContext.Provider>
     );

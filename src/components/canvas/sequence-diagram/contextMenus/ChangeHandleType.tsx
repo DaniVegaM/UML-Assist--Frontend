@@ -185,7 +185,8 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
             position: { x: newPositionX, y: newPositionY },
             data: {
                 orderedHandles: [],
-                isCreatedLifeLine: true
+                isCreatedLifeLine: true,
+                headerIcon: 'rectangle'
             },
             connectable: true,
             draggable: true,

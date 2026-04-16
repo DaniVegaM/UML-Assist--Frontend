@@ -48,48 +48,63 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
             return null;
         }
     };
-    
 
-const saveDiagram = async () => {
-  if (saving) return;
-  setSaving(true);
 
-  try {
-    loadingAlert('Guardando Diagrama...');
-    const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
-    const previewBlob = await generatePreview();
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append(
-        "content",
-        JSON.stringify({
-            type: type,
-            canvas: {
-                nodes: nodes,
-                edges: edges,
-                totalNodes: nodes.length,
-                totalEdges: edges.length
+    const saveDiagram = async () => {
+        if (saving) return;
+        setSaving(true);
+
+        try {
+            loadingAlert('Guardando Diagrama...');
+            const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
+            const previewBlob = await generatePreview();
+            const formData = new FormData();
+            formData.append("title", title);
+            formData.append(
+                "content",
+                JSON.stringify({
+                    type: type,
+                    canvas: {
+                        nodes: nodes,
+                        edges: edges,
+                        totalNodes: nodes.length,
+                        totalEdges: edges.length
+                    }
+                })
+            );
+
+            if (previewBlob) {
+                formData.append("preview_image", previewBlob, "preview.png");
             }
-        })
-        );
+            let response;
 
-        if (previewBlob) {
-            formData.append("preview_image", previewBlob, "preview.png");
-        }
-        const savePromise = !diagramId
-        ? createDiagram(formData)
-        : updateDiagram(diagramId, formData);
+            if (!diagramId) {
+                response = await createDiagram(formData);
+                const newId = response.data.id;
 
-        await Promise.all([savePromise, minLoadingTime]);
+                if (newId) {
+                    let basePath = '/crear-diagrama-de-secuencia';
 
-        closeAlert();
-        await successAlert('Guardado', `Diagrama: <strong>${title}</strong> guardado con éxito`);
+                    if (type === 'actividades') {
+                        basePath = '/crear-diagrama-de-actividades';
+                    } else if (type === 'secuencia') {
+                        basePath = '/crear-diagrama-de-secuencia';
+                    }
+
+                    navigate(`${basePath}/${newId}`, { replace: true });
+                }
+            } else {
+                response = await updateDiagram(diagramId, formData);
+            }
+
+            closeAlert();
+            await successAlert('Guardado', `Diagrama: <strong>${title}</strong> guardado con éxito`);
         } catch (err) {
             closeAlert();
             await errorAlert('Error', 'No se pudo guardar el diagrama');
         }
         setSaving(false);
-        };
+    };
     const closeModal = () => {
         setLoading({ showLoading: false, showConfirmation: false, showError: false });
     }
@@ -102,7 +117,7 @@ const saveDiagram = async () => {
                         onClick={() => handleExit('/dashboard')}
                         className="mr-4 cursor-pointer"
                     >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" stroke="white" strokeWidth="3" className="size-6" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" /></svg>
                     </div>
                     <div
                         onClick={() => handleExit('/')}
