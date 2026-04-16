@@ -55,7 +55,7 @@ export default function InterruptActivityRegion({ data }: DataProps) {
                 position: "relative",
                 width: "100%",
                 height: "100%",
-                pointerEvents: "all",
+                pointerEvents: "none",
             }}
         >
             {data.suggestion && (
@@ -80,18 +80,22 @@ export default function InterruptActivityRegion({ data }: DataProps) {
                 </>
             )}
             <NodeResizer
+                color="#0084D1"
                 minWidth={200}
                 minHeight={150}
                 isVisible={showResizer}
                 shouldResize={() => true}
                 handleStyle={{
-                    width: 36,
-                    height: 36,
-                    opacity: 0,
+                    width: 10,
+                    height: 10,
+                    opacity: 1,
+                    pointerEvents: "all",
+                    borderRadius: 2,
                 }}
                 lineStyle={{
                     stroke: 'currentColor',
-                    strokeWidth: 2,
+                    borderWidth: 2.5,
+                    pointerEvents: "all",
                 }}
             />
         </div>
