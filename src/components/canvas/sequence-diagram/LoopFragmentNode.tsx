@@ -245,7 +245,20 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         </>
       )}
       
-      <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
+      <NodeResizer
+        minWidth={350}
+        minHeight={150}
+        color="#0084D1"
+        isVisible={selected}
+        handleStyle={{
+            width: 12,   
+            height: 12,
+            borderRadius: 2,
+        }}
+        lineStyle={{
+            borderWidth: 2.5, 
+        }}
+      />
 
       {/* Pentágono con la palabra clave "loop" y especificación de iteración */}
       <div className="flex items-start relative z-10">

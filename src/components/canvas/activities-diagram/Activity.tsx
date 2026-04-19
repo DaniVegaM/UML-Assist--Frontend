@@ -219,6 +219,14 @@ export default function Activity({ data }: DataProps) {
                 isVisible={isSelected}
                 minWidth={1000}
                 minHeight={600}
+                handleStyle={{
+                width: 10,   
+                height: 10,
+                borderRadius: 2,
+            }}
+            lineStyle={{
+                borderWidth: 2.5, 
+            }}
             />
 
               <div className="flex flex-col">
