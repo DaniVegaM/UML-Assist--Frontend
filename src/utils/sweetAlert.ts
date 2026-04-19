@@ -171,6 +171,74 @@ export const selectDiagramTypeAlert = async () => {
   });
 };
 
+export const selectExportFormatAlert = async () => {
+  const theme = getSwalTheme();
+  document.body.classList.add('no-blur');
+
+  return Swal.fire({
+    ...theme,
+    title: 'Exportar diagrama',
+
+    html: `
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="w-8 h-8 text-sky-600 dark:text-sky-400">
+            <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+            <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold mb-2">
+          ¿En qué formato quieres exportar?
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-6">
+        <div id="png-option"
+          class="cursor-pointer p-6 rounded-2xl border-2 border-sky-200 dark:border-sky-700 
+          hover:border-sky-400 transition-all hover:scale-105">
+          <h3 class="font-bold text-lg text-center">PNG</h3>
+          <p class="text-sm text-zinc-500 text-center">
+            Imagen del diagrama
+          </p>
+        </div>
+        <div id="pdf-option"
+          class="cursor-pointer p-6 rounded-2xl border-2 border-red-200 dark:border-red-700 
+          hover:border-red-400 transition-all hover:scale-105">
+          <h3 class="font-bold text-lg text-center">PDF</h3>
+          <p class="text-sm text-zinc-500 text-center">
+            Documento listo para compartir
+          </p>
+        </div>
+      </div>
+    `,
+
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+
+    didOpen: () => {
+      const png = document.getElementById('png-option');
+      const pdf = document.getElementById('pdf-option');
+
+      png?.addEventListener('click', () => {
+        Swal.close();
+        window.dispatchEvent(new CustomEvent('export:selected', { detail: 'png' }));
+      });
+
+      pdf?.addEventListener('click', () => {
+        Swal.close();
+        window.dispatchEvent(new CustomEvent('export:selected', { detail: 'pdf' }));
+      });
+    },
+
+    willClose: () => {
+      document.body.classList.remove('no-blur');
+    }
+  });
+};
 
 export const renameDiagramAlert = async (currentName: string) => {
   const theme = getSwalTheme();

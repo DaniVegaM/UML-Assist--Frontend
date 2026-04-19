@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import { toPng } from 'html-to-image';
 import './Header.css';
+import { useReactFlow } from '@xyflow/react';
+import jsPDF from 'jspdf';
 
 import { useNavigate } from 'react-router';
 import { closeAlert, confirmExitWithoutSaving, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
-
+import { selectExportFormatAlert } from '../../../utils/sweetAlert';
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
@@ -49,6 +51,84 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         }
     };
 
+    const getFileName = () => {
+        const input = document.querySelector('input[type="text"]') as HTMLInputElement;
+        const currentTitle = input?.value || title || 'diagrama';
+        return currentTitle
+            .trim()
+            .replace(/[^a-z0-9]/gi, '_')
+            .toLowerCase();
+    };
+        const handleExport = async () => {
+        await selectExportFormatAlert();
+    };
+    useEffect(() => {
+        const handleExportSelected = async (e: any) => {
+            if (e.detail === 'png') {
+                await exportToPNG();
+            } else if (e.detail === 'pdf') {
+                await exportToPDF();
+            }
+        };
+
+        window.addEventListener('export:selected', handleExportSelected);
+
+        return () => {
+            window.removeEventListener('export:selected', handleExportSelected);
+        };
+    }, []);
+
+    const { fitView } = useReactFlow();
+    const exportToPNG = async () => {
+        const reactFlowElement = document.querySelector('.react-flow');
+        if (!reactFlowElement) return;
+        try {
+            await fitView({ padding: 0.2, duration: 0 });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
+                backgroundColor: '#ffffff',
+                pixelRatio: 2
+            });
+            const link = document.createElement('a');
+            link.download = `${getFileName()}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (error) {
+            console.error("Error exportando PNG:", error);
+        }
+    };
+
+    const exportToPDF = async () => {
+        const reactFlowElement = document.querySelector('.react-flow');
+        if (!reactFlowElement) return;
+        try {
+            await fitView({ padding: 0.2, duration: 0 });
+            await new Promise(resolve => setTimeout(resolve, 100));
+            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
+                backgroundColor: '#ffffff',
+                pixelRatio: 2
+            });
+            const pdf = new jsPDF({
+                orientation: 'landscape',
+                unit: 'px',
+                format: [
+                    reactFlowElement.clientWidth,
+                    reactFlowElement.clientHeight
+                ]
+            });
+            pdf.addImage(
+                dataUrl,
+                'PNG',
+                0,
+                0,
+                reactFlowElement.clientWidth,
+                reactFlowElement.clientHeight
+            );
+            pdf.save(`${getFileName()}.pdf`);
+        } catch (error) {
+            console.error("Error exportando PDF:", error);
+        }
+    };
 
     const saveDiagram = async () => {
         if (saving) return;
@@ -158,7 +238,12 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                 <div className="flex justify-center gap-4">
                     <button onClick={() => saveDiagram()} className="bg-white dark:bg-neutral-800 py-1 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
 
-                    <button className="bg-white py-1 dark:bg-neutral-800 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Exportar</button>
+                <button
+                    onClick={handleExport}
+                    className="bg-white py-1 dark:bg-neutral-800 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer"
+                >
+                    Exportar
+                </button>
 
                     <label htmlFor="switch" className="bg-white dark:bg-neutral-800 toggle ">
                         <input
