@@ -234,14 +234,20 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150 relative"
-      style={{ minWidth: '350px', minHeight: '150px', zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
+      style={{ minWidth: '350px', minHeight: '150px', zIndex: 1, pointerEvents: 'none' }}
       onContextMenu={handleContextMenu}
     >
+
+    <div className="absolute inset-0 z-20 pointer-events-none">
+      <div className="fragment-drag-handle absolute inset-x-0 top-0 h-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+      <div className="fragment-drag-handle absolute inset-x-0 bottom-0 h-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+      <div className="fragment-drag-handle absolute inset-y-0 left-0 w-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+      <div className="fragment-drag-handle absolute inset-y-0 right-0 w-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+    </div>
+
       {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
       <div 
-        className="absolute inset-0 z-0"
-        style={{ pointerEvents: 'auto' }}
-        onContextMenu={handleContextMenu}
+        className="absolute inset-0 z-0 pointer-events-none"
       />
       {(data as any)?.suggestion && (
         <>
@@ -265,23 +271,19 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
           />
         </>
       )}
-      
-      <NodeResizer
-        minWidth={350}
-        minHeight={150}
-        color="#0084D1"
-        isVisible={selected}
-        handleStyle={{
-            width: 12,   
-            height: 12,
-            borderRadius: 2,
-        }}
-        lineStyle={{
-            borderWidth: 2.5, 
-        }}
-      />
+      <div className="absolute inset-0 z-30 pointer-events-none">
+        <div className="pointer-events-auto">
+            <NodeResizer
+              minWidth={350}
+              minHeight={150}
+              color="#0084D1"
+              isVisible={selected}
+            />
+        </div>
+      </div>
+
       <div
-        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10"
+        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10 pointer-events-auto nodrag"
         style={{
           clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
           width: '60px',
@@ -294,20 +296,20 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
       {/* Espacio vacío donde iría la guarda (strict no requiere guarda) */}
       <div className="relative z-10" />
 
-      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative z-10">
+      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative z-10 pointer-events-none">
 
         {/* Separadores */}
         {separators.map((_, index) => (
           <div
             key={index}
-            className="absolute w-full nodrag"
+            className="absolute w-full nodrag pointer-events-auto"
             style={{
               top: `${separatorPositions[index]}px`,
             }}
           >
             {/* Área de arrastre */}
             <div
-              className="absolute w-full cursor-ns-resize"
+              className="absolute w-full cursor-ns-resize pointer-events-auto"
               style={{
                 top: '-6px',
                 height: '12px',
