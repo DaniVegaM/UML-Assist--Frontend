@@ -1,6 +1,6 @@
 import { useTheme } from '../../../hooks/useTheme';
 import type { HeaderProps } from '../../../types/canvas';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createDiagram, updateDiagram } from '../../../services/diagramSerivce';
 import { toPng } from 'html-to-image';
 import './Header.css';
@@ -11,12 +11,16 @@ import { useNavigate } from 'react-router';
 import { closeAlert, confirmExitWithoutSaving, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
 import { selectExportFormatAlert } from '../../../utils/sweetAlert';
 
+const AUTO_SAVE_DELAY = 5000;
+
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
     const [title, setTitle] = useState<string>('')
     const [saving, setSaving] = useState<boolean>(false)
     const [loading, setLoading] = useState({ showLoading: false, showConfirmation: false, showError: false });
     const navigate = useNavigate();
+    const { fitView } = useReactFlow();
+
     const handleExit = async (path: string) => {
         const result = await confirmExitWithoutSaving();
         if (result.isConfirmed) {
@@ -24,13 +28,35 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         }
     };
 
+    const autoSaveTimeoutRef = useRef<number | null>(null);
+    const isManualSavingRef = useRef(false);
+    const firstRenderRef = useRef(true);
+
+    const autoSaveKey = diagramId
+        ? `autosave-${type}-${diagramId}`
+        : `autosave-${type}-new`;
+
     useEffect(() => {
+        const savedDraft = localStorage.getItem(autoSaveKey);
+
+        if (savedDraft) {
+            try {
+                const draft = JSON.parse(savedDraft);
+                if (draft.title) {
+                    setTitle(draft.title);
+                    return;
+                }
+            } catch {
+                console.error('No se pudo leer el título del autoguardado');
+            }
+        }
         if (diagramTitle?.length > 0)
             setTitle(diagramTitle);
         else {
             setTitle('Diagrama sin título')
         }
-    }, [diagramTitle])
+    }, [diagramTitle, autoSaveKey])
+
 
     const generatePreview = async (): Promise<Blob | null> => {
         const reactFlowElement = document.querySelector('.react-flow');
@@ -59,9 +85,11 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
             .replace(/[^a-z0-9]/gi, '_')
             .toLowerCase();
     };
-        const handleExport = async () => {
+        
+    const handleExport = async () => {
         await selectExportFormatAlert();
     };
+
     useEffect(() => {
         const handleExportSelected = async (e: any) => {
             if (e.detail === 'png') {
@@ -78,7 +106,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         };
     }, []);
 
-    const { fitView } = useReactFlow();
+    
     const exportToPNG = async () => {
         const reactFlowElement = document.querySelector('.react-flow');
         if (!reactFlowElement) return;
@@ -130,14 +158,59 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         }
     };
 
+    useEffect(() => {
+        if (firstRenderRef.current) {
+            firstRenderRef.current = false;
+            return;
+        }
+
+        if (isManualSavingRef.current) return;
+
+        if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+        }
+
+        autoSaveTimeoutRef.current = window.setTimeout(() => {
+            const draft = {
+                title,
+                type,
+                updatedAt: new Date().toISOString(),
+                content: {
+                    type,
+                    canvas: {
+                        nodes,
+                        edges,
+                        totalNodes: nodes.length,
+                        totalEdges: edges.length,
+                    },
+                },
+            };
+
+            localStorage.setItem(autoSaveKey, JSON.stringify(draft));
+            console.log("Autoguardado local realizado");
+        }, AUTO_SAVE_DELAY);
+
+        return () => {
+            if (autoSaveTimeoutRef.current) {
+                clearTimeout(autoSaveTimeoutRef.current);
+            }
+        };
+    }, [title, nodes, edges, type, autoSaveKey]);
+
     const saveDiagram = async () => {
         if (saving) return;
+        isManualSavingRef.current = true;
+
+        if (autoSaveTimeoutRef.current) {
+            clearTimeout(autoSaveTimeoutRef.current);
+        }
         setSaving(true);
 
         try {
             loadingAlert('Guardando Diagrama...');
             const minLoadingTime = new Promise(resolve => setTimeout(resolve, 1500));
             const previewBlob = await generatePreview();
+            await minLoadingTime;
             const formData = new FormData();
             formData.append("title", title);
             formData.append(
@@ -178,11 +251,13 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
             }
 
             closeAlert();
+            localStorage.removeItem(autoSaveKey);
             await successAlert('Guardado', `Diagrama: <strong>${title}</strong> guardado con éxito`);
-        } catch (err) {
+        } catch {
             closeAlert();
             await errorAlert('Error', 'No se pudo guardar el diagrama');
         }
+        isManualSavingRef.current = false;
         setSaving(false);
     };
     const closeModal = () => {

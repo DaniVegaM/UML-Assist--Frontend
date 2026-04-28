@@ -20,6 +20,7 @@ import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
+import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -32,6 +33,8 @@ function DiagramContent() {
     const { isValidActivityConnection } = useLocalValidations(nodes, edges);
     const { validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    const restoredFromDraftRef = useRef(false);
 
     const isValidActivityConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -79,21 +82,43 @@ function DiagramContent() {
     }, [diagramId]);
 
     useEffect(() => {
+        const restoreDraft = async () => {
+            const autoSaveKey = diagramId
+                ? `autosave-actividades-${diagramId}`
+                : `autosave-actividades-new`;
+
+            const savedDraft = localStorage.getItem(autoSaveKey);
+            if (!savedDraft) return;
+
+            const result = await confirmRestoreAutoSave();
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const draft = JSON.parse(savedDraft);
+
+                setNodes(draft.content?.canvas?.nodes || []);
+                setEdges(draft.content?.canvas?.edges || []);
+
+                restoredFromDraftRef.current = true;
+                console.log('Autoguardado recuperado');
+            } catch {
+                console.error('No se pudo recuperar el autoguardado');
+            }
+        };
+
+        restoreDraft();
+    }, [diagramId, setNodes, setEdges]);
+
+    useEffect(() => {
+
+        if (restoredFromDraftRef.current) return;
+
         if (diagram?.content) {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
-
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            e.preventDefault();
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
+    }, [diagram, setNodes, setEdges]);
 
     useEffect(() => {
         window.history.pushState(null, '', window.location.href);
