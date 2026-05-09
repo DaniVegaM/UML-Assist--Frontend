@@ -1,23 +1,33 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { ElementsBarProps } from '../../types/canvas';
 import { DraggableNode } from './DraggableNode';
+
+const TOOLTIP_DELAY = 500;
 
 export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
     const [isVisible, setIsVisible] = useState(true);
     const [tooltip, setTooltip] = useState<{ label: string; description: string; top: number; svg?: React.ReactNode } | null>(null);
+    const tooltipTimerRef = useRef<number | null>(null);
 
     const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>, label: string, description?: string, svg?: React.ReactNode) => {
         if (!description) return;
         const rect = e.currentTarget.getBoundingClientRect();
-        setTooltip({
-            label,
-            description,
-            top: rect.top,
-            svg
-        });
+        const pending = { label, description, top: rect.top, svg };
+
+        if (tooltipTimerRef.current !== null) {
+            clearTimeout(tooltipTimerRef.current);
+        }
+        tooltipTimerRef.current = window.setTimeout(() => {
+            setTooltip(pending);
+            tooltipTimerRef.current = null;
+        }, TOOLTIP_DELAY);
     };
 
     const handleMouseLeave = () => {
+        if (tooltipTimerRef.current !== null) {
+            clearTimeout(tooltipTimerRef.current);
+            tooltipTimerRef.current = null;
+        }
         setTooltip(null);
     };
 
@@ -133,10 +143,11 @@ export function ElementsBar({ nodes, oneColumn }: ElementsBarProps) {
             </aside>
             {tooltip && isVisible && (
                 <div
-                    className="fixed z-50 bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-gray-200 dark:border-zinc-700 w-64 p-4 pointer-events-none transition-opacity duration-200"
+                    className="fixed z-50 bg-white dark:bg-zinc-800 rounded-lg shadow-xl border border-gray-200 dark:border-zinc-700 w-64 p-4 pointer-events-none"
                     style={{
                         top: `${tooltip.top}px`,
-                        left: '150px'
+                        left: '150px',
+                        animation: 'fadeInTooltip 0.2s ease-out'
                     }}
                 >
                     <div className="flex items-center justify-between mb-2 border-b border-gray-200 dark:border-zinc-700 pb-2 gap-x-4">
