@@ -25,11 +25,16 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
     const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const autoSaveSavedTimerRef = useRef<number | null>(null);
 
+    // Contador de versión para detectar cambios nuevos durante un autosave en vuelo
+    const dirtyVersionRef = useRef(0);
+
     const handleExit = async (path: string) => {
+        // Si no hay cambios sin guardar, navega directamente
         if (!isDirty) {
             navigate(path);
             return;
         }
+        // Si hay cambios sin guardar, muestra modal de confirmación
         const result = await confirmExitUnsaved();
         if (result.isConfirmed) {
             await saveDiagram();
@@ -177,6 +182,9 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
 
         if (isManualSavingRef.current) return;
 
+        // Incrementar versión para detectar cambios durante un autosave en vuelo
+        dirtyVersionRef.current++;
+        const versionAtChange = dirtyVersionRef.current;
         setIsDirty(true);
 
         if (autoSaveTimeoutRef.current) {
@@ -185,6 +193,10 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
 
         autoSaveTimeoutRef.current = window.setTimeout(async () => {
             if (diagramId) {
+                // Si llegaron cambios nuevos mientras esperábamos, no hacer nada
+                // (el próximo timeout se encargará)
+                if (dirtyVersionRef.current !== versionAtChange) return;
+
                 setAutoSaveStatus('saving');
                 try {
                     const formData = new FormData();
@@ -202,8 +214,12 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                         })
                     );
                     await updateDiagram(diagramId, formData);
+
+                    // Solo limpiar dirty si no llegaron cambios nuevos durante el request
+                    if (dirtyVersionRef.current === versionAtChange) {
+                        setIsDirty(false);
+                    }
                     setAutoSaveStatus('saved');
-                    setIsDirty(false);
                     localStorage.removeItem(autoSaveKey);
                     if (autoSaveSavedTimerRef.current) clearTimeout(autoSaveSavedTimerRef.current);
                     autoSaveSavedTimerRef.current = window.setTimeout(() => {
@@ -228,6 +244,8 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                     },
                 };
                 localStorage.setItem(autoSaveKey, JSON.stringify(draft));
+                // Para nuevos diagramas, el localStorage ES el guardado - no marcar como no-dirty
+                // hasta que se guarde en el servidor con saveDiagram()
             }
         }, AUTO_SAVE_DELAY);
 

@@ -75,7 +75,10 @@ function DiagramContent() {
 
             const result = await confirmRestoreAutoSave();
 
-            if (!result.isConfirmed) return;
+            if (!result.isConfirmed) {
+                localStorage.removeItem(autoSaveKey);
+                return;
+            }
 
             try {
                 const draft = JSON.parse(savedDraft);
