@@ -8,7 +8,7 @@ import { useReactFlow } from '@xyflow/react';
 import jsPDF from 'jspdf';
 
 import { useNavigate } from 'react-router';
-import { closeAlert, confirmExitWithoutSaving, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
+import { closeAlert, confirmExitUnsaved, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
 import { selectExportFormatAlert } from '../../../utils/sweetAlert';
 
 const AUTO_SAVE_DELAY = 5000;
@@ -21,9 +21,20 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
     const navigate = useNavigate();
     const { fitView } = useReactFlow();
 
+    const [isDirty, setIsDirty] = useState(false);
+    const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+    const autoSaveSavedTimerRef = useRef<number | null>(null);
+
     const handleExit = async (path: string) => {
-        const result = await confirmExitWithoutSaving();
+        if (!isDirty) {
+            navigate(path);
+            return;
+        }
+        const result = await confirmExitUnsaved();
         if (result.isConfirmed) {
+            await saveDiagram();
+            navigate(path);
+        } else if (result.isDenied) {
             navigate(path);
         }
     };
@@ -166,28 +177,58 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
 
         if (isManualSavingRef.current) return;
 
+        setIsDirty(true);
+
         if (autoSaveTimeoutRef.current) {
             clearTimeout(autoSaveTimeoutRef.current);
         }
 
-        autoSaveTimeoutRef.current = window.setTimeout(() => {
-            const draft = {
-                title,
-                type,
-                updatedAt: new Date().toISOString(),
-                content: {
+        autoSaveTimeoutRef.current = window.setTimeout(async () => {
+            if (diagramId) {
+                setAutoSaveStatus('saving');
+                try {
+                    const formData = new FormData();
+                    formData.append('title', title);
+                    formData.append(
+                        'content',
+                        JSON.stringify({
+                            type,
+                            canvas: {
+                                nodes,
+                                edges,
+                                totalNodes: nodes.length,
+                                totalEdges: edges.length,
+                            },
+                        })
+                    );
+                    await updateDiagram(diagramId, formData);
+                    setAutoSaveStatus('saved');
+                    setIsDirty(false);
+                    localStorage.removeItem(autoSaveKey);
+                    if (autoSaveSavedTimerRef.current) clearTimeout(autoSaveSavedTimerRef.current);
+                    autoSaveSavedTimerRef.current = window.setTimeout(() => {
+                        setAutoSaveStatus('idle');
+                    }, 3000);
+                } catch {
+                    setAutoSaveStatus('error');
+                }
+            } else {
+                const draft = {
+                    title,
                     type,
-                    canvas: {
-                        nodes,
-                        edges,
-                        totalNodes: nodes.length,
-                        totalEdges: edges.length,
+                    updatedAt: new Date().toISOString(),
+                    content: {
+                        type,
+                        canvas: {
+                            nodes,
+                            edges,
+                            totalNodes: nodes.length,
+                            totalEdges: edges.length,
+                        },
                     },
-                },
-            };
-
-            localStorage.setItem(autoSaveKey, JSON.stringify(draft));
-            console.log("Autoguardado local realizado");
+                };
+                localStorage.setItem(autoSaveKey, JSON.stringify(draft));
+            }
         }, AUTO_SAVE_DELAY);
 
         return () => {
@@ -195,7 +236,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                 clearTimeout(autoSaveTimeoutRef.current);
             }
         };
-    }, [title, nodes, edges, type, autoSaveKey]);
+    }, [title, nodes, edges, type, autoSaveKey, diagramId]);
 
     const saveDiagram = async () => {
         if (saving) return;
@@ -252,6 +293,10 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
 
             closeAlert();
             localStorage.removeItem(autoSaveKey);
+            setIsDirty(false);
+            setAutoSaveStatus('saved');
+            if (autoSaveSavedTimerRef.current) clearTimeout(autoSaveSavedTimerRef.current);
+            autoSaveSavedTimerRef.current = window.setTimeout(() => setAutoSaveStatus('idle'), 3000);
             await successAlert('Guardado', `Diagrama: <strong>${title}</strong> guardado con éxito`);
         } catch {
             closeAlert();
@@ -299,7 +344,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                         <p className="text-center text-white font-bold uppercase">UML Assist</p>
                     </div>
                 </div>
-                <div>
+                <div className="flex flex-col items-center gap-0.5">
                     <input
                         className="max-w-92 min-w-52 w-full bg-zinc-200 text-zinc-600 ring-1 ring-zinc-200 focus:ring-2 focus:ring-sky-800 outline-none duration-300 placeholder:text-zinc-600 placeholder:opacity-50 rounded-lg px-4 py-1"
                         autoComplete="off"
@@ -309,6 +354,25 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                         onChange={e => setTitle(e.target.value)}
                         type="text"
                     />
+                    <div className="h-4 flex items-center">
+                        {autoSaveStatus === 'saving' && (
+                            <span className="flex items-center gap-1 text-white/60 text-xs">
+                                <svg className="animate-spin size-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                                </svg>
+                                Guardando...
+                            </span>
+                        )}
+                        {autoSaveStatus === 'saved' && (
+                            <span className="flex items-center gap-1 text-white/70 text-xs">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                                Guardado
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <div className="flex justify-center gap-4">
                     <button onClick={() => saveDiagram()} className="bg-white dark:bg-neutral-800 py-1 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>

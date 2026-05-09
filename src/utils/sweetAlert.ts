@@ -363,7 +363,30 @@ export const confirmExitWithoutSaving = async () => {
     customClass: {
       ...getSwalTheme().customClass,
       confirmButton:
-        'bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-full transition',
+        'bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-full transition cursor-pointer',
+    },
+  });
+};
+
+export const confirmExitUnsaved = async () => {
+  return Swal.fire({
+    ...getSwalTheme(),
+    title: 'Cambios sin guardar',
+    text: 'El diagrama tiene cambios que aún no se han guardado en el servidor.',
+    icon: 'warning',
+    iconColor: '#f59e0b',
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: 'Guardar y salir',
+    denyButtonText: 'Salir de todas formas',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true,
+    customClass: {
+      ...getSwalTheme().customClass,
+      confirmButton:
+        'bg-sky-600 hover:bg-sky-700 text-white font-semibold px-5 py-2 rounded-full transition cursor-pointer',
+      denyButton:
+        'bg-transparent border border-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 dark:text-red-400 font-semibold px-5 py-2 rounded-full transition cursor-pointer',
     },
   });
 };
