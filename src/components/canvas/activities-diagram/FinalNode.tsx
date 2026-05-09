@@ -18,9 +18,9 @@ export default function FinalNode({ data }: DataProps) {
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
-    const { handles, magneticHandle } = useHandle({ 
-        handleRef, 
-        nodeRef, 
+    const { handles, magneticHandle } = useHandle({
+        handleRef,
+        nodeRef,
         maxHandles: 1,
         initialHandles: data?.handles as HandleData[] | undefined
     });
@@ -62,14 +62,10 @@ export default function FinalNode({ data }: DataProps) {
     return (
         <div
             className="bg-transparent p-4"
-            onMouseEnter={() => setShowHandles(isTryingToConnect)}
+            onMouseEnter={() => setShowHandles(true)}
             onMouseLeave={() => setShowHandles(false)}
             onContextMenu={handleContextMenu}
-            onMouseMove={(evt) => {
-                if (isTryingToConnect) {
-                    magneticHandle(evt);
-                }
-            }}
+            onMouseMove={(evt) => magneticHandle(evt)}
         >
             {data.suggestion && (
                 <>
