@@ -21,6 +21,7 @@ import AIChatBar from "../../components/canvas/AIChatBar";
 import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
+import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -32,6 +33,8 @@ function DiagramContent() {
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { validateSequenceConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    const restoredFromDraftRef = useRef(false); 
 
     const isValidSequenceConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -62,11 +65,42 @@ function DiagramContent() {
     }, [diagramId]);
 
     useEffect(() => {
+        const restoreDraft = async () => {
+            const autoSaveKey = diagramId
+                ? `autosave-secuencia-${diagramId}`
+                : `autosave-secuencia-new`;
+
+            const savedDraft = localStorage.getItem(autoSaveKey);
+            if (!savedDraft) return;
+
+            const result = await confirmRestoreAutoSave();
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const draft = JSON.parse(savedDraft);
+
+                setNodes(draft.content?.canvas?.nodes || []);
+                setEdges(draft.content?.canvas?.edges || []);
+
+                restoredFromDraftRef.current = true;
+                console.log('Autoguardado recuperado');
+            } catch {
+                console.error('No se pudo recuperar el autoguardado');
+            }
+        };
+
+        restoreDraft();
+    }, [diagramId, setNodes, setEdges]);
+
+    useEffect(() => {
+
+        if (restoredFromDraftRef.current) return;
         if (diagram?.content) {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
+    }, [diagram, setNodes, setEdges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {

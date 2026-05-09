@@ -368,6 +368,19 @@ export const confirmExitWithoutSaving = async () => {
   });
 };
 
+export const confirmRestoreAutoSave = async () => {
+  return Swal.fire({
+    ...getSwalTheme(),
+    title: 'Autoguardado encontrado',
+    text: 'Se encontró una versión guardada localmente. ¿Deseas recuperarla?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, recuperar',
+    cancelButtonText: 'No recuperar',
+    reverseButtons: true,
+  });
+};
+
 export const selectLifeLineHeaderIcon = async (
   currentIcon: LifeLineHeaderIcon = 'rectangle'
 ) => {
