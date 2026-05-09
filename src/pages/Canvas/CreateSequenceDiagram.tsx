@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges, SelectionMode } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -263,6 +263,10 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    selectionOnDrag={true}
+                    selectionMode={SelectionMode.Partial}
+                    multiSelectionKeyCode={["Shift"]}
+                    nodesDraggable={true}
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     isValidConnection={isValidSequenceConnectionWithFeedback}
