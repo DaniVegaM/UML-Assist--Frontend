@@ -153,14 +153,18 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full relative"
-      style={{ minWidth: "300px", minHeight: "100px", zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
+      style={{ minWidth: "300px", minHeight: "100px", zIndex: 1, pointerEvents: 'none' }}
       onContextMenu={handleContextMenu}
     >
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <div className="fragment-drag-handle absolute inset-x-0 top-0 h-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+        <div className="fragment-drag-handle absolute inset-x-0 bottom-0 h-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+        <div className="fragment-drag-handle absolute inset-y-0 left-0 w-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+        <div className="fragment-drag-handle absolute inset-y-0 right-0 w-3 pointer-events-auto" onContextMenu={handleContextMenu}/>
+      </div>
       {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
       <div 
-        className="absolute inset-0 z-0"
-        style={{ pointerEvents: 'auto' }}
-        onContextMenu={handleContextMenu}
+        className="absolute inset-0 z-0 pointer-events-none"
       />
       {(data as any)?.suggestion && (
         <>
@@ -184,26 +188,16 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
           />
         </>
       )}
-      
-      <NodeResizer
-        minWidth={350}
-        minHeight={150}
-        color="#0084D1"
-        isVisible={selected}
-        handleStyle={{
-            width: 12,   
-            height: 12,
-            borderRadius: 2,
-        }}
-        lineStyle={{
-            borderWidth: 2.5, 
-        }}
-      />
+      <div className="absolute inset-0 z-30 pointer-events-none">
+        <div className="pointer-events-auto">
+          <NodeResizer minWidth={300} minHeight={100} color="#0084D1" isVisible={selected} />
+        </div>
+      </div>
 
       {/* Pentágono con la palabra clave "opt" */}
       <div className="flex items-start relative z-10">
         <div
-          className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1"
+          className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10 pointer-events-auto nodrag"
           style={{
             clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
             width: '50px',
@@ -214,7 +208,8 @@ const OptFragmentNode = ({ id, data, selected }: NodeProps) => {
         </div>
 
         {/* Guard del fragmento opcional */}
-        <div className="flex-1 cursor-text relative z-10" onDoubleClick={onGuardDoubleClick}>
+        <div className="flex-1 cursor-text relative z-10 pointer-events-auto nodrag" 
+        onDoubleClick={onGuardDoubleClick}>
           <textarea
             ref={textareaRef}
             placeholder="[condición]"
