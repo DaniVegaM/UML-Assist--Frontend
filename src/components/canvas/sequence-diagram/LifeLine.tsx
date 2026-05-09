@@ -2,10 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCanvas } from "../../../hooks/useCanvas";
 import { LIFE_LINE_MAX_LEN_TEXT, LIFE_LINE_BASE_HEIGHT, LIFE_LINE_HEIGHT_PER_HANDLE } from "../variables";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
-import { Position, useNodeId, useReactFlow, useUpdateNodeInternals } from "@xyflow/react";
+import { useNodeId, useReactFlow, useUpdateNodeInternals, useViewport } from "@xyflow/react";
 import BaseHandle from "../BaseHandle";
 import ChangeHandleType from "./contextMenus/ChangeHandleType";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
+import DeleteIcon from "../shared/DeleteIcon";
 import { useHandle, type HandleData } from "../../../hooks/useHandle";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
@@ -20,8 +21,9 @@ export default function LifeLine({ data }: DataProps) {
     const { setIsZoomOnScrollEnabled } = useCanvas();
     const { nodes, setMaxHandlesCount, maxHandlesCount } = useSequenceDiagram();
     const nodeId = useNodeId();
-    const { setNodes } = useReactFlow();
+    const { setNodes, setEdges } = useReactFlow();
     const updateNodeInternals = useUpdateNodeInternals();
+    const { zoom } = useViewport();
 
     const [showSuggestion, setShowSuggestion] = useState(false);
     const [headerIcon, setHeaderIcon] = useState<LifeLineHeaderIcon>((data?.headerIcon as LifeLineHeaderIcon) || 'rectangle');
@@ -47,7 +49,22 @@ export default function LifeLine({ data }: DataProps) {
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
     const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
     const [showNodeContextMenu, setShowNodeContextMenu] = useState(false);
-    const [destroyHandleIndex, setDestroyHandleIndex] = useState<number | null>(data?.destroyHandleIndex ?? null);
+    const [destroyY, setDestroyY] = useState<number | null>(() => {
+        if (typeof (data as { destroyY?: number })?.destroyY === 'number') {
+            return (data as { destroyY: number }).destroyY;
+        }
+        // Migración desde el formato antiguo (destroyHandleIndex)
+        if (typeof data?.destroyHandleIndex === 'number' && data?.handles) {
+            const h = (data.handles as HandleData[])[data.destroyHandleIndex];
+            if (h?.top !== undefined && h?.top !== null) {
+                return typeof h.top === 'string' ? parseInt(h.top) : h.top;
+            }
+        }
+        return null;
+    });
+    const [xMarkMenuEvent, setXMarkMenuEvent] = useState<MouseEvent | null>(null);
+    const [headerMenuEvent, setHeaderMenuEvent] = useState<MouseEvent | null>(null);
+    const contextMenuYRef = useRef<number | null>(null);
 
     // Callback ref para actualizar handleRef cuando cambie el último handle
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {
@@ -83,26 +100,27 @@ export default function LifeLine({ data }: DataProps) {
         }
     }, [data?.handles, handles, setHandles]);
 
-    // Sincronizamos destroyHandleIndex y hasDestruction con node.data cuando cambie
+    // Sincronizamos destroyY y hasDestruction con node.data cuando cambie
     useEffect(() => {
         if (!nodeId || isSyncingFromData.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
-                ? { ...n, data: { ...n.data, destroyHandleIndex, hasDestruction: destroyHandleIndex !== null } }
+                ? { ...n, data: { ...n.data, destroyY, hasDestruction: destroyY !== null } }
                 : n
         ));
-    }, [destroyHandleIndex, nodeId, setNodes]);
+    }, [destroyY, nodeId, setNodes]);
 
-    // Sincronizar destroyHandleIndex cuando data.destroyHandleIndex cambie (al cargar diagrama)
+    // Sincronizar destroyY cuando data.destroyY cambie (al cargar diagrama)
     useEffect(() => {
-        if (data?.destroyHandleIndex !== undefined && data.destroyHandleIndex !== destroyHandleIndex) {
+        const dataDestroyY = (data as { destroyY?: number | null })?.destroyY;
+        if (dataDestroyY !== undefined && dataDestroyY !== destroyY) {
             isSyncingFromData.current = true;
-            setDestroyHandleIndex(data.destroyHandleIndex);
+            setDestroyY(dataDestroyY);
             setTimeout(() => {
                 isSyncingFromData.current = false;
             }, 0);
         }
-    }, [data?.destroyHandleIndex, destroyHandleIndex]);
+    }, [(data as { destroyY?: number | null })?.destroyY, destroyY]);
 
     // Sincronizar label cuando data.label cambie (al cargar diagrama)
     useEffect(() => {
@@ -176,6 +194,11 @@ export default function LifeLine({ data }: DataProps) {
     const handleContextMenu = (event: React.MouseEvent, handleId: string, handleIndex: number) => {
         event.preventDefault();
         event.stopPropagation();
+        // Capturar posición Y relativa al nodeRef en coordenadas locales (sin zoom)
+        if (nodeRef.current) {
+            const bounds = nodeRef.current.getBoundingClientRect();
+            contextMenuYRef.current = (event.clientY - bounds.top) / zoom;
+        }
         setContextMenuEvent(event.nativeEvent);
         setSelectedHandle(handleId);
         setSelectedHandleIndex(handleIndex);
@@ -215,41 +238,26 @@ export default function LifeLine({ data }: DataProps) {
 
     // Callback para cuando se selecciona el evento de destrucción
     const handleDestroyEvent = useCallback((action: 'destroy' | 'default') => {
-        if (action === 'destroy' && selectedHandleIndex !== null) {
-            // Guardar el índice del handle con destrucción
-            setDestroyHandleIndex(selectedHandleIndex);
-
-            // Si el handle con destrucción es el último, crear un nuevo handle para que sea el magnético
-            if (selectedHandleIndex === handles.length - 1) {
-                setHandles(prev => [...prev, {
-                    id: prev.length,
-                    position: Position.Right,
-                    top: undefined,
-                    left: undefined
-                }]);
+        if (action === 'destroy') {
+            // Usar la posición Y capturada del click derecho
+            const yPos = contextMenuYRef.current;
+            if (yPos !== null) {
+                setDestroyY(yPos);
                 updateNodeInternals(nodeId || '');
             }
         } else if (action === 'default') {
-            // Si el handle seleccionado es el que tiene la destrucción, quitarla
-            if (selectedHandleIndex === destroyHandleIndex) {
-                setDestroyHandleIndex(null);
-            }
+            setDestroyY(null);
+            updateNodeInternals(nodeId || '');
         }
-    }, [selectedHandleIndex, destroyHandleIndex, handles.length, setHandles, updateNodeInternals, nodeId]);
+    }, [updateNodeInternals, nodeId]);
 
     // Calcular altura dinámica basada en el máximo de handles global
     const lifeLineHeight = useMemo(() => {
         return LIFE_LINE_BASE_HEIGHT + (maxHandlesCount * LIFE_LINE_HEIGHT_PER_HANDLE);
     }, [maxHandlesCount]);
 
-    // Calcular la posición Y del handle de destrucción
-    const destroyPosition = useMemo(() => {
-        if (destroyHandleIndex === null || !handles[destroyHandleIndex]) return null;
-        const handle = handles[destroyHandleIndex];
-        return handle.top ? (typeof handle.top === 'string' ? parseInt(handle.top) : handle.top) : null;
-    }, [destroyHandleIndex, handles]);
-
-    // Verificar si la lifeline está destruida
+    // La posición de destrucción es directamente destroyY
+    const destroyPosition = destroyY;
     const isDestroyed = destroyPosition !== null;
 
     // Calcular la altura final considerando destrucción
@@ -306,8 +314,9 @@ export default function LifeLine({ data }: DataProps) {
                 <div className="relative flex flex-col items-center pointer-events-auto"
                     style={{zIndex: 999}}
                 >
-                    <div 
+                    <div
                         onContextMenu={handleHeaderIconContextMenu}
+                        onClick={(e) => { e.stopPropagation(); setHeaderMenuEvent(e.nativeEvent); }}
                         className="p-2 rounded-lg bg-white dark:bg-zinc-800 border border-neutral-300 dark:border-neutral-600 cursor-pointer hover:shadow-md transition-shadow"
                         title="Click derecho para cambiar icono"
                     >
@@ -356,6 +365,7 @@ export default function LifeLine({ data }: DataProps) {
                 <div
                     onDoubleClick={handleDoubleClick}
                     onContextMenu={handleHeaderIconContextMenu}
+                    onClick={(e) => { if (!isEditing) { e.stopPropagation(); setHeaderMenuEvent(e.nativeEvent); } }}
                     className="relative border border-neutral-600 dark:border-neutral-300 bg-white dark:bg-zinc-800 p-2 hover:bg-gray-100 dark:hover:bg-zinc-700 min-w-[200px] flex flex-col items-center justify-center transition-all duration-150 pointer-events-auto"
                     style={{zIndex: 999}}
 
@@ -397,7 +407,6 @@ export default function LifeLine({ data }: DataProps) {
 
                     {handles.map((handle, i) => {
                         const isLastHandle = i === handles.length - 1;
-                        const hasDestruction = i === destroyHandleIndex;
 
                         return (
                             <BaseHandle
@@ -408,17 +417,18 @@ export default function LifeLine({ data }: DataProps) {
                                 position={handle.position}
                                 left={handle.left}
                                 top={handle.top}
-                                className={`!w-3 !h-3 pointer-events-auto ${hasDestruction ? '!opacity-0' : ''}`}
-                                onContextMenu={isLastHandle && !hasDestruction ? (e) => handleContextMenu(e, handle.id.toString(), i) : undefined}
+                                className="!w-3 !h-3 pointer-events-auto"
+                                onContextMenu={isLastHandle ? (e) => handleContextMenu(e, handle.id.toString(), i) : undefined}
                             />
                         );
                     })}
 
-                    {isDestroyed && destroyHandleIndex !== null && handles[destroyHandleIndex] && (
+                    {isDestroyed && destroyPosition !== null && (
                         <div
                             className="absolute left-1/2 -translate-x-1/2 w-6 h-6 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform z-10 pointer-events-auto"
-                            style={{ top: `${destroyPosition! - 12}px` }}
-                            onContextMenu={(e) => handleContextMenu(e, handles[destroyHandleIndex].id.toString(), destroyHandleIndex)}
+                            style={{ top: `${destroyPosition - 12}px` }}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setXMarkMenuEvent(e.nativeEvent); }}
+                            onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); setXMarkMenuEvent(e.nativeEvent); }}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"
@@ -444,7 +454,44 @@ export default function LifeLine({ data }: DataProps) {
                         lifeLineId={nodeId!}
                         onDestroyEvent={handleDestroyEvent}
                         showDeleteLifeLine={showNodeContextMenu}
+                        alreadyDestroyed={destroyY !== null}
                     />
+                </ContextMenuPortal>
+            )}
+            {xMarkMenuEvent && (
+                <ContextMenuPortal event={xMarkMenuEvent} onClose={() => setXMarkMenuEvent(null)}>
+                    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[220px] overflow-hidden">
+                        <div
+                            onClick={() => { setDestroyY(null); setXMarkMenuEvent(null); updateNodeInternals(nodeId || ''); }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-red-100 dark:hover:bg-red-700 cursor-pointer text-sm dark:text-white"
+                        >
+                            <div className="w-5 h-5 flex items-center justify-center">
+                                <DeleteIcon className="w-full h-full" />
+                            </div>
+                            <p>Eliminar evento de destrucción</p>
+                        </div>
+                    </div>
+                </ContextMenuPortal>
+            )}
+            {headerMenuEvent && (
+                <ContextMenuPortal event={headerMenuEvent} onClose={() => setHeaderMenuEvent(null)}>
+                    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[180px] overflow-hidden">
+                        <div
+                            onClick={() => {
+                                if (nodeId) {
+                                    setNodes(prev => prev.filter(n => n.id !== nodeId));
+                                    setEdges(prev => prev.filter(e => e.source !== nodeId && e.target !== nodeId));
+                                }
+                                setHeaderMenuEvent(null);
+                            }}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-red-100 dark:hover:bg-red-700 cursor-pointer text-sm dark:text-white"
+                        >
+                            <div className="w-6 h-6 flex items-center justify-center">
+                                <DeleteIcon className="w-full h-full" />
+                            </div>
+                            <p>Eliminar</p>
+                        </div>
+                    </div>
                 </ContextMenuPortal>
             )}
         </>

@@ -5,6 +5,7 @@ import { useTheme } from "../../../../hooks/useTheme";
 import { useCanvas } from "../../../../hooks/useCanvas";
 import DeleteIcon from "./DeleteIcon";
 import { createPrefixedNodeId } from "../../../../utils/idGenerator";
+import { showValidationToast } from "../../../../utils/sweetAlert";
 
 interface ChangeHandleTypeProps {
     id: string;
@@ -14,9 +15,10 @@ interface ChangeHandleTypeProps {
     handleIndex: number | null;
     onDestroyEvent?: (action: 'destroy' | 'default') => void;
     showDeleteLifeLine?: boolean;
+    alreadyDestroyed?: boolean;
 }
 
-export default function ChangeHandleType({ onClose, handleId, lifeLineId, handleIndex, onDestroyEvent, showDeleteLifeLine = false }: ChangeHandleTypeProps) {
+export default function ChangeHandleType({ onClose, handleId, lifeLineId, handleIndex, onDestroyEvent, showDeleteLifeLine = false, alreadyDestroyed = false }: ChangeHandleTypeProps) {
 
     const { setNodes, setEdges } = useSequenceDiagram();
     const { getNode } = useReactFlow();
@@ -24,6 +26,11 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
     const { generateUniqueId } = useCanvas();
 
     const handleItemClick = (action: string) => {
+        if (action === 'destroy' && alreadyDestroyed) {
+            showValidationToast('Esta lifeline ya tiene un evento de destrucción');
+            onClose();
+            return;
+        }
         if (action === 'default' || action === 'destroy') {
             setNodes(prev => {
                 return prev.map(node => {
@@ -239,17 +246,6 @@ export default function ChangeHandleType({ onClose, handleId, lifeLineId, handle
         <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[220px] overflow-hidden">
             {!showDeleteLifeLine ? (
                 <>
-                    {/* Opciones para handles */}
-                    {/* Handle predeterminado */}
-                    <div
-                        onClick={() => handleItemClick('default')}
-                        className="flex items-center gap-3 px-4 py-2 hover:bg-sky-100 dark:hover:bg-neutral-700 cursor-pointer text-sm dark:text-white"
-                    >
-                        <div className="rounded-full bg-neutral-400 dark:bg-neutral-300 w-6 h-6"></div>
-                        <p>Handle predeterminado</p>
-                    </div>
-                    <div className="border-b border-sky-600 dark:border-neutral-700"></div>
-                    
                     {/* Evento de destrucción */}
                     <div
                         onClick={() => handleItemClick('destroy')}

@@ -1,6 +1,6 @@
 import Swal from 'sweetalert2';
 
-export type LifeLineHeaderIcon = 'rectangle' | 'user' | 'database' | 'server' | 'circle';
+export type LifeLineHeaderIcon = 'rectangle' | 'user' | 'database' | 'server' | 'circle'; // database/server/circle kept for backwards compat with saved diagrams
 
 //Tema dinámico 
 const getSwalTheme = () => {
@@ -404,6 +404,22 @@ export const confirmRestoreAutoSave = async () => {
   });
 };
 
+export const showValidationToast = (message: string) => {
+  const isDark = document.documentElement.classList.contains('dark');
+  Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+    background: isDark ? '#27272a' : '#ffffff',
+    color: isDark ? '#f4f4f5' : '#18181b',
+  }).fire({
+    icon: 'warning',
+    title: message,
+  });
+};
+
 export const selectLifeLineHeaderIcon = async (
   currentIcon: LifeLineHeaderIcon = 'rectangle'
 ) => {
@@ -419,21 +435,6 @@ export const selectLifeLineHeaderIcon = async (
       id: 'user',
       label: 'Actor',
       svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="6.5" r="2.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m0 0-3.5 4M12 15l3.5 4m-8-7h9" /></svg>',
-    },
-    {
-      id: 'database',
-      label: 'Base de datos',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="5.5" rx="7" ry="2.5" /><path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" /><path d="M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" /></svg>',
-    },
-    {
-      id: 'server',
-      label: 'Servidor',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="6" rx="1.5" /><rect x="4" y="14" width="16" height="6" rx="1.5" /><circle cx="8" cy="7" r="0.9" fill="currentColor" /><circle cx="8" cy="17" r="0.9" fill="currentColor" /></svg>',
-    },
-    {
-      id: 'circle',
-      label: 'Círculo',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7" /></svg>',
     },
   ];
 
