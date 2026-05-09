@@ -226,6 +226,15 @@ export default function LifeLine({ data }: DataProps) {
         event.stopPropagation();
 
         const selectedIcon = await selectLifeLineHeaderIcon(headerIcon);
+        
+        if (selectedIcon === 'DELETE') {
+            if (nodeId) {
+                setNodes(prev => prev.filter(n => n.id !== nodeId));
+                setEdges(prev => prev.filter(e => e.source !== nodeId && e.target !== nodeId));
+            }
+            return;
+        }
+
         if (selectedIcon) {
             isSyncingFromData.current = true;
             setHeaderIcon(selectedIcon);
@@ -234,7 +243,7 @@ export default function LifeLine({ data }: DataProps) {
                 isSyncingFromData.current = false;
             }, 0);
         }
-    }, [headerIcon]);
+    }, [headerIcon, nodeId, setNodes, setEdges]);
 
     // Callback para cuando se selecciona el evento de destrucción
     const handleDestroyEvent = useCallback((action: 'destroy' | 'default') => {

@@ -473,9 +473,16 @@ export const selectLifeLineHeaderIcon = async (
       </div>
     `,
     showCancelButton: true,
+    showDenyButton: true,
     confirmButtonText: 'Aplicar',
     cancelButtonText: 'Cancelar',
+    denyButtonText: 'Eliminar línea de vida',
     focusConfirm: false,
+    customClass: {
+      ...getSwalTheme().customClass,
+      denyButton: 'bg-transparent border border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 font-semibold px-4 py-2 rounded-full transition cursor-pointer',
+      actions: 'flex-wrap gap-2 justify-center'
+    },
     didOpen: () => {
       const container = Swal.getHtmlContainer();
       if (!container) return;
@@ -501,5 +508,6 @@ export const selectLifeLineHeaderIcon = async (
     preConfirm: () => selectedIcon,
   });
 
+  if (result.isDenied) return 'DELETE';
   return result.isConfirmed ? (result.value as LifeLineHeaderIcon) : null;
 };

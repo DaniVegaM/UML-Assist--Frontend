@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 docs
+LibroUML.md
 
 # Variables de entorno
 .env
