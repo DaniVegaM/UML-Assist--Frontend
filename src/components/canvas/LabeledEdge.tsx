@@ -191,8 +191,8 @@ export function LabeledEdge({
                                 dark:bg-gray-800
                                 dark:text-gray-200
                                 focus:outline-none
-                                focus:ring-1 
-                                focus:ring-sky-500 
+                                focus:ring-1
+                                focus:ring-sky-500
                                 focus:border-sky-500
                             "
                             />
