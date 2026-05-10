@@ -6,12 +6,12 @@ import type { Node } from "@xyflow/react";
 import { createPrefixedNodeId, type NodeTypeIdKey } from "../../utils/idGenerator";
 
 
-export function DraggableNode({ className, children, nodeType, setExtendedBar, title, onMouseEnter, onMouseLeave, saveToHistory }: DraggableNodeProps) {
+export function DraggableNode({ className, children, nodeType, setExtendedBar, title, onMouseEnter, onMouseLeave}: DraggableNodeProps) {
     const draggableRef = useRef<HTMLDivElement>(null);
     const [position, setPosition] = useState<XYPosition>({ x: 0, y: 0 });
     const [isDragging, setIsDragging] = useState(false);
     const [startRect, setStartRect] = useState({ top: 0, left: 0, width: 0, height: 0 });
-    const { getNodes, getEdges, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
+    const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
 
    const getId = () => createPrefixedNodeId(nodeType as NodeTypeIdKey);
 
@@ -32,7 +32,6 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
             });
         },
         onDragEnd: async ({ event }) => {
-            console.log("🔥 DRAG END");
             setIsDragging(false);
             setExtendedBar?.(false);
             setPosition({ x: 0, y: 0 });
@@ -59,7 +58,6 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
             //Si sí está dentro entonces se agrega el nodo
             if (isInFlow && isOutsideBar) {
                 const flowPosition = screenToFlowPosition(screenPosition);
-                console.log("✅ DROPPED EN FLOW");
                 // Define el tipo de edge según el tipo de nodo
                 let incomingEdge = 'smoothstep'; // tipo por defecto
                 let outgoingEdge = 'smoothstep'; // tipo por defecto
@@ -112,18 +110,6 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
                         };
                         nodesToAdd.push(acceptEventNode);
                     }
-                    const newNodes = nds.concat(nodesToAdd);
-                    console.log("📦 BEFORE:", nds.length);
-                    console.log("📦 AFTER:", newNodes.length);
-                    if (saveToHistory) {
-                        console.log("💾 GUARDANDO HISTORIAL");
-                        saveToHistory(newNodes, getEdges());
-                    } else {
-                        console.log("❌ saveToHistory UNDEFINED");
-                    }
-
-
-                    
                     return nds.concat(nodesToAdd);
                 });
 

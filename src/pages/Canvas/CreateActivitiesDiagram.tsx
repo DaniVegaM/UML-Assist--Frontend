@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ControlButton, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
+import { addEdge, Background, useUpdateNodeInternals, Controls, ControlButton, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -41,8 +41,9 @@ function DiagramContent() {
         present: { nodes: [], edges: [] },
         future: [],
     });
-    const MAX_HISTORY = 20;
+    const MAX_HISTORY = 10;
     const saveToHistory = (newNodes: Node[], newEdges: Edge[]) => {
+        if (isUndoRedoRef.current) return;
         setHistory((h) => {
             const isSame =
                 JSON.stringify(h.present.nodes) === JSON.stringify(newNodes) &&
@@ -59,7 +60,7 @@ function DiagramContent() {
             };
         });
     };
-    const prevNodesRef = useRef<Node[]>([]);
+
 
     const isValidActivityConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -167,14 +168,27 @@ function DiagramContent() {
         [],
     );
 
-    const undo = () => {
+    const isUndoRedoRef = useRef(false);
+    const updateNodeInternals = useUpdateNodeInternals();
+
+    const undo = useCallback(() => {
+        isUndoRedoRef.current = true;
         setHistory((h) => {
-            if (h.past.length === 0) return h;
+            if (h.past.length === 0) {
+                isUndoRedoRef.current = false;
+                return h;
+            }
 
             const previous = h.past[h.past.length - 1];
 
             setNodes([...previous.nodes]);
             setEdges([...previous.edges]);
+            setTimeout(() => {
+                previous.nodes.forEach(node => {
+                    updateNodeInternals(node.id);
+                });
+                isUndoRedoRef.current = false;
+            }, 0);
 
             return {
                 past: h.past.slice(0, -1),
@@ -182,22 +196,59 @@ function DiagramContent() {
                 future: [h.present, ...h.future],
             };
         });
-    };
+        setTimeout(() => {
+            isUndoRedoRef.current = false;
+        }, 0);
+    }, [updateNodeInternals]);
 
-    const redo = () => {
+
+    const redo = useCallback(() => {
+        isUndoRedoRef.current = true;
         setHistory((h) => {
-            if (h.future.length === 0) return h;
+            if (h.future.length === 0) {
+                isUndoRedoRef.current = false;
+                return h;
+            }
 
             const next = h.future[0];
             setNodes([...next.nodes]);
             setEdges([...next.edges]);
+            setTimeout(() => {
+                next.nodes.forEach(node => {
+                    updateNodeInternals(node.id);
+                });
+                isUndoRedoRef.current = false;
+            }, 0);
+
             return {
                 past: [...h.past, h.present],
                 present: next,
                 future: h.future.slice(1),
             };
         });
-    };
+
+        setTimeout(() => {
+            isUndoRedoRef.current = false;
+        }, 0);
+    }, [updateNodeInternals]);
+
+        useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.ctrlKey && e.key.toLowerCase() === 'z') {
+                e.preventDefault();
+                undo();
+            }
+
+            if (e.ctrlKey && e.key.toLowerCase() === 'y') {
+                e.preventDefault();
+                redo();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [undo, redo]);
 
      const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node);
@@ -273,16 +324,15 @@ function DiagramContent() {
                 data: edgeType === "noteEdge" ? { isNoteEdge: true } : undefined,
             };
 
-            setEdges((edgesSnapshot) => {
-                const newEdges = addEdge(newEdge, edgesSnapshot);
-                saveToHistory([...nodes], newEdges);
-                // console.log('Conexiones actuales:', newEdges);
-                return newEdges;
-            });
-            
-        },
-        [nodes, setEdges],
-    );
+        setEdges((edgesSnapshot) => {
+            const newEdges = addEdge(newEdge, edgesSnapshot);
+            saveToHistory([...nodes], newEdges);
+            return newEdges;
+        });
+
+    },
+    [nodes, setEdges],
+);
 
    useEffect(() => {
         setEdges((currentEdges) =>
@@ -314,7 +364,7 @@ function DiagramContent() {
             }))
         );
     }, [isDarkMode]);
-    
+  
     const handleConnectEnd = useCallback(() => {
         setIsTryingToConnect(false);
 
