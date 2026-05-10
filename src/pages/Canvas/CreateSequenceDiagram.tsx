@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges, SelectionMode } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -21,6 +21,7 @@ import AIChatBar from "../../components/canvas/AIChatBar";
 import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
+import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -32,6 +33,9 @@ function DiagramContent() {
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { validateSequenceConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    const restoredFromDraftRef = useRef(false);
+    const nodesRef = useRef(nodes);
 
     const isValidSequenceConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -51,22 +55,62 @@ function DiagramContent() {
     );
 
     useEffect(() => {
+        if (!diagramId) return;
+        const controller = new AbortController();
         const loadDiagram = async () => {
-            if (diagramId) {
+            try {
                 const response = await fetchDiagramById(diagramId);
-                const data = response.data;
-                setDiagram(data);
+                if (!controller.signal.aborted) {
+                    setDiagram(response.data);
+                }
+            } catch {
+                // ignorar errores de abort
             }
         };
         loadDiagram();
+        return () => controller.abort();
     }, [diagramId]);
 
     useEffect(() => {
+        const restoreDraft = async () => {
+            const autoSaveKey = diagramId
+                ? `autosave-secuencia-${diagramId}`
+                : `autosave-secuencia-new`;
+
+            const savedDraft = localStorage.getItem(autoSaveKey);
+            if (!savedDraft) return;
+
+            const result = await confirmRestoreAutoSave();
+
+            if (!result.isConfirmed) {
+                localStorage.removeItem(autoSaveKey);
+                return;
+            }
+
+            try {
+                const draft = JSON.parse(savedDraft);
+
+                setNodes(draft.content?.canvas?.nodes || []);
+                setEdges(draft.content?.canvas?.edges || []);
+
+                restoredFromDraftRef.current = true;
+                console.log('Autoguardado recuperado');
+            } catch {
+                console.error('No se pudo recuperar el autoguardado');
+            }
+        };
+
+        restoreDraft();
+    }, [diagramId, setNodes, setEdges]);
+
+    useEffect(() => {
+
+        if (restoredFromDraftRef.current) return;
         if (diagram?.content) {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
+    }, [diagram, setNodes, setEdges]);
 
     const onNodesChange = useCallback(
         (changes: NodeChange[]) => {
@@ -116,10 +160,14 @@ function DiagramContent() {
         [setEdges],
     );
 
+    useEffect(() => {
+        nodesRef.current = nodes;
+    }, [nodes]);
+
     const onConnect = useCallback(
-        (params: Connection) => {          
-            const sourceNode = nodes.find(n => n.id === params.source);
-            const targetNode = nodes.find(n => n.id === params.target);
+        (params: Connection) => {
+            const sourceNode = nodesRef.current.find(n => n.id === params.source);
+            const targetNode = nodesRef.current.find(n => n.id === params.target);
 
             const isSelfMessage = params.source === params.target;
 
@@ -174,7 +222,7 @@ function DiagramContent() {
             
 
         },
-        [setEdges, isDarkMode, nodes],
+        [setEdges, isDarkMode],
     );
 
     useEffect(() => {
@@ -263,6 +311,10 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    selectionOnDrag={true}
+                    selectionMode={SelectionMode.Partial}
+                    multiSelectionKeyCode={["Shift"]}
+                    nodesDraggable={true}
                     nodeTypes={sequenceNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     isValidConnection={isValidSequenceConnectionWithFeedback}

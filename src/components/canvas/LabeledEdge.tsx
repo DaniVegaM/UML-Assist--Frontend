@@ -36,6 +36,7 @@ export function LabeledEdge({
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
     const [showSuggestion, setShowSuggestion] = useState(false);
+    const [openTime, setOpenTime] = useState(0);
 
     const clearSuggestion = () => {
         setEdges((eds) =>
@@ -73,6 +74,30 @@ export function LabeledEdge({
         borderRadius: 5,
     });
 
+    // Smart repositioning heuristic to avoid edge overlapping
+    let isMidpointVertical = false;
+
+    const isSourceHorizontal = sourcePosition === 'left' || sourcePosition === 'right';
+    const isTargetHorizontal = targetPosition === 'left' || targetPosition === 'right';
+
+    if (!isSourceHorizontal && !isTargetHorizontal) {
+        // Top/Bottom to Top/Bottom: main middle segment is horizontal, unless X distance is very small
+        isMidpointVertical = Math.abs(finalTargetX - sourceX) < 40;
+    } else if (isSourceHorizontal && isTargetHorizontal) {
+        // Left/Right to Left/Right: main middle segment is vertical, unless Y distance is very small
+        isMidpointVertical = Math.abs(finalTargetY - sourceY) >= 40;
+    } else {
+        // Mixed: midpoint usually falls on the longer segment
+        isMidpointVertical = Math.abs(finalTargetY - sourceY) > Math.abs(finalTargetX - sourceX);
+    }
+
+    // En lugar de usar offsets grandes con -50% -50%, usamos anclaje dinámico:
+    // - Si es vertical, anclamos el lado izquierdo del texto a la derecha de la flecha (translate(0%, -50%)) con 12px de margen.
+    // - Si es horizontal, anclamos la parte inferior del texto arriba de la flecha (translate(-50%, -100%)) con 12px de margen.
+    const transformOrigin = isMidpointVertical ? 'translate(0%, -50%)' : 'translate(-50%, -100%)';
+    const finalLabelX = isMidpointVertical ? labelX + 12 : labelX;
+    const finalLabelY = isMidpointVertical ? labelY : labelY - 12;
+
     const onSave = () => {
         setIsEditing(false);
         const trimmedLabel = editingLabel.trim();
@@ -96,10 +121,19 @@ export function LabeledEdge({
         );
     };
 
-    const onDoubleClick = () => {
+    const handleBlur = () => {
+        // Prevent accidental closes right after opening (e.g. from frantic clicking)
+        if (Date.now() - openTime < 300) return;
+        onSave();
+    };
+
+    const onDoubleClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        e.preventDefault();
         const currentText = String(label || '').replace(/^\[|\]$/g, '');
         setEditingLabel(currentText);
         setIsEditing(true);
+        setOpenTime(Date.now());
     };
 
     const onKeyDown = (evt: React.KeyboardEvent<HTMLInputElement>) => {
@@ -121,17 +155,19 @@ export function LabeledEdge({
                 d={edgePath}
                 fill="none"
                 stroke="transparent"
-                strokeWidth={2}
+                strokeWidth={25}
                 onDoubleClick={onDoubleClick}
                 cursor="pointer"
+                className="react-flow__edge-interaction"
             />
 
             <EdgeLabelRenderer>
                 <div
                     style={{
                         position: 'absolute',
-                        transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+                        transform: `${transformOrigin} translate(${finalLabelX}px,${finalLabelY}px)`,
                         pointerEvents: isEditing ? 'all' : 'none',
+                        userSelect: 'none',
                     }}
                     className="nodrag nopan"
                 >
@@ -142,7 +178,7 @@ export function LabeledEdge({
                                 value={editingLabel}
                                 onChange={onLabelChange}
                                 maxLength={30}
-                                onBlur={onSave}
+                                onBlur={handleBlur}
                                 onKeyDown={onKeyDown}
                                 className="
                                 py-0.5 px-1
@@ -155,8 +191,8 @@ export function LabeledEdge({
                                 dark:bg-gray-800
                                 dark:text-gray-200
                                 focus:outline-none
-                                focus:ring-1 
-                                focus:ring-sky-500 
+                                focus:ring-1
+                                focus:ring-sky-500
                                 focus:border-sky-500
                             "
                             />
@@ -186,7 +222,8 @@ export function LabeledEdge({
                     <div
                         style={{
                             position: 'absolute',
-                            transform: `translate(-50%, -50%) translate(${labelX + 20}px, ${labelY - 20}px)`,
+                            // The suggestion button always sits nicely to the side of the label
+                            transform: `translate(-50%, -50%) translate(${finalLabelX + (isMidpointVertical ? 40 : 25)}px, ${finalLabelY - 15}px)`,
                             pointerEvents: 'all',
                         }}
                         className="nodrag nopan"

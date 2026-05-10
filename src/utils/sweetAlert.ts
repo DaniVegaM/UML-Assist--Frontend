@@ -1,6 +1,6 @@
 import Swal from 'sweetalert2';
 
-export type LifeLineHeaderIcon = 'rectangle' | 'user' | 'database' | 'server' | 'circle';
+export type LifeLineHeaderIcon = 'rectangle' | 'user' | 'database' | 'server' | 'circle'; // database/server/circle kept for backwards compat with saved diagrams
 
 //Tema dinámico 
 const getSwalTheme = () => {
@@ -171,6 +171,74 @@ export const selectDiagramTypeAlert = async () => {
   });
 };
 
+export const selectExportFormatAlert = async () => {
+  const theme = getSwalTheme();
+  document.body.classList.add('no-blur');
+
+  return Swal.fire({
+    ...theme,
+    title: 'Exportar diagrama',
+
+    html: `
+      <div class="flex flex-col items-center text-center">
+        <div class="w-16 h-16 flex items-center justify-center rounded-full bg-sky-100 dark:bg-sky-900 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+            class="w-8 h-8 text-sky-600 dark:text-sky-400">
+            <path d="M10.75 2.75a.75.75 0 0 0-1.5 0v8.614L6.295 8.235a.75.75 0 1 0-1.09 1.03l4.25 4.5a.75.75 0 0 0 1.09 0l4.25-4.5a.75.75 0 0 0-1.09-1.03l-2.955 3.129V2.75Z" />
+            <path d="M3.5 12.75a.75.75 0 0 0-1.5 0v2.5A2.75 2.75 0 0 0 4.75 18h10.5A2.75 2.75 0 0 0 18 15.25v-2.5a.75.75 0 0 0-1.5 0v2.5c0 .69-.56 1.25-1.25 1.25H4.75c-.69 0-1.25-.56-1.25-1.25v-2.5Z" />
+          </svg>
+        </div>
+        <h2 class="text-xl font-bold mb-2">
+          ¿En qué formato quieres exportar?
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-2 gap-6 mt-6">
+        <div id="png-option"
+          class="cursor-pointer p-6 rounded-2xl border-2 border-sky-200 dark:border-sky-700 
+          hover:border-sky-400 transition-all hover:scale-105">
+          <h3 class="font-bold text-lg text-center">PNG</h3>
+          <p class="text-sm text-zinc-500 text-center">
+            Imagen del diagrama
+          </p>
+        </div>
+        <div id="pdf-option"
+          class="cursor-pointer p-6 rounded-2xl border-2 border-red-200 dark:border-red-700 
+          hover:border-red-400 transition-all hover:scale-105">
+          <h3 class="font-bold text-lg text-center">PDF</h3>
+          <p class="text-sm text-zinc-500 text-center">
+            Documento listo para compartir
+          </p>
+        </div>
+      </div>
+    `,
+
+    showConfirmButton: false,
+    showCancelButton: true,
+    cancelButtonText: 'Cancelar',
+
+    didOpen: () => {
+      const png = document.getElementById('png-option');
+      const pdf = document.getElementById('pdf-option');
+
+      png?.addEventListener('click', () => {
+        Swal.close();
+        window.dispatchEvent(new CustomEvent('export:selected', { detail: 'png' }));
+      });
+
+      pdf?.addEventListener('click', () => {
+        Swal.close();
+        window.dispatchEvent(new CustomEvent('export:selected', { detail: 'pdf' }));
+      });
+    },
+
+    willClose: () => {
+      document.body.classList.remove('no-blur');
+    }
+  });
+};
 
 export const renameDiagramAlert = async (currentName: string) => {
   const theme = getSwalTheme();
@@ -295,8 +363,60 @@ export const confirmExitWithoutSaving = async () => {
     customClass: {
       ...getSwalTheme().customClass,
       confirmButton:
-        'bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-full transition',
+        'bg-red-500 hover:bg-red-600 text-white font-semibold px-5 py-2 rounded-full transition cursor-pointer',
     },
+  });
+};
+
+export const confirmExitUnsaved = async () => {
+  return Swal.fire({
+    ...getSwalTheme(),
+    title: 'Cambios sin guardar',
+    text: 'El diagrama tiene cambios que aún no se han guardado en el servidor.',
+    icon: 'warning',
+    iconColor: '#f59e0b',
+    showCancelButton: true,
+    showDenyButton: true,
+    confirmButtonText: 'Guardar y salir',
+    denyButtonText: 'Salir de todas formas',
+    cancelButtonText: 'Cancelar',
+    reverseButtons: true,
+    customClass: {
+      ...getSwalTheme().customClass,
+      confirmButton:
+        'bg-sky-600 hover:bg-sky-700 text-white font-semibold px-5 py-2 rounded-full transition cursor-pointer',
+      denyButton:
+        'bg-transparent border border-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 dark:text-red-400 font-semibold px-5 py-2 rounded-full transition cursor-pointer',
+    },
+  });
+};
+
+export const confirmRestoreAutoSave = async () => {
+  return Swal.fire({
+    ...getSwalTheme(),
+    title: 'Autoguardado encontrado',
+    text: 'Se encontró una versión guardada localmente. ¿Deseas recuperarla?',
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Sí, recuperar',
+    cancelButtonText: 'No recuperar',
+    reverseButtons: true,
+  });
+};
+
+export const showValidationToast = (message: string) => {
+  const isDark = document.documentElement.classList.contains('dark');
+  Swal.mixin({
+    toast: true,
+    position: 'top-end',
+    showConfirmButton: false,
+    timer: 3500,
+    timerProgressBar: true,
+    background: isDark ? '#27272a' : '#ffffff',
+    color: isDark ? '#f4f4f5' : '#18181b',
+  }).fire({
+    icon: 'warning',
+    title: message,
   });
 };
 
@@ -315,21 +435,6 @@ export const selectLifeLineHeaderIcon = async (
       id: 'user',
       label: 'Actor',
       svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="6.5" r="2.5" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m0 0-3.5 4M12 15l3.5 4m-8-7h9" /></svg>',
-    },
-    {
-      id: 'database',
-      label: 'Base de datos',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><ellipse cx="12" cy="5.5" rx="7" ry="2.5" /><path d="M5 5.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" /><path d="M5 11.5v6c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-6" /></svg>',
-    },
-    {
-      id: 'server',
-      label: 'Servidor',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="6" rx="1.5" /><rect x="4" y="14" width="16" height="6" rx="1.5" /><circle cx="8" cy="7" r="0.9" fill="currentColor" /><circle cx="8" cy="17" r="0.9" fill="currentColor" /></svg>',
-    },
-    {
-      id: 'circle',
-      label: 'Círculo',
-      svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="7" /></svg>',
     },
   ];
 
@@ -368,9 +473,16 @@ export const selectLifeLineHeaderIcon = async (
       </div>
     `,
     showCancelButton: true,
+    showDenyButton: true,
     confirmButtonText: 'Aplicar',
     cancelButtonText: 'Cancelar',
+    denyButtonText: 'Eliminar línea de vida',
     focusConfirm: false,
+    customClass: {
+      ...getSwalTheme().customClass,
+      denyButton: 'bg-transparent border border-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 text-red-500 font-semibold px-4 py-2 rounded-full transition cursor-pointer',
+      actions: 'flex-wrap gap-2 justify-center'
+    },
     didOpen: () => {
       const container = Swal.getHtmlContainer();
       if (!container) return;
@@ -396,5 +508,6 @@ export const selectLifeLineHeaderIcon = async (
     preConfirm: () => selectedIcon,
   });
 
+  if (result.isDenied) return 'DELETE';
   return result.isConfirmed ? (result.value as LifeLineHeaderIcon) : null;
 };

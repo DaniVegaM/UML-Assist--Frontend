@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useViewport, useNodeId } from "@xyflow/react";
+import { useViewport, useNodeId, useReactFlow } from "@xyflow/react";
 
 interface SuggestionTooltipProps {
   isVisible: boolean;
@@ -22,22 +22,31 @@ export default function NodeSuggestionTooltip({
 
   const { zoom } = useViewport();
   const nodeId = useNodeId();
+  const { getNodes } = useReactFlow();
 
   useEffect(() => {
     if (!isVisible || !nodeId) return;
 
-    const reactFlowNodeWrapper = document.querySelector(`[data-id="${nodeId}"]`) as HTMLElement;
-    if (reactFlowNodeWrapper) {
-      reactFlowNodeWrapper.style.setProperty('z-index', '10000', 'important');
+    const nodes = getNodes();
+
+    const childNodeIds = nodes
+      .filter((node) => node.parentId === nodeId)
+      .map((node) => node.id);
+
+    const currentNodeWrapper = document.querySelector(
+      `[data-id="${nodeId}"]`
+    ) as HTMLElement;
+
+    if (currentNodeWrapper && childNodeIds.length === 0) {
+      currentNodeWrapper.style.setProperty("z-index", "10000", "important");
     }
 
     return () => {
-      const currentFlowNode = document.querySelector(`[data-id="${nodeId}"]`) as HTMLElement;
-      if (currentFlowNode) {
-        currentFlowNode.style.removeProperty('z-index');
+      if (currentNodeWrapper) {
+        currentNodeWrapper.style.removeProperty("z-index");
       }
-    };
-  }, [isVisible, nodeId]);
+    };   
+  }, [isVisible, nodeId, getNodes]);
 
   useEffect(() => {
     if (!isDragging) return;

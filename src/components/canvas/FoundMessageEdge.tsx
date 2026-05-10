@@ -7,6 +7,8 @@ import {
 } from '@xyflow/react';
 import EdgeSuggestionTooltip from './EdgeSuggestionTooltip';
 import type { EdgeDataProps } from '../../types/canvas';
+import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
+import DeleteIcon from './shared/DeleteIcon';
 
 // Extend the original EdgeProps to properly type our custom data
 export type FoundMessageEdgeProps = Omit<ReactFlowEdgeProps, 'data'> & {
@@ -26,6 +28,7 @@ export function FoundMessageEdge({
     const [isEditing, setIsEditing] = useState(false);
     const [editingLabel, setEditingLabel] = useState('');
     const [showSuggestion, setShowSuggestion] = useState(false);
+    const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
 
     const clearSuggestion = () => {
         setEdges((eds) =>
@@ -64,10 +67,21 @@ export function FoundMessageEdge({
         );
     };
 
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setContextMenuEvent(e.nativeEvent);
+    };
+
     const onDoubleClick = () => {
         const currentText = String(label || '');
         setEditingLabel(currentText);
         setIsEditing(true);
+    };
+
+    const handleDelete = () => {
+        setEdges(eds => eds.filter(e => e.id !== id));
+        setContextMenuEvent(null);
     };
 
     return (
@@ -91,6 +105,7 @@ export function FoundMessageEdge({
                 stroke="transparent"
                 strokeWidth={20}
                 onDoubleClick={onDoubleClick}
+                onContextMenu={handleContextMenu}
                 cursor="pointer"
             />
             <EdgeLabelRenderer>
@@ -161,6 +176,22 @@ export function FoundMessageEdge({
                 onMinimize={() => setShowSuggestion(false)}
                 onDiscard={clearSuggestion}
             />
+
+            {contextMenuEvent && (
+                <ContextMenuPortal event={contextMenuEvent} onClose={() => setContextMenuEvent(null)}>
+                    <div className="bg-white dark:bg-neutral-800 rounded-lg shadow-xl border border-sky-600 dark:border-neutral-700 min-w-[180px] overflow-hidden">
+                        <div
+                            onClick={handleDelete}
+                            className="flex items-center gap-3 px-4 py-2 hover:bg-red-100 dark:hover:bg-red-700 cursor-pointer text-sm dark:text-white"
+                        >
+                            <div className="w-6 h-6 flex items-center justify-center">
+                                <DeleteIcon className="w-full h-full" />
+                            </div>
+                            <p>Eliminar</p>
+                        </div>
+                    </div>
+                </ContextMenuPortal>
+            )}
         </>
     );
 }

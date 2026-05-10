@@ -88,7 +88,7 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
         const midWidth = nodeWidth / 2;
         const midHeight = nodeHeight / 2;
 
-        const paddingMagnet = 0.065 * nodeWidth; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo  
+        const paddingMagnet = 0.065 * nodeWidth; // Pixeles del campo magnetico alrededor de los centros de cada lado del nodo
 
 
         // Distancias a los bordes del nodo para saber cuál es el más cercano

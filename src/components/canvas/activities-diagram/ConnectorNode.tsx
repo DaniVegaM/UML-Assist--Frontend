@@ -29,9 +29,9 @@ export default function ConnectorNode({ data }: DataProps) {
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
-  const { handles, magneticHandle } = useHandle({ 
-    handleRef, 
-    nodeRef, 
+  const { handles, magneticHandle } = useHandle({
+    handleRef,
+    nodeRef,
     maxHandles: 1,
     initialHandles: data?.handles as HandleData[] | undefined
   });
@@ -101,11 +101,7 @@ export default function ConnectorNode({ data }: DataProps) {
       onMouseEnter={() => setShowHandles(true)}
       onMouseLeave={() => setShowHandles(false)}
       className="bg-transparent p-4"
-      onMouseMove={(evt) => {
-                if (isTryingToConnect) {
-                    magneticHandle(evt);
-                }
-            }}
+      onMouseMove={(evt) => magneticHandle(evt)}
     >
       {data.suggestion && (
         <>

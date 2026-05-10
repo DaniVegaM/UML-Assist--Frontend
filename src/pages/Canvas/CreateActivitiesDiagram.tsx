@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges, SelectionMode } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -20,6 +20,7 @@ import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
+import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -29,9 +30,10 @@ function DiagramContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
-    const { isValidActivityConnection } = useLocalValidations(nodes, edges);
-    const { validateActivityConnection } = useLocalValidations(nodes, edges);
+    const { isValidActivityConnection, validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    const restoredFromDraftRef = useRef(false);
 
     const isValidActivityConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -67,33 +69,64 @@ function DiagramContent() {
         [openEdgeContextMenu],
     );
 
-        useEffect(() => {
+    useEffect(() => {
+        if (!diagramId) return;
+        const controller = new AbortController();
         const loadDiagram = async () => {
-            if (diagramId) {
+            try {
                 const response = await fetchDiagramById(diagramId);
-                const data = response.data;
-                setDiagram(data);
+                if (!controller.signal.aborted) {
+                    setDiagram(response.data);
+                }
+            } catch {
+                // ignorar errores de abort
             }
         };
         loadDiagram();
+        return () => controller.abort();
     }, [diagramId]);
 
     useEffect(() => {
+        const restoreDraft = async () => {
+            const autoSaveKey = diagramId
+                ? `autosave-actividades-${diagramId}`
+                : `autosave-actividades-new`;
+
+            const savedDraft = localStorage.getItem(autoSaveKey);
+            if (!savedDraft) return;
+
+            const result = await confirmRestoreAutoSave();
+
+            if (!result.isConfirmed) {
+                localStorage.removeItem(autoSaveKey);
+                return;
+            }
+
+            try {
+                const draft = JSON.parse(savedDraft);
+
+                setNodes(draft.content?.canvas?.nodes || []);
+                setEdges(draft.content?.canvas?.edges || []);
+
+                restoredFromDraftRef.current = true;
+                console.log('Autoguardado recuperado');
+            } catch {
+                console.error('No se pudo recuperar el autoguardado');
+            }
+        };
+
+        restoreDraft();
+    }, [diagramId, setNodes, setEdges]);
+
+    useEffect(() => {
+
+        if (restoredFromDraftRef.current) return;
+
         if (diagram?.content) {
             setNodes(diagram.content.canvas.nodes);
             setEdges(diagram.content.canvas.edges || []);
         }
-    }, [diagram]);
-
-    useEffect(() => {
-        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-            e.preventDefault();
-        };
-        window.addEventListener('beforeunload', handleBeforeUnload);
-        return () => {
-            window.removeEventListener('beforeunload', handleBeforeUnload);
-        };
-    }, []);
+    }, [diagram, setNodes, setEdges]);
 
     useEffect(() => {
         window.history.pushState(null, '', window.location.href);
@@ -133,20 +166,21 @@ function DiagramContent() {
         const intersections = getIntersectingNodes(node);
         const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
 
-        if (node.type !== 'activity' && parentNode) {
-            // Solo asignar parentId si no lo tenía ya (evitar recalcular en cada drag)
-            if (node.parentId !== parentNode.id) {
-                node.parentId = parentNode.id;
-                node.extent = 'parent';
-                // Convertir posición absoluta a relativa al padre
-                node.position = {
+        if (node.type !== 'activity' && parentNode && node.parentId !== parentNode.id) {
+            const updatedNode: Node = {
+                ...node,
+                parentId: parentNode.id,
+                extent: 'parent',
+                position: {
                     x: node.position.x - parentNode.position.x,
                     y: node.position.y - parentNode.position.y,
-                };
-            }
+                },
+            };
+            setNodes(nodes => nodes.map(n => n.id === updatedNode.id ? updatedNode : n));
+            return;
         }
         setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
-    }, []);
+    }, [getIntersectingNodes, setNodes]);
 
 
     const onConnect = useCallback(
@@ -301,6 +335,10 @@ function DiagramContent() {
                     onNodeDrag={onNodeDrag}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
+                    selectionOnDrag={true}
+                    selectionMode={SelectionMode.Partial}
+                    multiSelectionKeyCode={["Shift"]}
+                    nodesDraggable={true}
                     onConnect={onConnect}
                     onConnectEnd={handleConnectEnd}
                     onConnectStart={() => setIsTryingToConnect(true)}

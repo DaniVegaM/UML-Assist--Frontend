@@ -14,6 +14,8 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
   const [draggingIndex, setDraggingIndex] = useState<number | null>(null);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
+  const HEADER_HEIGHT = 25;
+  const PADDING = 20;
   const { setIsZoomOnScrollEnabled } = useCanvas();
   const { getZoom, getNodesBounds, getInternalNode } = useReactFlow();
   const { nodes: allNodes, edges, setNodes, setEdges } = useSequenceDiagram();
@@ -43,7 +45,6 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
     lastFragmentBoundsRef.current = currentBounds;
     initialCalcDone.current = true;
     const fragLeft = fragmentBounds.x, fragRight = fragmentBounds.x + fragmentBounds.width, fragTop = fragmentBounds.y, fragBottom = fragmentBounds.y + fragmentBounds.height;
-    const HEADER_HEIGHT = 25;
     const containerTop = fragmentBounds.y + HEADER_HEIGHT;
     const absSeparatorYs = separatorPositions.map(pos => containerTop + pos).sort((a, b) => a - b);
     const insideEdgeIds: string[] = [];
@@ -107,14 +108,21 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
 
   // Handler para agregar separador
   const addSeparator = useCallback(() => {
-    setSeparators(prev => [...prev, prev.length + 1]);
-    setSeparatorPositions(prev => {
-      const containerHeight = containerRef.current?.clientHeight || 0;
-      const newPosition = containerHeight / (prev.length + 2) * (prev.length + 1);
-      return [...prev, newPosition];
+    if (!nodeId) return;
+
+    const fragmentBounds = getNodesBounds([nodeId]);
+    const containerHeight = Math.max((fragmentBounds?.height ?? 150) - HEADER_HEIGHT, 1);
+    const newCount = separators.length + 1;
+    const usableHeight = Math.max(containerHeight - PADDING * 2, 1);
+
+    const newPositions = Array.from({ length: newCount }, (_, i) => {
+      return PADDING + (usableHeight / (newCount + 1)) * (i + 1);
     });
+
+    setSeparators(Array.from({ length: newCount }, (_, i) => i + 1));
+    setSeparatorPositions(newPositions);
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [nodeId, separators.length, getNodesBounds, closeContextMenu, HEADER_HEIGHT, PADDING]);
 
   // Handler para eliminar separador
   const removeSeparator = useCallback(() => {
@@ -152,22 +160,24 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
   }, [setIsZoomOnScrollEnabled]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-    if (draggingIndex !== null && containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
+    if (draggingIndex !== null && nodeId) {
+      const fragmentBounds = getNodesBounds([nodeId]);
+      const containerHeight = Math.max((fragmentBounds?.height ?? 150) - HEADER_HEIGHT, 1);
       const zoom = getZoom();
-      
-      const newY = (e.clientY - rect.top) / zoom;
-      const containerHeight = rect.height / zoom;
 
-      const clampedY = Math.max(10, Math.min(newY, containerHeight - 10));
+      const rootRect = containerRef.current?.getBoundingClientRect();
+      if (!rootRect) return;
+
+      const newY = (e.clientY - rootRect.top) / zoom;
+      const clampedY = Math.max(PADDING, Math.min(newY, containerHeight - PADDING));
 
       setSeparatorPositions(prev => {
-        const newPositions = [...prev];
-        newPositions[draggingIndex] = clampedY;
-        return newPositions;
+        const next = [...prev];
+        next[draggingIndex] = clampedY;
+        return next;
       });
     }
-  }, [draggingIndex, getZoom]);
+  }, [draggingIndex, nodeId, getNodesBounds, getZoom, HEADER_HEIGHT, PADDING]);
 
   const handleMouseUp = useCallback(() => {
     setDraggingIndex(null);
@@ -191,58 +201,56 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
     const container = containerRef.current;
     if (!container) return;
 
-    const padding = 40;
+    const resizeObserver = new ResizeObserver(() => {
+      if (!nodeId) return;
 
-    const resizeObserver = new ResizeObserver(entries => {
-      const entry = entries[0];
-      if (entry) {
-        const newHeight = entry.contentRect.height;
-        const prevHeight = previousHeightRef.current;
+      const fragmentBounds = getNodesBounds([nodeId]);
+      const containerHeight = Math.max((fragmentBounds?.height ?? 150) - HEADER_HEIGHT, 1);
 
-        if (prevHeight === null) {
-          previousHeightRef.current = newHeight;
-          return;
-        }
+      setSeparatorPositions(prevPositions => {
+        let hasChanged = false;
 
-        if (newHeight < prevHeight) {
-          setSeparatorPositions(prevPositions => {
-            let hasChanged = false;
+        const clampedPositions = prevPositions.map(pos => {
+          const newPos = Math.max(PADDING, Math.min(pos, containerHeight - PADDING));
+          if (newPos !== pos) hasChanged = true;
+          return newPos;
+        });
 
-            const clampedPositions = prevPositions.map(pos => {
-              const newPos = Math.max(padding, Math.min(pos, newHeight - padding));
-              if (newPos !== pos) {
-                hasChanged = true;
-              }
-              return newPos;
-            });
-
-            return hasChanged ? clampedPositions : prevPositions;
-          });
-        }
-
-        previousHeightRef.current = newHeight;
-      }
+        return hasChanged ? clampedPositions : prevPositions;
+      });
     });
 
     resizeObserver.observe(container);
 
     return () => {
-      resizeObserver.unobserve(container);
+      resizeObserver.disconnect();
     };
-  }, []);
+  }, [nodeId, getNodesBounds, HEADER_HEIGHT, PADDING]);
 
   return (
     <div
       className="border-2 border-gray-800 dark:border-neutral-200 bg-white/10 dark:bg-neutral-800/10 w-full h-full grid grid-cols-[auto_1fr] grid-rows-[auto_1fr] transition-all duration-150 relative"
-      style={{ minWidth: '350px', minHeight: '150px', zIndex: -1, pointerEvents: selected ? 'auto' : 'none' }}
-      onContextMenu={handleContextMenu}
+      style={{ minWidth: '350px', minHeight: '150px', zIndex: -1, pointerEvents: 'none'}}
     >
-      {/* Overlay para capturar clic derecho cuando el nodo no está seleccionado */}
-      <div 
-        className="absolute inset-0 z-0"
-        style={{ pointerEvents: 'auto' }}
-        onContextMenu={handleContextMenu}
-      />
+      {/* Bordes interactivos */}
+      <div className="absolute inset-0 z-20 pointer-events-none">
+        <div
+          className="fragment-drag-handle absolute inset-x-0 top-0 h-3 pointer-events-auto"
+          onContextMenu={handleContextMenu}
+        />
+        <div
+          className="fragment-drag-handle absolute inset-x-0 bottom-0 h-3 pointer-events-auto"
+          onContextMenu={handleContextMenu}
+        />
+        <div
+          className="fragment-drag-handle absolute inset-y-0 left-0 w-3 pointer-events-auto"
+          onContextMenu={handleContextMenu}
+        />
+        <div
+          className="fragment-drag-handle absolute inset-y-0 right-0 w-3 pointer-events-auto"
+          onContextMenu={handleContextMenu}
+        />
+      </div>
       {(data as any)?.suggestion && (
         <>
           <button
@@ -265,15 +273,19 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
           />
         </>
       )}
-      
-      <NodeResizer
-        minWidth={350}
-        minHeight={150}
-        color="#0084D1"
-        isVisible={selected}
-      />
+      <div className="absolute inset-0 z-30 pointer-events-none">
+        <div className="pointer-events-auto">
+          <NodeResizer
+            minWidth={350}
+            minHeight={150}
+            color="#0084D1"
+            isVisible={selected}
+          />
+        </div>
+      </div>
+
       <div
-        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10"
+        className="bg-gray-800 dark:bg-neutral-200 text-white dark:text-neutral-800 font-mono font-bold text-xs px-3 py-1 relative z-10 nodrag"
         style={{
           clipPath: 'polygon(100% 0, 100% 50%, 90% 100%, 0 100%, 0 0)',
           width: '50px',
@@ -284,15 +296,15 @@ const SeqFragmentNode = ({ selected, data }: NodeProps) => {
       </div>
 
       {/* Espacio vacío donde iría la guarda (seq no requiere guarda) */}
-      <div className="relative z-10" />
+      <div className="relative z-10 nodrag" />
 
-      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative z-10">
+      <div ref={containerRef} className="col-span-2 w-full h-full flex flex-col relative z-10 nodrag pointer-events-none">
 
         {/* Separadores */}
         {separators.map((_, index) => (
           <div
             key={index}
-            className="absolute w-full nodrag"
+            className="absolute w-full nodrag pointer-events-auto"
             style={{
               top: `${separatorPositions[index]}px`,
             }}

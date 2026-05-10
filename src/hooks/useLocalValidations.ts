@@ -357,6 +357,28 @@ const hasAnyHandleUsed = useCallback(
             };
         }
 
+        // ---------- ActivityNode ----------
+        //REGLA: el handle derecho de fuente solo puede ser source 
+        if (connection.targetHandle?.includes("_source")) {
+       
+            return {
+                ok: false,
+                severity: "info",
+                reason: "No se puede conectar a un punto de conexión fuente.",
+            };
+        }
+
+        if (connection.targetHandle?.includes("target_right")) {
+            
+            return {
+                ok: false,
+                severity: "info",
+                reason: "No se puede conectar a ese punto de conexión.",
+            };
+        }
+
+        
+
         return { ok: true };
         },
         [
