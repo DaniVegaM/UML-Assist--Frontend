@@ -34,7 +34,8 @@ function DiagramContent() {
     const { validateSequenceConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
 
-    const restoredFromDraftRef = useRef(false); 
+    const restoredFromDraftRef = useRef(false);
+    const nodesRef = useRef(nodes);
 
     const isValidSequenceConnectionWithFeedback = useCallback(
         (conn: Connection) => {
@@ -54,14 +55,20 @@ function DiagramContent() {
     );
 
     useEffect(() => {
+        if (!diagramId) return;
+        const controller = new AbortController();
         const loadDiagram = async () => {
-            if (diagramId) {
+            try {
                 const response = await fetchDiagramById(diagramId);
-                const data = response.data;
-                setDiagram(data);
+                if (!controller.signal.aborted) {
+                    setDiagram(response.data);
+                }
+            } catch {
+                // ignorar errores de abort
             }
         };
         loadDiagram();
+        return () => controller.abort();
     }, [diagramId]);
 
     useEffect(() => {
@@ -153,10 +160,14 @@ function DiagramContent() {
         [setEdges],
     );
 
+    useEffect(() => {
+        nodesRef.current = nodes;
+    }, [nodes]);
+
     const onConnect = useCallback(
-        (params: Connection) => {          
-            const sourceNode = nodes.find(n => n.id === params.source);
-            const targetNode = nodes.find(n => n.id === params.target);
+        (params: Connection) => {
+            const sourceNode = nodesRef.current.find(n => n.id === params.source);
+            const targetNode = nodesRef.current.find(n => n.id === params.target);
 
             const isSelfMessage = params.source === params.target;
 
@@ -211,7 +222,7 @@ function DiagramContent() {
             
 
         },
-        [setEdges, isDarkMode, nodes],
+        [setEdges, isDarkMode],
     );
 
     useEffect(() => {

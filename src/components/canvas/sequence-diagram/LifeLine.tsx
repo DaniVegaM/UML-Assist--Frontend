@@ -57,8 +57,10 @@ export default function LifeLine({ data }: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [value, setValue] = useState(data.label || "");
+    const valueRef = useRef(value);
+    valueRef.current = value;
     const { setIsZoomOnScrollEnabled } = useCanvas();
-    const { nodes, setMaxHandlesCount, maxHandlesCount } = useSequenceDiagram();
+    const { setMaxHandlesCount, maxHandlesCount } = useSequenceDiagram();
     const nodeId = useNodeId();
     const { setNodes, setEdges } = useReactFlow();
     const updateNodeInternals = useUpdateNodeInternals();
@@ -101,14 +103,19 @@ export default function LifeLine({ data }: DataProps) {
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
-    const isSyncingFromData = useRef(false); // Ref para evitar bucles
+    const isSyncingHandles = useRef(false);
+    const isSyncingDestroyY = useRef(false);
+    const isSyncingHeaderIcon = useRef(false);
+    const isSyncingValue = useRef(false);
     const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, allowSelfConnection: true, initialHandles: data?.handles as HandleData[] | undefined});
+    const handlesRef = useRef(handles);
 
     // Estados para el menú contextual y destrucción
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
     const [selectedHandleIndex, setSelectedHandleIndex] = useState<number | null>(null);
     const [showNodeContextMenu, setShowNodeContextMenu] = useState(false);
+    const destroyYRef = useRef<number | null>(null);
     const [destroyY, setDestroyY] = useState<number | null>(() => {
         if (typeof (data as { destroyY?: number })?.destroyY === 'number') {
             return (data as { destroyY: number }).destroyY;
@@ -122,6 +129,7 @@ export default function LifeLine({ data }: DataProps) {
         }
         return null;
     });
+    destroyYRef.current = destroyY;
     const [xMarkMenuEvent, setXMarkMenuEvent] = useState<MouseEvent | null>(null);
     const contextMenuYRef = useRef<number | null>(null);
 
@@ -130,9 +138,15 @@ export default function LifeLine({ data }: DataProps) {
         handleRef.current = node;
     }, []);
 
+    // Mantiene handlesRef al día para que el effect de carga pueda comparar sin depender del estado
+    useEffect(() => {
+        handlesRef.current = handles;
+    }, [handles]);
+
     // Sincronizamos handles con node.data cuando cambien (solo si no estamos sincronizando desde data)
     useEffect(() => {
-        if (!nodeId || isSyncingFromData.current) return;
+        if (!nodeId || isSyncingHandles.current) return;
+        isSyncingValue.current = true;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
                 ? { ...n, data: { ...n.data, handles, label: value, headerIcon } }
@@ -140,28 +154,29 @@ export default function LifeLine({ data }: DataProps) {
         ));
         // Actualizar el máximo de handles en el contexto
         setMaxHandlesCount(prev => Math.max(prev, handles.length));
+        const t = setTimeout(() => { isSyncingValue.current = false; }, 0);
+        return () => clearTimeout(t);
     }, [handles, nodeId, setNodes, value, headerIcon, setMaxHandlesCount]);
 
-    // Sincronizar handles cuando data.handles cambie (al cargar diagrama)
+    // Sincronizar handles cuando data.handles cambie (al cargar diagrama).
+    // Usa handlesRef para la comparación — sin handles en las deps para evitar el ciclo bidireccional.
     useEffect(() => {
         if (data?.handles && data.handles.length > 0) {
-            // Comparar si los handles son diferentes antes de actualizar
-            const currentHandlesStr = JSON.stringify(handles);
             const dataHandlesStr = JSON.stringify(data.handles);
+            const currentHandlesStr = JSON.stringify(handlesRef.current);
             if (currentHandlesStr !== dataHandlesStr) {
-                isSyncingFromData.current = true;
+                isSyncingHandles.current = true;
                 setHandles(data.handles as HandleData[]);
-                // Reset flag después de un ciclo de renderizado
                 setTimeout(() => {
-                    isSyncingFromData.current = false;
+                    isSyncingHandles.current = false;
                 }, 0);
             }
         }
-    }, [data?.handles, handles, setHandles]);
+    }, [data?.handles, setHandles]);
 
     // Sincronizamos destroyY y hasDestruction con node.data cuando cambie
     useEffect(() => {
-        if (!nodeId || isSyncingFromData.current) return;
+        if (!nodeId || isSyncingDestroyY.current) return;
         setNodes(nodes => nodes.map(n =>
             n.id === nodeId
                 ? { ...n, data: { ...n.data, destroyY, hasDestruction: destroyY !== null } }
@@ -170,31 +185,35 @@ export default function LifeLine({ data }: DataProps) {
     }, [destroyY, nodeId, setNodes]);
 
     // Sincronizar destroyY cuando data.destroyY cambie (al cargar diagrama)
+    // Usa destroyYRef para comparar sin hacer destroyY una dep — evita ciclo con el effect de escritura.
     useEffect(() => {
         const dataDestroyY = (data as { destroyY?: number | null })?.destroyY;
-        if (dataDestroyY !== undefined && dataDestroyY !== destroyY) {
-            isSyncingFromData.current = true;
+        if (dataDestroyY !== undefined && dataDestroyY !== destroyYRef.current) {
+            isSyncingDestroyY.current = true;
             setDestroyY(dataDestroyY);
             setTimeout(() => {
-                isSyncingFromData.current = false;
+                isSyncingDestroyY.current = false;
             }, 0);
         }
-    }, [(data as { destroyY?: number | null })?.destroyY, destroyY]);
+    }, [(data as { destroyY?: number | null })?.destroyY]);
 
     // Sincronizar label cuando data.label cambie (al cargar diagrama)
+    // Usa valueRef para comparar sin hacer value una dep — evita ciclo con el effect de escritura.
+    // El flag isSyncingValue evita revertir mientras el effect de escritura acaba de actualizar data.
     useEffect(() => {
-        if (data?.label !== undefined && data.label !== value && !isEditing) {
+        if (isSyncingValue.current) return;
+        if (data?.label !== undefined && data.label !== valueRef.current && !isEditing) {
             setValue(data.label);
         }
-    }, [data?.label, isEditing, value]);
+    }, [data?.label, isEditing]);
 
     useEffect(() => {
         if (data?.headerIcon && data.headerIcon !== prevHeaderIconRef.current) {
-            isSyncingFromData.current = true;
+            isSyncingHeaderIcon.current = true;
             setHeaderIcon(data.headerIcon as LifeLineHeaderIcon);
             prevHeaderIconRef.current = data.headerIcon as LifeLineHeaderIcon;
             setTimeout(() => {
-                isSyncingFromData.current = false;
+                isSyncingHeaderIcon.current = false;
             }, 0);
         }
     }, [data?.headerIcon]);
@@ -244,11 +263,10 @@ export default function LifeLine({ data }: DataProps) {
     }, [setIsZoomOnScrollEnabled]);
 
     useEffect(() => {
-        if (nodes.length > 0) {
-            const nodeIds = nodes.map(n => n.id);
-            updateNodeInternals(nodeIds);
+        if (nodeId) {
+            updateNodeInternals(nodeId);
         }
-    }, [nodes, updateNodeInternals]);
+    }, [handles, nodeId, updateNodeInternals]);
 
     const handleContextMenu = (event: React.MouseEvent, handleId: string, handleIndex: number) => {
         event.preventDefault();
@@ -295,11 +313,11 @@ export default function LifeLine({ data }: DataProps) {
         }
 
         if (selectedIcon) {
-            isSyncingFromData.current = true;
+            isSyncingHeaderIcon.current = true;
             setHeaderIcon(selectedIcon);
             prevHeaderIconRef.current = selectedIcon;
             setTimeout(() => {
-                isSyncingFromData.current = false;
+                isSyncingHeaderIcon.current = false;
             }, 0);
         }
     }, [headerIcon, nodeId, setNodes, setEdges]);

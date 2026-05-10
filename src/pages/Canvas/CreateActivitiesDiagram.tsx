@@ -30,8 +30,7 @@ function DiagramContent() {
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
     const { getIntersectingNodes } = useReactFlow();
-    const { isValidActivityConnection } = useLocalValidations(nodes, edges);
-    const { validateActivityConnection } = useLocalValidations(nodes, edges);
+    const { isValidActivityConnection, validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
 
     const restoredFromDraftRef = useRef(false);
@@ -70,15 +69,21 @@ function DiagramContent() {
         [openEdgeContextMenu],
     );
 
-        useEffect(() => {
+    useEffect(() => {
+        if (!diagramId) return;
+        const controller = new AbortController();
         const loadDiagram = async () => {
-            if (diagramId) {
+            try {
                 const response = await fetchDiagramById(diagramId);
-                const data = response.data;
-                setDiagram(data);
+                if (!controller.signal.aborted) {
+                    setDiagram(response.data);
+                }
+            } catch {
+                // ignorar errores de abort
             }
         };
         loadDiagram();
+        return () => controller.abort();
     }, [diagramId]);
 
     useEffect(() => {
@@ -161,20 +166,21 @@ function DiagramContent() {
         const intersections = getIntersectingNodes(node);
         const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
 
-        if (node.type !== 'activity' && parentNode) {
-            // Solo asignar parentId si no lo tenía ya (evitar recalcular en cada drag)
-            if (node.parentId !== parentNode.id) {
-                node.parentId = parentNode.id;
-                node.extent = 'parent';
-                // Convertir posición absoluta a relativa al padre
-                node.position = {
+        if (node.type !== 'activity' && parentNode && node.parentId !== parentNode.id) {
+            const updatedNode: Node = {
+                ...node,
+                parentId: parentNode.id,
+                extent: 'parent',
+                position: {
                     x: node.position.x - parentNode.position.x,
                     y: node.position.y - parentNode.position.y,
-                };
-            }
+                },
+            };
+            setNodes(nodes => nodes.map(n => n.id === updatedNode.id ? updatedNode : n));
+            return;
         }
         setNodes(nodes => nodes.map(n => n.id === node.id ? node : n));
-    }, []);
+    }, [getIntersectingNodes, setNodes]);
 
 
     const onConnect = useCallback(
