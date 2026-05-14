@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges, SelectionMode } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type Node, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, useReactFlow, useNodes, useEdges, SelectionMode, ViewportPortal } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -21,6 +21,7 @@ import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
 import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
+import PagueGuides from "../../components/canvas/PagueGuides";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -344,6 +345,9 @@ function DiagramContent() {
                     onConnectStart={() => setIsTryingToConnect(true)}
                     onEdgeContextMenu={onEdgeContextMenu}
                 >
+                    <ViewportPortal>
+                        <PagueGuides />
+                    </ViewportPortal>
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
                         showFitView={true}

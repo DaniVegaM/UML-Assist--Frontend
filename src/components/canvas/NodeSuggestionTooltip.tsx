@@ -88,7 +88,7 @@ export default function NodeSuggestionTooltip({
 
   return (
     <div 
-      className="absolute nodrag nopan"
+      className="absolute nodrag nopan node-suggestion-tooltip"
       style={{
         bottom: `calc(100% + ${bottomValue}px)`,
         left: '50%',

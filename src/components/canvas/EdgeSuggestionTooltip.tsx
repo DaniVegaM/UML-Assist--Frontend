@@ -22,7 +22,7 @@ export default function EdgeSuggestionTooltip({
   return (
     <EdgeLabelRenderer>
       <div 
-        className="absolute nodrag nopan"
+        className="absolute nodrag nopan edge-suggestion-tooltip"
         style={{
           position: 'absolute',
           transform: `translate(-50%, -100%) translate(${labelX}px, ${labelY - 30}px)`,

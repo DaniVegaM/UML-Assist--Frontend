@@ -19,7 +19,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
     const [saving, setSaving] = useState<boolean>(false)
     const [loading, setLoading] = useState({ showLoading: false, showConfirmation: false, showError: false });
     const navigate = useNavigate();
-    const { fitView } = useReactFlow();
+    const { setViewport, getNodes } = useReactFlow();
 
     const [isDirty, setIsDirty] = useState(false);
     const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -122,56 +122,467 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         };
     }, []);
 
-    
+
+    const exportFilter = (node: HTMLElement) => {
+        
+        // Ocultar líneas guía
+        if (node.closest?.(".page-guides")) {
+            return false;
+        }
+
+        // Ocultar tooltips y botón IA
+        if (
+            node.classList?.contains("ver-ia") ||
+            node.closest?.(".node-suggestion-tooltip") ||
+            node.closest?.(".edge-suggestion-tooltip") ||
+            node.closest?.(".ver-ia")
+        ) {
+            return false;
+        }
+
+        // Otros elementos ReactFlow
+        if (
+            node.closest?.(".react-flow__controls") ||
+            node.closest?.(".react-flow__minimap") ||
+            node.closest?.(".react-flow__attribution")
+        ) {
+            return false;
+        }
+
+        return true;
+    };
+        
+    const hideExportElements = () => {
+        document.querySelectorAll(
+            ".ver-ia, .add-box-btn"
+        ).forEach(el => {
+            (el as HTMLElement).style.visibility = "hidden";
+        });
+    };
+
+    const showExportElements = () => {
+        document.querySelectorAll(
+            ".ver-ia, .add-box-btn"
+        ).forEach(el => {
+            (el as HTMLElement).style.visibility = "visible";
+        });
+    };
+
     const exportToPNG = async () => {
-        const reactFlowElement = document.querySelector('.react-flow');
-        if (!reactFlowElement) return;
         try {
-            await fitView({ padding: 0.2, duration: 0 });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
-                backgroundColor: '#ffffff',
-                pixelRatio: 2
-            });
-            const link = document.createElement('a');
-            link.download = `${getFileName()}.png`;
-            link.href = dataUrl;
-            link.click();
-        } catch (error) {
-            console.error("Error exportando PNG:", error);
+            document.body.classList.add(
+            "exporting"
+            );
+            hideExportElements();
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            await new Promise(resolve => setTimeout(resolve, 50));
+            const reactFlowElement =
+                document.querySelector(
+                    ".react-flow__viewport"
+                ) as HTMLElement;
+
+            if (!reactFlowElement) return;
+
+            const currentNodes = getNodes();
+
+            if (!currentNodes.length) return;
+
+            const PAGE_WIDTH = 1123;
+            const PAGE_HEIGHT = 794;
+
+            const minX = Math.min(
+                ...currentNodes.map(
+                    n => n.position.x
+                )
+            );
+
+            const minY = Math.min(
+                ...currentNodes.map(
+                    n => n.position.y
+                )
+            );
+
+            const maxX = Math.max(
+                ...currentNodes.map(
+                    n =>
+                        n.position.x +
+                        (n.width || 200)
+                )
+            );
+
+            const maxY = Math.max(
+                ...currentNodes.map(
+                    n =>
+                        n.position.y +
+                        (n.height || 100)
+                )
+            );
+
+            const startPageX =
+                Math.floor(
+                    minX /
+                    PAGE_WIDTH
+                );
+
+            const endPageX =
+                Math.floor(
+                    maxX /
+                    PAGE_WIDTH
+                );
+
+            const startPageY =
+                Math.floor(
+                    minY /
+                    PAGE_HEIGHT
+                );
+
+            const endPageY =
+                Math.floor(
+                    maxY /
+                    PAGE_HEIGHT
+                );
+
+            let pageNumber = 1;
+
+            for (
+                let py = startPageY;
+                py <= endPageY;
+                py++
+            ) {
+
+                for (
+                    let px = startPageX;
+                    px <= endPageX;
+                    px++
+                ) {
+
+                    const pageMinX =
+                        px *
+                        PAGE_WIDTH;
+
+                    const pageMaxX =
+                        pageMinX +
+                        PAGE_WIDTH;
+
+                    const pageMinY =
+                        py *
+                        PAGE_HEIGHT;
+
+                    const pageMaxY =
+                        pageMinY +
+                        PAGE_HEIGHT;
+
+                    const hasContent =
+                        currentNodes.some(
+                            n => {
+
+                                const positionAbsolute =
+                                    (n as any)
+                                        .positionAbsolute;
+
+                                const x =
+                                    positionAbsolute?.x ??
+                                    n.position.x;
+
+                                const y =
+                                    positionAbsolute?.y ??
+                                    n.position.y;
+
+                                const width =
+                                    n.width ||
+                                    200;
+
+                                const height =
+                                    n.height ||
+                                    100;
+
+                                return (
+                                    x + width >
+                                    pageMinX &&
+                                    x <
+                                    pageMaxX &&
+                                    y + height >
+                                    pageMinY &&
+                                    y <
+                                    pageMaxY
+                                );
+                            }
+                        );
+
+                    if (!hasContent)
+                        continue;
+
+                    await setViewport(
+                        {
+                            x: -pageMinX,
+                            y: -pageMinY,
+                            zoom: 1
+                        },
+                        {
+                            duration: 0
+                        }
+                    );
+
+                    await new Promise(
+                        r =>
+                            setTimeout(
+                                r,
+                                150
+                            )
+                    );
+
+                    const img =
+                        await toPng(
+                            reactFlowElement,
+                            {
+                                backgroundColor:"#fff",
+                                width:PAGE_WIDTH,
+                                height:PAGE_HEIGHT,
+                                pixelRatio:2,
+                                filter: exportFilter
+                            }
+                        );
+
+                    const link =
+                        document.createElement(
+                            "a"
+                        );
+
+                    link.download =
+                        `${getFileName()}_pagina_${pageNumber}.png`;
+
+                    link.href =
+                        img;
+
+                    link.click();
+
+                    pageNumber++;
+                }
+            }
+
+        }
+        catch(error){
+
+            console.error(
+                "Error PNG:",
+                error
+            );
+        }
+        finally{
+            showExportElements();
+            document.body.classList.remove(
+                "exporting"
+        );
         }
     };
 
     const exportToPDF = async () => {
-        const reactFlowElement = document.querySelector('.react-flow');
-        if (!reactFlowElement) return;
+
         try {
-            await fitView({ padding: 0.2, duration: 0 });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
-                backgroundColor: '#ffffff',
-                pixelRatio: 2
-            });
+            document.body.classList.add("exporting");
+            const reactFlowElement =
+                document.querySelector(
+                    ".react-flow__viewport"
+                ) as HTMLElement;
+            hideExportElements();
+            await new Promise(resolve => requestAnimationFrame(resolve));
+            await new Promise(resolve => setTimeout(resolve, 50));
+            if (!reactFlowElement) return;
+
+            const currentNodes = getNodes();
+
+            if (!currentNodes.length) return;
+
+            const PAGE_WIDTH = 1123;
+            const PAGE_HEIGHT = 794;
+
+            const minX = Math.min(
+                ...currentNodes.map(
+                    n => n.position.x
+                )
+            );
+
+            const minY = Math.min(
+                ...currentNodes.map(
+                    n => n.position.y
+                )
+            );
+
+            const maxX = Math.max(
+                ...currentNodes.map(
+                    n =>
+                        n.position.x +
+                        (n.width || 200)
+                )
+            );
+
+            const maxY = Math.max(
+                ...currentNodes.map(
+                    n =>
+                        n.position.y +
+                        (n.height || 100)
+                )
+            );
+
+            // páginas según líneas rojas
+            const startPageX =
+                Math.floor(
+                    minX /
+                    PAGE_WIDTH
+                );
+
+            const endPageX =
+                Math.floor(
+                    maxX /
+                    PAGE_WIDTH
+                );
+
+            const startPageY =
+                Math.floor(
+                    minY /
+                    PAGE_HEIGHT
+                );
+
+            const endPageY =
+                Math.floor(
+                    maxY /
+                    PAGE_HEIGHT
+                );
+
             const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [
-                    reactFlowElement.clientWidth,
-                    reactFlowElement.clientHeight
+                orientation:"landscape",
+                unit:"px",
+                format:[
+                    PAGE_WIDTH,
+                    PAGE_HEIGHT
                 ]
             });
-            pdf.addImage(
-                dataUrl,
-                'PNG',
-                0,
-                0,
-                reactFlowElement.clientWidth,
-                reactFlowElement.clientHeight
+
+            let firstPage = true;
+
+    for (
+        let py = startPageY;
+        py <= endPageY;
+        py++
+    ) {
+
+        for (
+            let px = startPageX;
+            px <= endPageX;
+            px++
+        ) {
+
+            // coordenadas de esta hoja
+            const pageMinX = px * PAGE_WIDTH;
+            const pageMaxX = pageMinX + PAGE_WIDTH;
+
+            const pageMinY = py * PAGE_HEIGHT;
+            const pageMaxY = pageMinY + PAGE_HEIGHT;
+
+            // verificar si existe algún nodo aquí
+            const hasContent =
+                currentNodes.some(n => {
+
+                    const positionAbsolute =
+                        (n as any).positionAbsolute;
+
+                    const x =
+                        positionAbsolute?.x ??
+                        n.position.x;
+
+                    const y =
+                        positionAbsolute?.y ??
+                        n.position.y;
+
+                    const width =
+                        n.width || 200;
+
+                    const height =
+                        n.height || 100;
+
+                    return (
+                        x + width > pageMinX &&
+                        x < pageMaxX &&
+                        y + height > pageMinY &&
+                        y < pageMaxY
+                    );
+
+                });
+
+            // si está vacía saltarla
+            if (!hasContent) {
+                console.log(
+                    "Saltando hoja vacía:",
+                    px,
+                    py
+                );
+                continue;
+            }
+
+            console.log(
+                "Exportando:",
+                px,
+                py
             );
-            pdf.save(`${getFileName()}.pdf`);
-        } catch (error) {
-            console.error("Error exportando PDF:", error);
+
+            await setViewport(
+                {
+                    x: -(pageMinX),
+                    y: -(pageMinY),
+                    zoom: 1
+                },
+                { duration: 0 }
+            );
+
+            await new Promise(
+                r => setTimeout(
+                    r,
+                    150
+                )
+            );
+
+            const img =
+                await toPng(
+                    reactFlowElement,
+                    {
+                        backgroundColor:"#fff",
+                        width:PAGE_WIDTH,
+                        height:PAGE_HEIGHT,
+                        pixelRatio:2,
+                        filter: exportFilter
+                    }
+                );
+
+            if(!firstPage){
+                pdf.addPage();
+            }
+
+            pdf.addImage(
+                img,
+                "PNG",
+                0,
+                0,
+                PAGE_WIDTH,
+                PAGE_HEIGHT
+            );
+
+            firstPage=false;
         }
+    }
+
+            pdf.save(
+                `${getFileName()}.pdf`
+            );
+            document.body.classList.remove("exporting");
+
+        }
+         catch(error) {
+        console.error(error);
+
+    } finally {
+        showExportElements(); // ← AQUÍ
+        document.body.classList.remove("exporting");
+    }
     };
 
     useEffect(() => {

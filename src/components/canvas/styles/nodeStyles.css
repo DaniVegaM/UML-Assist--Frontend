@@ -267,3 +267,8 @@
 .dark .add-box-btn {
   @apply bg-neutral-600 hover:bg-neutral-500 text-white;
 }
+
+body.exporting .ver-ia,
+    .exporting .add-box-btn {
+    display: none !important;
+}
