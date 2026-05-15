@@ -1,5 +1,5 @@
 import { useTheme } from "../../hooks/useTheme";
-import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges, SelectionMode } from '@xyflow/react';
+import { addEdge, Background, Controls, ReactFlow, ReactFlowProvider, applyEdgeChanges, type Connection, applyNodeChanges, type Edge, type NodeChange, type EdgeChange, ConnectionLineType, ConnectionMode, MarkerType, useNodes, useEdges, SelectionMode, ViewportPortal } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { ElementsBar } from "../../components/canvas/ElementsBar";
 import Header from "../../components/layout/Canvas/Header";
@@ -22,6 +22,7 @@ import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
+import PagueGuides from "../../components/canvas/PagueGuides";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -322,6 +323,9 @@ function DiagramContent() {
                     onConnectStart={handleConnectStart}
                     onConnect={onConnect}
                 >
+                    <ViewportPortal>
+                        <PagueGuides />
+                    </ViewportPortal>
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
                     <Controls
                         showFitView={true}
