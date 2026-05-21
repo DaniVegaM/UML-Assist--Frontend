@@ -159,7 +159,7 @@ ${edges
                         </div>
                     </div>
 
-                    <textarea value={initialContext} onChange={onChange} name="chatAI" id="chatAI" placeholder="Contexto del sistema (opcional): Define brevemente qué construyes (ej. 'E-commerce de ropa'). Esto permitirá que las sugerencias para cada componente sean más coherentes entre sí." className="h-full border-1 border-zinc-500 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-700 dark:text-white"></textarea>
+                    <textarea value={initialContext} onChange={onChange} name="chatAI" id="chatAI" placeholder="Contexto del sistema (opcional): Define brevemente qué construyes (ej. 'E-commerce de ropa'). Esto permitirá que las sugerencias para cada componente sean más coherentes entre sí." className="flex-1 min-h-24 border-1 border-zinc-500 p-1 rounded-lg bg-zinc-100 dark:bg-zinc-700 dark:text-white"></textarea>
                         {
                             <p className="char-counter char-counter-right">{`${initialContext.length}/${TEXT_AREA_MAX_LEN}`}</p>
                         }
@@ -167,7 +167,7 @@ ${edges
                     {generalDescription && (
                         <>
                             <h2 className="font-semibold text-sm text-zinc-900 dark:text-white mb-1">Resumen</h2>
-                            <div className="bg-zinc-100 dark:bg-zinc-600 p-3 rounded-lg overflow-y-auto min-h-60 max-h-70 shadow-inner mt-2">
+                            <div className="flex-1 bg-zinc-100 dark:bg-zinc-600 p-3 rounded-lg overflow-y-auto min-h-24 max-h-70 shadow-inner mt-2">
                                 <p className="text-sm text-zinc-800 dark:text-zinc-200">{generalDescription}</p>
                             </div>
                         </>
