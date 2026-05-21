@@ -1,0 +1,31 @@
+/* Estilos aplicados temporalmente al body durante la exportación de diagramas.
+   Ocultan toda la cromática de la interfaz (header, controles, minimap, fondo,
+   indicadores de IA, tooltips, etc.) para capturar solo el contenido vectorial. */
+
+body.is-exporting header,
+body.is-exporting .react-flow__panel,
+body.is-exporting .react-flow__controls,
+body.is-exporting .react-flow__minimap,
+body.is-exporting .react-flow__attribution,
+body.is-exporting .react-flow__background,
+body.is-exporting .react-flow__handle,
+body.is-exporting .react-flow__node-addLifeLineBtn,
+body.is-exporting button[title="Ver sugerencia de IA"],
+body.is-exporting [data-export-hidden] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+}
+
+body.is-exporting .react-flow__node.selected,
+body.is-exporting .react-flow__edge.selected {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+body.is-exporting .react-flow,
+body.is-exporting .react-flow__renderer,
+body.is-exporting .react-flow__pane {
+    background: transparent !important;
+}

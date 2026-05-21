@@ -10,6 +10,7 @@ import jsPDF from 'jspdf';
 import { useNavigate } from 'react-router';
 import { closeAlert, confirmExitUnsaved, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
 import { selectExportFormatAlert } from '../../../utils/sweetAlert';
+import { exportDiagramAsPdf, exportDiagramAsPng } from '../../../utils/exportDiagram';
 
 const AUTO_SAVE_DELAY = 5000;
 
@@ -19,7 +20,6 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
     const [saving, setSaving] = useState<boolean>(false)
     const [loading, setLoading] = useState({ showLoading: false, showConfirmation: false, showError: false });
     const navigate = useNavigate();
-    const { fitView } = useReactFlow();
 
     const [isDirty, setIsDirty] = useState(false);
     const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -93,25 +93,31 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         }
     };
 
-    const getFileName = () => {
+    const getCurrentTitle = () => {
         const input = document.querySelector('input[type="text"]') as HTMLInputElement;
-        const currentTitle = input?.value || title || 'diagrama';
-        return currentTitle
-            .trim()
-            .replace(/[^a-z0-9]/gi, '_')
-            .toLowerCase();
+        return input?.value || title || 'diagrama';
     };
-        
+
     const handleExport = async () => {
         await selectExportFormatAlert();
     };
 
     useEffect(() => {
-        const handleExportSelected = async (e: any) => {
-            if (e.detail === 'png') {
-                await exportToPNG();
-            } else if (e.detail === 'pdf') {
-                await exportToPDF();
+        const handleExportSelected = async (e: Event) => {
+            const detail = (e as CustomEvent).detail;
+            const currentTitle = getCurrentTitle();
+            try {
+                loadingAlert('Exportando diagrama...');
+                if (detail === 'png') {
+                    await exportDiagramAsPng(nodes, edges, currentTitle);
+                } else if (detail === 'pdf') {
+                    await exportDiagramAsPdf(nodes, edges, currentTitle);
+                }
+                closeAlert();
+            } catch (error) {
+                console.error('Error exportando:', error);
+                closeAlert();
+                await errorAlert('Error', 'No se pudo exportar el diagrama');
             }
         };
 
@@ -120,59 +126,7 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
         return () => {
             window.removeEventListener('export:selected', handleExportSelected);
         };
-    }, []);
-
-    
-    const exportToPNG = async () => {
-        const reactFlowElement = document.querySelector('.react-flow');
-        if (!reactFlowElement) return;
-        try {
-            await fitView({ padding: 0.2, duration: 0 });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
-                backgroundColor: '#ffffff',
-                pixelRatio: 2
-            });
-            const link = document.createElement('a');
-            link.download = `${getFileName()}.png`;
-            link.href = dataUrl;
-            link.click();
-        } catch (error) {
-            console.error("Error exportando PNG:", error);
-        }
-    };
-
-    const exportToPDF = async () => {
-        const reactFlowElement = document.querySelector('.react-flow');
-        if (!reactFlowElement) return;
-        try {
-            await fitView({ padding: 0.2, duration: 0 });
-            await new Promise(resolve => setTimeout(resolve, 100));
-            const dataUrl = await toPng(reactFlowElement as HTMLElement, {
-                backgroundColor: '#ffffff',
-                pixelRatio: 2
-            });
-            const pdf = new jsPDF({
-                orientation: 'landscape',
-                unit: 'px',
-                format: [
-                    reactFlowElement.clientWidth,
-                    reactFlowElement.clientHeight
-                ]
-            });
-            pdf.addImage(
-                dataUrl,
-                'PNG',
-                0,
-                0,
-                reactFlowElement.clientWidth,
-                reactFlowElement.clientHeight
-            );
-            pdf.save(`${getFileName()}.pdf`);
-        } catch (error) {
-            console.error("Error exportando PDF:", error);
-        }
-    };
+    }, [nodes, edges, title]);
 
     useEffect(() => {
         if (firstRenderRef.current) {
