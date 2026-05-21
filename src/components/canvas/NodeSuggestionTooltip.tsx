@@ -87,7 +87,8 @@ export default function NodeSuggestionTooltip({
   if (!isVisible) return null;
 
   return (
-    <div 
+    <div
+      data-export-hidden
       className="absolute nodrag nopan"
       style={{
         bottom: `calc(100% + ${bottomValue}px)`,
