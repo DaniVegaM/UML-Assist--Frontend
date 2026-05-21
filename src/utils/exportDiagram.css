@@ -9,6 +9,7 @@ body.is-exporting .react-flow__minimap,
 body.is-exporting .react-flow__attribution,
 body.is-exporting .react-flow__background,
 body.is-exporting .react-flow__handle,
+body.is-exporting .react-flow__node-addLifeLineBtn,
 body.is-exporting button[title="Ver sugerencia de IA"],
 body.is-exporting [data-export-hidden] {
     display: none !important;
