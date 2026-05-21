@@ -21,7 +21,8 @@ export default function EdgeSuggestionTooltip({
 
   return (
     <EdgeLabelRenderer>
-      <div 
+      <div
+        data-export-hidden
         className="absolute nodrag nopan"
         style={{
           position: 'absolute',

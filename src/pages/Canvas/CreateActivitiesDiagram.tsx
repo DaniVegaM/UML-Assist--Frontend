@@ -304,6 +304,8 @@ function DiagramContent() {
                     deleteKeyCode={["Backspace", "Delete"]}
                     fitView={false}
                     preventScrolling={true}
+                    minZoom={0.1}
+                    maxZoom={4}
                     colorMode={isDarkMode ? 'dark' : 'light'}
                     attributionPosition="bottom-right"
                     edgeTypes={edgeTypes}
