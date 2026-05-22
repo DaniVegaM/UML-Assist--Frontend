@@ -6,6 +6,7 @@ import { TEXT_AREA_MAX_LEN } from "../variables";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoableNodeLabel } from "../../../hooks/useNodeHistory";
 
 export default function AcceptEvent({data}: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -16,6 +17,9 @@ export default function AcceptEvent({data}: DataProps) {
     const { setNodes } = useReactFlow();
     const nodeId = useNodeId();
     const [showSuggestion, setShowSuggestion] = useState(false);
+
+    // Historial: snapshot/reconciliación del texto para undo/redo
+    const { onEditStart, onEditCommit } = useUndoableNodeLabel(value, setValue, data.label, isEditing);
 
     const clearSuggestion = useCallback(() => {
         if (!nodeId) return;
@@ -51,6 +55,7 @@ export default function AcceptEvent({data}: DataProps) {
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            onEditStart();
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
@@ -60,12 +65,13 @@ export default function AcceptEvent({data}: DataProps) {
                 }
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, setIsZoomOnScrollEnabled, onEditStart]);
 
     const handleBlur = useCallback(() => {
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
-    }, [setIsZoomOnScrollEnabled]);
+        onEditCommit();
+    }, [setIsZoomOnScrollEnabled, onEditCommit]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();

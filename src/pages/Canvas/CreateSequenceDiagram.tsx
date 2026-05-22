@@ -22,17 +22,27 @@ import { notify } from "../../components/ui/NotificationComponent";
 import NodeContextMenu from "../../components/canvas/NodeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
+import { UndoRedoProvider, useUndoRedoContext } from "../../contexts/UndoRedoContext";
+import { useUndoRedoShortcuts } from "../../hooks/useUndoRedoShortcuts";
+import type { Snapshot } from "../../hooks/useUndoRedo";
+import type { HandleData } from "../../hooks/useHandle";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
     const [diagram, setDiagram] = useState<Diagram | null>(null);
     const { isDarkMode } = useTheme();
     const { isZoomOnScrollEnabled, setIsTryingToConnect } = useCanvas();
-    const { nodes, setNodes, edges, setEdges } = useSequenceDiagram();
+    const { nodes, setNodes, edges, setEdges, setMaxHandlesCount } = useSequenceDiagram();
 
     const { handleMouseMove } = useAddLifeLinesBtns(); // Activa la actualización automática de botones de addLifeLines
     const { validateSequenceConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    // ── Historial undo/redo ──
+    const { takeSnapshot, captureSnapshot, commitSnapshot, historyVersion } = useUndoRedoContext();
+    useUndoRedoShortcuts();
+    const pendingConnectSnapshot = useRef<Snapshot | null>(null);
+    const pendingDragSnapshot = useRef<Snapshot | null>(null);
 
     const restoredFromDraftRef = useRef(false);
     const nodesRef = useRef(nodes);
@@ -164,8 +174,44 @@ function DiagramContent() {
         nodesRef.current = nodes;
     }, [nodes]);
 
+    // Tras un undo/redo, recalcular maxHandlesCount desde los nodos restaurados
+    // (de otro modo solo crece y la altura de las lifelines no se reduce al deshacer).
+    useEffect(() => {
+        if (historyVersion === 0) return;
+        const maxHandles = nodesRef.current.reduce((max, n) => {
+            const count = (n.data?.handles as HandleData[] | undefined)?.length ?? 0;
+            return Math.max(max, count);
+        }, 1);
+        setMaxHandlesCount(maxHandles);
+    }, [historyVersion, setMaxHandlesCount]);
+
+    // Snapshot al iniciar un arrastre; se confirma al soltar solo si hubo movimiento real.
+    const onNodeDragStart = useCallback(() => {
+        pendingDragSnapshot.current = captureSnapshot();
+    }, [captureSnapshot]);
+
+    const onNodeDragStop = useCallback(() => {
+        const before = pendingDragSnapshot.current;
+        pendingDragSnapshot.current = null;
+        if (!before) return;
+        const moved = before.nodes.some((bn) => {
+            const an = nodesRef.current.find((n) => n.id === bn.id);
+            return an && (an.position.x !== bn.position.x || an.position.y !== bn.position.y);
+        });
+        if (moved) commitSnapshot(before);
+    }, [captureSnapshot, commitSnapshot]);
+
     const onConnect = useCallback(
         (params: Connection) => {
+            // Confirma el snapshot tomado en onConnectStart (incluye el handle magnético
+            // generado durante el gesto). Si no hubo gesto previo, snapshot directo.
+            if (pendingConnectSnapshot.current) {
+                commitSnapshot(pendingConnectSnapshot.current);
+                pendingConnectSnapshot.current = null;
+            } else {
+                takeSnapshot();
+            }
+
             const sourceNode = nodesRef.current.find(n => n.id === params.source);
             const targetNode = nodesRef.current.find(n => n.id === params.target);
 
@@ -219,10 +265,8 @@ function DiagramContent() {
                 return newEdges;
             });
 
-            
-
         },
-        [setEdges, isDarkMode],
+        [setEdges, isDarkMode, commitSnapshot, takeSnapshot],
     );
 
     useEffect(() => {
@@ -256,6 +300,8 @@ function DiagramContent() {
 
     const handleConnectEnd = useCallback(() => {
         setIsTryingToConnect(false);
+        // Si el gesto no terminó en una conexión, descartamos el snapshot pendiente.
+        pendingConnectSnapshot.current = null;
 
         const info = lastInvalidAttemptRef.current;
         if (info && Date.now() - info.ts < 700) {
@@ -266,7 +312,9 @@ function DiagramContent() {
 
     const handleConnectStart = useCallback(() => {
         setIsTryingToConnect(true);
-    }, [setIsTryingToConnect]);
+        // Captura el estado antes de iniciar la conexión (se confirma en onConnect).
+        pendingConnectSnapshot.current = captureSnapshot();
+    }, [setIsTryingToConnect, captureSnapshot]);
 
     return (
         <div className="h-screen w-full grid grid-rows-[54px_1fr]">
@@ -313,6 +361,11 @@ function DiagramContent() {
                     edges={edges}
                     onNodesChange={onNodesChange}
                     onEdgesChange={onEdgesChange}
+                    onNodeDragStart={onNodeDragStart}
+                    onNodeDragStop={onNodeDragStop}
+                    onSelectionDragStart={onNodeDragStart}
+                    onSelectionDragStop={onNodeDragStop}
+                    onBeforeDelete={async () => { takeSnapshot(); return true; }}
                     selectionOnDrag={true}
                     selectionMode={SelectionMode.Partial}
                     multiSelectionKeyCode={["Shift"]}
@@ -345,7 +398,9 @@ export default function CreateSequenceDiagram() {
         <ReactFlowProvider>
             <CanvasProvider>
                 <SequenceCanvasProvider>
+                    <UndoRedoProvider>
                         <DiagramContent />
+                    </UndoRedoProvider>
                 </SequenceCanvasProvider>
             </CanvasProvider>
         </ReactFlowProvider>

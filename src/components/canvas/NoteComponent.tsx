@@ -7,6 +7,7 @@ import "./styles/nodeStyles.css";
 import { useNodeId, useReactFlow } from "@xyflow/react";
 import type { DataProps } from "../../types/canvas";
 import NodeSuggestionTooltip from "./NodeSuggestionTooltip";
+import { useUndoableNodeLabel, useReconcileHandlesOnHistory } from "../../hooks/useNodeHistory";
 
 export default function NoteComponent({data} : DataProps) {
 
@@ -31,11 +32,15 @@ export default function NoteComponent({data} : DataProps) {
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
-    const { handles, magneticHandle } = useHandle({ 
-        handleRef, 
+    const { handles, setHandles, magneticHandle } = useHandle({
+        handleRef,
         nodeRef,
         initialHandles: data?.handles as HandleData[] | undefined
     });
+
+    // Historial: snapshot/reconciliación de texto y handles para undo/redo
+    const { onEditStart, onEditCommit } = useUndoableNodeLabel(value, setValue, data.label, isEditing);
+    useReconcileHandlesOnHistory(setHandles, data?.handles as HandleData[] | undefined);
 
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {
         handleRef.current = node;
@@ -68,6 +73,7 @@ export default function NoteComponent({data} : DataProps) {
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            onEditStart();
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
@@ -75,13 +81,14 @@ export default function NoteComponent({data} : DataProps) {
                 textareaRef.current?.select();
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, setIsZoomOnScrollEnabled, onEditStart]);
 
     const handleBlur = useCallback(() => {
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
         setValue(v => v.trim());
-    }, [setIsZoomOnScrollEnabled]);
+        onEditCommit();
+    }, [setIsZoomOnScrollEnabled, onEditCommit]);
 
     // Handler para abrir el menú contextual
     const handleContextMenu = useCallback((e: React.MouseEvent) => {

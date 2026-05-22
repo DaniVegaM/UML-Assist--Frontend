@@ -11,11 +11,13 @@ import { useNavigate } from 'react-router';
 import { closeAlert, confirmExitUnsaved, errorAlert, loadingAlert, successAlert } from '../../../utils/sweetAlert';
 import { selectExportFormatAlert } from '../../../utils/sweetAlert';
 import { exportDiagramAsPdf, exportDiagramAsPng } from '../../../utils/exportDiagram';
+import { useUndoRedoContext } from '../../../contexts/UndoRedoContext';
 
 const AUTO_SAVE_DELAY = 5000;
 
 export default function Header({ diagramTitle = '', diagramId, type, nodes, edges }: HeaderProps) {
     const { isDarkMode, toggleTheme } = useTheme();
+    const { undo, redo, canUndo, canRedo } = useUndoRedoContext();
     const [title, setTitle] = useState<string>('')
     const [saving, setSaving] = useState<boolean>(false)
     const [loading, setLoading] = useState({ showLoading: false, showConfirmation: false, showError: false });
@@ -346,7 +348,31 @@ export default function Header({ diagramTitle = '', diagramId, type, nodes, edge
                         )}
                     </div>
                 </div>
-                <div className="flex justify-center gap-4">
+                <div className="flex justify-center items-center gap-4">
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={undo}
+                            disabled={!canUndo}
+                            title="Deshacer (Ctrl/Cmd+Z)"
+                            aria-label="Deshacer"
+                            className="bg-white dark:bg-neutral-800 p-1.5 text-sky-600 dark:text-white rounded-full transition-all duration-200 enabled:hover:bg-zinc-800 enabled:hover:text-white enabled:cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                            </svg>
+                        </button>
+                        <button
+                            onClick={redo}
+                            disabled={!canRedo}
+                            title="Rehacer (Ctrl+Y / Cmd+Shift+Z)"
+                            aria-label="Rehacer"
+                            className="bg-white dark:bg-neutral-800 p-1.5 text-sky-600 dark:text-white rounded-full transition-all duration-200 enabled:hover:bg-zinc-800 enabled:hover:text-white enabled:cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="size-5">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3" />
+                            </svg>
+                        </button>
+                    </div>
                     <button onClick={() => saveDiagram()} className="bg-white dark:bg-neutral-800 py-1 px-4 text-sky-600 dark:text-white font-bold uppercase rounded-full hover:bg-zinc-800 hover:text-white transition-all duration-200 cursor-pointer">Guardar</button>
 
                 <button

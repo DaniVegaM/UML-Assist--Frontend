@@ -6,6 +6,9 @@ import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import type { AltFragmentData } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoableNodeLabel } from "../../../hooks/useNodeHistory";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
+import type { Snapshot } from "../../../hooks/useUndoRedo";
 
 const TEXT_AREA_MAX_LEN = 30;
 
@@ -27,6 +30,26 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
   const { nodes: allNodes, edges, setNodes, setEdges } = useSequenceDiagram();
 
   const [showSuggestion, setShowSuggestion] = useState(false);
+
+  // ── Historial undo/redo ──
+  const { onEditStart: onFirstOperandEditStart, onEditCommit: onFirstOperandEditCommit } =
+    useUndoableNodeLabel(rawFirstOperand, setRawFirstOperand, data?.firstOperand, isEditingFirstOperand);
+  const { takeSnapshot, captureSnapshot, commitSnapshot, historyVersion } = useUndoRedoContext();
+  const pendingSeparatorEdit = useRef<Snapshot | null>(null);
+  const pendingSeparatorStart = useRef<string>("");
+  const pendingSeparatorDrag = useRef<Snapshot | null>(null);
+  const pendingDragStart = useRef<number[] | null>(null);
+
+  // Reconciliar separadores desde data tras un undo/redo
+  useEffect(() => {
+    if (historyVersion === 0) return;
+    const sv = data?.separatorValues ?? [];
+    const sp = data?.separatorPositions ?? [];
+    setSeparatorValues(sv);
+    setSeparators(sv.map((_, i) => i));
+    setSeparatorPositions(sp);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyVersion]);
 
   const clearSuggestion = useCallback(() => {
     if (!nodeId) return;
@@ -199,6 +222,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
 
   // Handler para agregar separador
   const addSeparator = useCallback(() => {
+    takeSnapshot();
     setSeparators(prev => [...prev, prev.length + 1]);
     setSeparatorValues(prev => [...prev, '']);
     setSeparatorPositions(prev => {
@@ -207,10 +231,11 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
       return [...prev, newPosition];
     });
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, takeSnapshot]);
 
   // Handler para eliminar separador
   const removeSeparator = useCallback(() => {
+    takeSnapshot();
     setSeparators(prev => {
       if (prev.length > 0) return prev.slice(0, -1);
       return prev;
@@ -224,24 +249,26 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
       return prev;
     });
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, takeSnapshot]);
 
   // Handler para eliminar el nodo
   const deleteNode = useCallback(() => {
     if (!nodeId) return;
-    
+    takeSnapshot();
+
     // Eliminar el nodo
     setNodes(prev => prev.filter(node => node.id !== nodeId));
-    
+
     // Eliminar todas las conexiones (edges) asociadas al nodo
-    setEdges(prev => prev.filter(edge => 
+    setEdges(prev => prev.filter(edge =>
       edge.source !== nodeId && edge.target !== nodeId
     ));
-    
+
     closeContextMenu();
-  }, [nodeId, setNodes, setEdges, closeContextMenu]);
+  }, [nodeId, setNodes, setEdges, closeContextMenu, takeSnapshot]);
 
   const onFirstOperandDoubleClick = useCallback(() => {
+    onFirstOperandEditStart();
     setIsEditingFirstOperand(true);
     setIsZoomOnScrollEnabled(false);
 
@@ -252,7 +279,7 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
         textareaRef.current.select();
       }
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, onFirstOperandEditStart]);
 
   const onFirstOperandChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     // Quita corchetes por si el usuario los pega
@@ -263,7 +290,8 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
   const onFirstOperandBlur = useCallback(() => {
     setIsEditingFirstOperand(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+    onFirstOperandEditCommit();
+  }, [setIsZoomOnScrollEnabled, onFirstOperandEditCommit]);
 
   useEffect(() => {
     if (editingSeparatorIndex !== null) {
@@ -281,9 +309,12 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
     // Solo permitir arrastrar con el botón izquierdo del ratón
     if (e.button !== 0) return;
     e.stopPropagation();
+    // Capturamos el estado antes de mover el separador (se confirma en mouseUp si hubo cambio).
+    pendingSeparatorDrag.current = captureSnapshot();
+    pendingDragStart.current = [...separatorPositions];
     setDraggingIndex(index);
     setIsZoomOnScrollEnabled(false);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, captureSnapshot, separatorPositions]);
 
   const handleSeparatorChange = useCallback((index: number) => (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     const raw = evt.target.value.replace(/^\[|\]$/g, '');
@@ -295,14 +326,25 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
   }, []);
 
   const handleSeparatorDoubleClick = useCallback((index: number) => () => {
+    pendingSeparatorEdit.current = captureSnapshot();
+    pendingSeparatorStart.current = separatorValues[index] ?? "";
     setEditingSeparatorIndex(index);
     setIsZoomOnScrollEnabled(false);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, captureSnapshot, separatorValues]);
 
   const handleSeparatorBlur = useCallback(() => {
+    const idx = editingSeparatorIndex;
+    if (
+      pendingSeparatorEdit.current &&
+      idx !== null &&
+      (separatorValues[idx] ?? "") !== pendingSeparatorStart.current
+    ) {
+      commitSnapshot(pendingSeparatorEdit.current);
+    }
+    pendingSeparatorEdit.current = null;
     setEditingSeparatorIndex(null);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, editingSeparatorIndex, separatorValues, commitSnapshot]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (draggingIndex !== null && containerRef.current) {
@@ -325,9 +367,17 @@ const AltFragmentNode = ({ selected, data }: NodeProps<Node<AltFragmentData>>) =
   }, [draggingIndex, getZoom]);
 
   const handleMouseUp = useCallback(() => {
+    if (pendingSeparatorDrag.current && pendingDragStart.current) {
+      const changed = separatorPositions.some(
+        (p, i) => p !== pendingDragStart.current![i]
+      );
+      if (changed) commitSnapshot(pendingSeparatorDrag.current);
+    }
+    pendingSeparatorDrag.current = null;
+    pendingDragStart.current = null;
     setDraggingIndex(null);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, separatorPositions, commitSnapshot]);
 
   // Sincronizar datos con node.data (sin containedEdgeIds para evitar loop)
   useEffect(() => {

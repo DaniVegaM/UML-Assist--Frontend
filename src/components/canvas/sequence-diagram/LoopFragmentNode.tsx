@@ -5,6 +5,9 @@ import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoableNodeLabel } from "../../../hooks/useNodeHistory";
+import { useUndoableText } from "../../../hooks/useUndoableText";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
 
 const TEXT_AREA_MAX_LEN = 30;
 const NUMBER_MAX_LEN = 5;
@@ -27,6 +30,21 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   const [isEditingMax, setIsEditingMax] = useState(false);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
+
+  // Historial: snapshot/reconciliación para undo/redo
+  const { onEditStart: onGuardEditStart, onEditCommit: onGuardEditCommit } =
+    useUndoableNodeLabel(guard, setGuard, (data as any)?.guard, isEditingGuard);
+  const { onEditStart: onMinEditStart, onEditCommit: onMinEditCommit } = useUndoableText(minIterations);
+  const { onEditStart: onMaxEditStart, onEditCommit: onMaxEditCommit } = useUndoableText(maxIterations);
+  const { takeSnapshot, historyVersion } = useUndoRedoContext();
+
+  // Reconciliar min/max desde data tras un undo/redo
+  useEffect(() => {
+    if (historyVersion === 0) return;
+    setMinIterations((data as any)?.minIterations ?? "0");
+    setMaxIterations((data as any)?.maxIterations ?? "*");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyVersion]);
 
   const clearSuggestion = useCallback(() => {
     if (!nodeId) return;
@@ -106,6 +124,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   }, [containedEdgeIds, operandAssignments]);
 
   const onGuardDoubleClick = useCallback(() => {
+    onGuardEditStart();
     setIsEditingGuard(true);
     setIsZoomOnScrollEnabled(false);
 
@@ -115,7 +134,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         guardTextareaRef.current.select();
       }
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, onGuardEditStart]);
 
   const onGuardChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     const raw = evt.target.value.replace(/^\[|\]$/g, "");
@@ -125,10 +144,12 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   const onGuardBlur = useCallback(() => {
     setIsEditingGuard(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+    onGuardEditCommit();
+  }, [setIsZoomOnScrollEnabled, onGuardEditCommit]);
 
   const onMinDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    onMinEditStart();
     setIsEditingMin(true);
     setIsZoomOnScrollEnabled(false);
     setTimeout(() => {
@@ -137,7 +158,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         minInputRef.current.select();
       }
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, onMinEditStart]);
 
   const onMinChange = useCallback((evt: React.ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value;
@@ -153,10 +174,12 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
     if (minIterations === "") {
       setMinIterations("0");
     }
-  }, [setIsZoomOnScrollEnabled, minIterations]);
+    onMinEditCommit();
+  }, [setIsZoomOnScrollEnabled, minIterations, onMinEditCommit]);
 
   const onMaxDoubleClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
+    onMaxEditStart();
     setIsEditingMax(true);
     setIsZoomOnScrollEnabled(false);
     setTimeout(() => {
@@ -165,7 +188,7 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
         maxInputRef.current.select();
       }
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, onMaxEditStart]);
 
   const onMaxChange = useCallback((evt: React.ChangeEvent<HTMLInputElement>) => {
     const value = evt.target.value;
@@ -181,7 +204,8 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
     if (maxIterations === "") {
       setMaxIterations("*");
     }
-  }, [setIsZoomOnScrollEnabled, maxIterations]);
+    onMaxEditCommit();
+  }, [setIsZoomOnScrollEnabled, maxIterations, onMaxEditCommit]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -198,17 +222,18 @@ const LoopFragmentNode = ({ id, data, selected }: NodeProps) => {
   // Handler para eliminar el nodo
   const deleteNode = useCallback(() => {
     if (!nodeId) return;
-    
+    takeSnapshot();
+
     // Eliminar el nodo
     setNodes(prev => prev.filter(node => node.id !== nodeId));
-    
+
     // Eliminar todas las conexiones (edges) asociadas al nodo
-    setEdges(prev => prev.filter(edge => 
+    setEdges(prev => prev.filter(edge =>
       edge.source !== nodeId && edge.target !== nodeId
     ));
-    
+
     closeContextMenu();
-  }, [nodeId, setNodes, setEdges, closeContextMenu]);
+  }, [nodeId, setNodes, setEdges, closeContextMenu, takeSnapshot]);
 
   return (
     <div

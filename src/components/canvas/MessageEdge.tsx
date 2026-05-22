@@ -12,6 +12,7 @@ import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal
 import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
 import EdgeSuggestionTooltip from './EdgeSuggestionTooltip';
 import type { EdgeDataProps } from '../../types/canvas';
+import { useUndoableEdgeLabel } from '../../hooks/useNodeHistory';
 
 // Extend the original EdgeProps to properly type our custom data
 export type MessageEdgeProps = Omit<ReactFlowEdgeProps, 'data'> & {
@@ -90,6 +91,7 @@ export function MessageEdge({
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [showSuggestion, setShowSuggestion] = useState(false);
     const [portalPos, setPortalPos] = useState<{ x: number; y: number } | null>(null);
+    const { begin, commit } = useUndoableEdgeLabel();
 
     // Track input position with rAF so the portal tooltip always stays above the input
     // even when the user pans or zooms the canvas.
@@ -196,6 +198,7 @@ export function MessageEdge({
         if (isEditing) return;
 
         const currentText = String(label || '').trim();
+        begin(currentText);
         setEditingLabel(currentText);
 
         setEdges((eds) =>
@@ -211,6 +214,7 @@ export function MessageEdge({
 
     const finishEditing = () => {
         const trimmed = editingLabel.trim();
+        commit(trimmed);
 
         if (!trimmed) {
         setEdges((eds) =>

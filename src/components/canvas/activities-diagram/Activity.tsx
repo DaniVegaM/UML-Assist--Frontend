@@ -5,6 +5,8 @@ import { TEXT_AREA_MAX_LEN } from "../variables";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoableNodeLabel } from "../../../hooks/useNodeHistory";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
 
 export default function Activity({ data }: DataProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -40,6 +42,26 @@ export default function Activity({ data }: DataProps) {
         }
         return [0];
     });
+
+    // Historial: snapshot/reconciliación de texto para undo/redo
+    const { onEditStart, onEditCommit } = useUndoableNodeLabel(value, setValue, data.label, isEditing);
+    const { takeSnapshot, historyVersion } = useUndoRedoContext();
+
+    // Reconciliar cajas source/target desde data tras un undo/redo
+    useEffect(() => {
+        if (historyVersion === 0) return;
+        const sLen = data.sourceBoxesLength ?? 1;
+        const tLen = data.targetBoxesLength ?? 1;
+        setSourceBoxes(Array.from({ length: sLen }, (_, i) => i));
+        setTargetBoxes(Array.from({ length: tLen }, (_, i) => i));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [historyVersion]);
+
+    // Re-medir los handles de las cajas cuando cambie su cantidad (incluye la
+    // reconciliación tras undo/redo); de lo contrario quedan mal posicionados.
+    useEffect(() => {
+        if (nodeId) updateNodeInternals(nodeId);
+    }, [sourceBoxes.length, targetBoxes.length, nodeId, updateNodeInternals]);
 
     const [hoveringSource, setHoveringSource] = useState<{ [key: number]: boolean }>({});
     const [hoveringTarget, setHoveringTarget] = useState<{ [key: number]: boolean }>({});
@@ -78,6 +100,7 @@ export default function Activity({ data }: DataProps) {
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            onEditStart();
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
@@ -85,12 +108,13 @@ export default function Activity({ data }: DataProps) {
                 textareaRef.current?.select();
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, setIsZoomOnScrollEnabled, onEditStart]);
 
     const handleBlur = useCallback(() => {
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
-    }, [setIsZoomOnScrollEnabled]);
+        onEditCommit();
+    }, [setIsZoomOnScrollEnabled, onEditCommit]);
 
     const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
         e.preventDefault();
@@ -103,6 +127,7 @@ export default function Activity({ data }: DataProps) {
     }, [openContextMenu, nodeId]);
                             
     const addSourceBox = () => {
+        takeSnapshot();
         setSourceBoxes(prev => {
             const newBoxes = [...prev, prev.length];
             updateNodeInternals(nodeId!);
@@ -111,6 +136,7 @@ export default function Activity({ data }: DataProps) {
     };
 
     const addTargetBox = () => {
+        takeSnapshot();
         setTargetBoxes(prev => {
             const newBoxes = [...prev, prev.length];
             updateNodeInternals(nodeId!);
@@ -120,6 +146,7 @@ export default function Activity({ data }: DataProps) {
 
     const deleteBox = () => {
         if (!boxContextMenu || !nodeId) return;
+        takeSnapshot();
 
         let handlesToDelete: string[] = [];
 

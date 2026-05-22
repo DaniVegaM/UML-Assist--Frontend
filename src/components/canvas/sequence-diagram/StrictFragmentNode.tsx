@@ -5,6 +5,8 @@ import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
+import type { Snapshot } from "../../../hooks/useUndoRedo";
 
 const StrictFragmentNode = ({ selected, data }: NodeProps) => {
   const nodeId = useNodeId();
@@ -17,6 +19,20 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
   const { setIsZoomOnScrollEnabled } = useCanvas();
   const { getZoom, getNodesBounds, getInternalNode } = useReactFlow();
   const { nodes: allNodes, edges, setNodes, setEdges } = useSequenceDiagram();
+
+  // ── Historial undo/redo ──
+  const { takeSnapshot, captureSnapshot, commitSnapshot, historyVersion } = useUndoRedoContext();
+  const pendingDragSnapshot = useRef<Snapshot | null>(null);
+  const pendingDragStart = useRef<number[] | null>(null);
+
+  // Reconciliar separadores desde data tras un undo/redo
+  useEffect(() => {
+    if (historyVersion === 0) return;
+    const sp = (data as { separatorPositions?: number[] })?.separatorPositions ?? [];
+    setSeparatorPositions(sp);
+    setSeparators(sp.map((_, i) => i + 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyVersion]);
 
   const clearSuggestion = useCallback(() => {
     if (!nodeId) return;
@@ -107,6 +123,7 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
 
   // Handler para agregar separador
   const addSeparator = useCallback(() => {
+    takeSnapshot();
     setSeparators(prev => [...prev, prev.length + 1]);
     setSeparatorPositions(prev => {
       const containerHeight = containerRef.current?.clientHeight || 0;
@@ -114,10 +131,11 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
       return [...prev, newPosition];
     });
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, takeSnapshot]);
 
   // Handler para eliminar separador
   const removeSeparator = useCallback(() => {
+    takeSnapshot();
     setSeparators(prev => {
       if (prev.length > 0) return prev.slice(0, -1);
       return prev;
@@ -127,29 +145,32 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
       return prev;
     });
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, takeSnapshot]);
 
   // Handler para eliminar el nodo
   const deleteNode = useCallback(() => {
     if (!nodeId) return;
-    
+    takeSnapshot();
+
     // Eliminar el nodo
     setNodes(prev => prev.filter(node => node.id !== nodeId));
-    
+
     // Eliminar todas las conexiones (edges) asociadas al nodo
-    setEdges(prev => prev.filter(edge => 
+    setEdges(prev => prev.filter(edge =>
       edge.source !== nodeId && edge.target !== nodeId
     ));
-    
+
     closeContextMenu();
-  }, [nodeId, setNodes, setEdges, closeContextMenu]);
+  }, [nodeId, setNodes, setEdges, closeContextMenu, takeSnapshot]);
 
   const handleMouseDown = useCallback((index: number) => (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     e.stopPropagation();
+    pendingDragSnapshot.current = captureSnapshot();
+    pendingDragStart.current = [...separatorPositions];
     setDraggingIndex(index);
     setIsZoomOnScrollEnabled(false);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, captureSnapshot, separatorPositions]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (draggingIndex !== null && containerRef.current) {
@@ -170,9 +191,15 @@ const StrictFragmentNode = ({ selected, data }: NodeProps) => {
   }, [draggingIndex, getZoom]);
 
   const handleMouseUp = useCallback(() => {
+    if (pendingDragSnapshot.current && pendingDragStart.current) {
+      const changed = separatorPositions.some((p, i) => p !== pendingDragStart.current![i]);
+      if (changed) commitSnapshot(pendingDragSnapshot.current);
+    }
+    pendingDragSnapshot.current = null;
+    pendingDragStart.current = null;
     setDraggingIndex(null);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, separatorPositions, commitSnapshot]);
 
   const previousHeightRef = useRef<number | null>(null);
 

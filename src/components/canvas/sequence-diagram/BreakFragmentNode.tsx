@@ -5,6 +5,8 @@ import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram";
 import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoableNodeLabel } from "../../../hooks/useNodeHistory";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
 
 const TEXT_AREA_MAX_LEN = 30;
 
@@ -21,6 +23,10 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   const [isEditingGuard, setIsEditingGuard] = useState(false);
   const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
   const [showSuggestion, setShowSuggestion] = useState(false);
+
+  // Historial: snapshot/reconciliación del guard + borrado para undo/redo
+  const { onEditStart, onEditCommit } = useUndoableNodeLabel(guard, setGuard, (data as any)?.guard, isEditingGuard);
+  const { takeSnapshot } = useUndoRedoContext();
 
   const clearSuggestion = useCallback(() => {
     if (!nodeId) return;
@@ -99,6 +105,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   }, [containedEdgeIds, operandAssignments]);
 
   const onGuardDoubleClick = useCallback(() => {
+    onEditStart();
     setIsEditingGuard(true);
     setIsZoomOnScrollEnabled(false);
 
@@ -108,7 +115,7 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
         textareaRef.current.select();
       }
     }, 0);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, onEditStart]);
 
   const onGuardChange = useCallback((evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     const raw = evt.target.value.replace(/^\[|\]$/g, "");
@@ -118,7 +125,8 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   const onGuardBlur = useCallback(() => {
     setIsEditingGuard(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+    onEditCommit();
+  }, [setIsZoomOnScrollEnabled, onEditCommit]);
 
   // Handler para abrir el menú contextual
   const handleContextMenu = useCallback((e: React.MouseEvent) => {
@@ -135,17 +143,18 @@ const BreakFragmentNode = ({ id, data, selected }: NodeProps) => {
   // Handler para eliminar el nodo
   const deleteNode = useCallback(() => {
     if (!nodeId) return;
-    
+    takeSnapshot();
+
     // Eliminar el nodo
     setNodes(prev => prev.filter(node => node.id !== nodeId));
-    
+
     // Eliminar todas las conexiones (edges) asociadas al nodo
-    setEdges(prev => prev.filter(edge => 
+    setEdges(prev => prev.filter(edge =>
       edge.source !== nodeId && edge.target !== nodeId
     ));
-    
+
     closeContextMenu();
-  }, [nodeId, setNodes, setEdges, closeContextMenu]);
+  }, [nodeId, setNodes, setEdges, closeContextMenu, takeSnapshot]);
 
   return (
     <div

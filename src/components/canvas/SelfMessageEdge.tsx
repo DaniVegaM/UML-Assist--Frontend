@@ -9,6 +9,7 @@ import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal
 import ChangeEdgeType from './sequence-diagram/contextMenus/ChangeEdgeType';
 import EdgeSuggestionTooltip from './EdgeSuggestionTooltip';
 import type { EdgeDataProps } from '../../types/canvas';
+import { useUndoableEdgeLabel } from '../../hooks/useNodeHistory';
 
 // Extend the original EdgeProps to properly type our custom data
 export type SelfMessageEdgeProps = Omit<ReactFlowEdgeProps, 'data'> & {
@@ -82,6 +83,7 @@ export function SelfMessageEdge({
     const [editingLabel, setEditingLabel] = useState('');
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
     const [showSuggestion, setShowSuggestion] = useState(false);
+    const { begin, commit } = useUndoableEdgeLabel();
 
     const clearSuggestion = () => {
         setEdges((eds) =>
@@ -103,6 +105,7 @@ export function SelfMessageEdge({
 
     const onSave = () => {
         const trimmed = editingLabel.trim();
+        commit(trimmed);
 
         if (trimmed === '') {
             setEdges((eds) =>
@@ -147,6 +150,7 @@ export function SelfMessageEdge({
 
     const onDoubleClick = () => {
         const currentText = String(label || '').trim();
+        begin(currentText);
         setEditingLabel(currentText);
         setEdges((eds) =>
             eds.map((e) =>
