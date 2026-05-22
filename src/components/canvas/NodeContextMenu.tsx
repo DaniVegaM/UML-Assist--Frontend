@@ -2,10 +2,12 @@ import { useRef, useEffect, useState } from "react";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useReactFlow, useNodes, type Node as RFNode, type XYPosition } from "@xyflow/react";
 import DeleteIcon from "./shared/DeleteIcon";
+import { useUndoRedoContext } from "../../contexts/UndoRedoContext";
 
 export default function NodeContextMenu() {
     const { contextMenu, closeContextMenu } = useCanvas();
     const { setNodes, setEdges } = useReactFlow();
+    const { takeSnapshot } = useUndoRedoContext();
     const nodes = useNodes();
     const menuRef = useRef<HTMLDivElement>(null);
 
@@ -61,6 +63,7 @@ export default function NodeContextMenu() {
     const isDataNode = currentNode.type === 'dataNode';
 
     const changeType = (variant: "centralBuffer" | "datastore") => {
+        takeSnapshot();
         setNodes((nodes: RFNode[]) =>
             nodes.map((n: RFNode) =>
                 n.id === contextMenu.nodeId
@@ -72,6 +75,7 @@ export default function NodeContextMenu() {
     };
 
     const deleteNode = () => {
+        takeSnapshot();
         // Eliminar el nodo
         setNodes((nodes: RFNode[]) =>
             nodes.filter((n: RFNode) => n.id !== contextMenu.nodeId)

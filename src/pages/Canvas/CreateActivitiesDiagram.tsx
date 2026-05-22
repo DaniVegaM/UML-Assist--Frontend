@@ -21,6 +21,9 @@ import EdgeContextMenu from "../../components/canvas/EdgeContextMenu";
 import { createPrefixedNodeId } from "../../utils/idGenerator";
 import { confirmExitWithoutSaving } from "../../utils/sweetAlert";
 import { confirmRestoreAutoSave } from "../../utils/sweetAlert";
+import { UndoRedoProvider, useUndoRedoContext } from "../../contexts/UndoRedoContext";
+import { useUndoRedoShortcuts } from "../../hooks/useUndoRedoShortcuts";
+import type { Snapshot } from "../../hooks/useUndoRedo";
 
 function DiagramContent() {
     const { id: diagramId } = useParams();
@@ -29,9 +32,15 @@ function DiagramContent() {
     const { isZoomOnScrollEnabled, setIsTryingToConnect, openEdgeContextMenu } = useCanvas();
     const [nodes, setNodes] = useState<Node[]>([]);
     const [edges, setEdges] = useState<Edge[]>([]);
-    const { getIntersectingNodes } = useReactFlow();
+    const { getIntersectingNodes, getNodes } = useReactFlow();
     const { isValidActivityConnection, validateActivityConnection } = useLocalValidations(nodes, edges);
     const lastInvalidAttemptRef = useRef<{ ts: number; message: string; type: "error" | "success" | "info" } | null>(null);
+
+    // ── Historial undo/redo ──
+    const { takeSnapshot, captureSnapshot, commitSnapshot } = useUndoRedoContext();
+    useUndoRedoShortcuts();
+    const pendingConnectSnapshot = useRef<Snapshot | null>(null);
+    const pendingDragSnapshot = useRef<Snapshot | null>(null);
 
     const restoredFromDraftRef = useRef(false);
 
@@ -162,6 +171,28 @@ function DiagramContent() {
         [],
     );
 
+    // Snapshot al iniciar un arrastre; se confirma al soltar solo si hubo movimiento real.
+    const onNodeDragStart = useCallback(() => {
+        pendingDragSnapshot.current = captureSnapshot();
+    }, [captureSnapshot]);
+
+    const onNodeDragStop = useCallback(() => {
+        const before = pendingDragSnapshot.current;
+        pendingDragSnapshot.current = null;
+        if (!before) return;
+        const after = getNodes();
+        const moved = before.nodes.some((bn) => {
+            const an = after.find((n) => n.id === bn.id);
+            return (
+                an &&
+                (an.position.x !== bn.position.x ||
+                    an.position.y !== bn.position.y ||
+                    an.parentId !== bn.parentId)
+            );
+        });
+        if (moved) commitSnapshot(before);
+    }, [getNodes, commitSnapshot]);
+
      const onNodeDrag = useCallback((_: React.MouseEvent, node: Node) => {
         const intersections = getIntersectingNodes(node);
         const parentNode = intersections.find(n => n.type === 'activity' && n.id !== node.id);
@@ -185,6 +216,14 @@ function DiagramContent() {
 
     const onConnect = useCallback(
         (params: Connection) => {
+            // Confirma el snapshot tomado en onConnectStart (incluye handles magnéticos
+            // generados durante el gesto). Si no hubo gesto previo, snapshot directo.
+            if (pendingConnectSnapshot.current) {
+                commitSnapshot(pendingConnectSnapshot.current);
+                pendingConnectSnapshot.current = null;
+            } else {
+                takeSnapshot();
+            }
 
             const sourceNode = nodes.find((node) => node.id === params.source);
             const targetNode = nodes.find((node) => node.id === params.target);
@@ -242,9 +281,9 @@ function DiagramContent() {
                 // console.log('Conexiones actuales:', newEdges);
                 return newEdges;
             });
-            
+
         },
-        [nodes, setEdges],
+        [nodes, setEdges, commitSnapshot, takeSnapshot],
     );
 
    useEffect(() => {
@@ -278,8 +317,16 @@ function DiagramContent() {
         );
     }, [isDarkMode]);
     
+    const handleConnectStart = useCallback(() => {
+        setIsTryingToConnect(true);
+        // Captura el estado antes de iniciar la conexión (se confirma en onConnect).
+        pendingConnectSnapshot.current = captureSnapshot();
+    }, [setIsTryingToConnect, captureSnapshot]);
+
     const handleConnectEnd = useCallback(() => {
         setIsTryingToConnect(false);
+        // Si el gesto no terminó en una conexión, descartamos el snapshot pendiente.
+        pendingConnectSnapshot.current = null;
 
         const info = lastInvalidAttemptRef.current;
         if (info && Date.now() - info.ts < 700) {
@@ -335,6 +382,11 @@ function DiagramContent() {
                     onEdgesChange={onEdgesChange}
                     elevateNodesOnSelect={false}
                     onNodeDrag={onNodeDrag}
+                    onNodeDragStart={onNodeDragStart}
+                    onNodeDragStop={onNodeDragStop}
+                    onSelectionDragStart={onNodeDragStart}
+                    onSelectionDragStop={onNodeDragStop}
+                    onBeforeDelete={async () => { takeSnapshot(); return true; }}
                     nodeTypes={activitiesNodeTypes}
                     zoomOnScroll={isZoomOnScrollEnabled}
                     selectionOnDrag={true}
@@ -343,7 +395,7 @@ function DiagramContent() {
                     nodesDraggable={true}
                     onConnect={onConnect}
                     onConnectEnd={handleConnectEnd}
-                    onConnectStart={() => setIsTryingToConnect(true)}
+                    onConnectStart={handleConnectStart}
                     onEdgeContextMenu={onEdgeContextMenu}
                 >
                     <Background bgColor={isDarkMode ? '#18181B' : '#FAFAFA'} />
@@ -367,7 +419,9 @@ export default function CreateActivitiesDiagram() {
     return (
         <ReactFlowProvider>
             <CanvasProvider>
-                <DiagramContent />
+                <UndoRedoProvider>
+                    <DiagramContent />
+                </UndoRedoProvider>
             </CanvasProvider>
         </ReactFlowProvider>
 

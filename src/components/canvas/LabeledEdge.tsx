@@ -8,6 +8,7 @@ import {
 } from '@xyflow/react';
 import EdgeSuggestionTooltip from './EdgeSuggestionTooltip';
 import type { EdgeDataProps } from '../../types/canvas';
+import { useUndoableEdgeLabel } from '../../hooks/useNodeHistory';
 
 // Extend the original EdgeProps to properly type our custom data
 export type LabeledEdgeProps = Omit<ReactFlowEdgeProps, 'data'> & {
@@ -37,6 +38,7 @@ export function LabeledEdge({
     const [editingLabel, setEditingLabel] = useState('');
     const [showSuggestion, setShowSuggestion] = useState(false);
     const [openTime, setOpenTime] = useState(0);
+    const { begin, commit } = useUndoableEdgeLabel();
 
     const clearSuggestion = () => {
         setEdges((eds) =>
@@ -111,6 +113,7 @@ export function LabeledEdge({
             }
         }
 
+        commit(formattedLabel);
         setEdges((currentEdges) =>
             currentEdges.map((e) => {
                 if (e.id === id) {
@@ -130,6 +133,7 @@ export function LabeledEdge({
     const onDoubleClick = (e: React.MouseEvent) => {
         e.stopPropagation();
         e.preventDefault();
+        begin(String(label || ''));
         const currentText = String(label || '').replace(/^\[|\]$/g, '');
         setEditingLabel(currentText);
         setIsEditing(true);

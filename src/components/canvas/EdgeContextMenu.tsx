@@ -2,10 +2,12 @@ import { useRef, useEffect, useState } from "react";
 import { useCanvas } from "../../hooks/useCanvas";
 import { useReactFlow, type XYPosition } from "@xyflow/react";
 import DeleteIcon from "./shared/DeleteIcon";
+import { useUndoRedoContext } from "../../contexts/UndoRedoContext";
 
 export default function EdgeContextMenu() {
     const { edgeContextMenu, closeEdgeContextMenu } = useCanvas();
     const { setEdges } = useReactFlow();
+    const { takeSnapshot } = useUndoRedoContext();
     const menuRef = useRef<HTMLDivElement>(null);
 
     const [menuPos, setMenuPos] = useState<XYPosition>({ x: 0, y: 0 });
@@ -43,6 +45,7 @@ export default function EdgeContextMenu() {
     if (!edgeContextMenu) return null;
 
     const deleteEdge = () => {
+        takeSnapshot();
         setEdges((edges) =>
             edges.filter((edge) => edge.id !== edgeContextMenu.edgeId)
         );

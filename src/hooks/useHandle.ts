@@ -42,6 +42,14 @@ export function useHandle({ handleRef, nodeRef, disableMagneticPoints = false, d
         }
     }, [connection.inProgress]);
 
+    // Cada vez que cambian los handles (incluyendo al montar, al cargar un diagrama
+    // guardado o al reconciliar tras un undo/redo) hay que pedirle a React Flow que
+    // vuelva a medir los bounds de los handles; de lo contrario las aristas quedan
+    // ancladas en posiciones viejas hasta que el usuario hace hover sobre el nodo.
+    useEffect(() => {
+        if (nodeId) updateNodeInternals(nodeId);
+    }, [handles, nodeId, updateNodeInternals]);
+
     const magneticHandle = useCallback((evt: React.MouseEvent) => {
         // Si allowSelfConnection es true, permitir que el handle aparezca incluso cuando la conexión viene del mismo nodo
         const blockSelfConnection = !allowSelfConnection && connection.inProgress && connection.fromNode.id === nodeId;

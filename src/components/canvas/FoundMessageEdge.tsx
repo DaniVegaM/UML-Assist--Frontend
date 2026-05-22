@@ -9,6 +9,8 @@ import EdgeSuggestionTooltip from './EdgeSuggestionTooltip';
 import type { EdgeDataProps } from '../../types/canvas';
 import ContextMenuPortal from './sequence-diagram/contextMenus/ContextMenuPortal';
 import DeleteIcon from './shared/DeleteIcon';
+import { useUndoableEdgeLabel } from '../../hooks/useNodeHistory';
+import { useUndoRedoContext } from '../../contexts/UndoRedoContext';
 
 // Extend the original EdgeProps to properly type our custom data
 export type FoundMessageEdgeProps = Omit<ReactFlowEdgeProps, 'data'> & {
@@ -29,6 +31,8 @@ export function FoundMessageEdge({
     const [editingLabel, setEditingLabel] = useState('');
     const [showSuggestion, setShowSuggestion] = useState(false);
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
+    const { begin, commit } = useUndoableEdgeLabel();
+    const { takeSnapshot } = useUndoRedoContext();
 
     const clearSuggestion = () => {
         setEdges((eds) =>
@@ -57,6 +61,7 @@ export function FoundMessageEdge({
     const onSave = () => {
         setIsEditing(false);
         const trimmedLabel = editingLabel.trim();
+        commit(trimmedLabel);
         setEdges((currentEdges) =>
             currentEdges.map((e) => {
                 if (e.id === id) {
@@ -75,11 +80,13 @@ export function FoundMessageEdge({
 
     const onDoubleClick = () => {
         const currentText = String(label || '');
+        begin(currentText);
         setEditingLabel(currentText);
         setIsEditing(true);
     };
 
     const handleDelete = () => {
+        takeSnapshot();
         setEdges(eds => eds.filter(e => e.id !== id));
         setContextMenuEvent(null);
     };
