@@ -2,13 +2,16 @@ import { useCallback } from "react";
 import { useSequenceDiagram } from "../../../hooks/useSequenceDiagram"; // Ajusta tu import
 import type { NodeProps } from "@xyflow/react";
 import { createPrefixedNodeId } from "../../../utils/idGenerator";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
 
 // Recibimos el ID y la posición directamente del nodo
 export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeProps) {
     const { nodes, setNodes } = useSequenceDiagram();
+    const { takeSnapshot } = useUndoRedoContext();
     const isHiding = data?.isHiding as boolean || false;
 
     const addNewLifeLine = useCallback(() => {
+        takeSnapshot();
         //Si positionAbsoluteX falla, buscamos el nodo en el estado
         let currentBtnX = positionAbsoluteX;
 
@@ -79,7 +82,7 @@ export default function AddLifeLineButton({ id, positionAbsoluteX, data }: NodeP
                 style: { zIndex: 999 }
             }]);
         });
-    }, [id, positionAbsoluteX, nodes, setNodes]);
+    }, [id, positionAbsoluteX, nodes, setNodes, takeSnapshot]);
 
     return (
         <button 

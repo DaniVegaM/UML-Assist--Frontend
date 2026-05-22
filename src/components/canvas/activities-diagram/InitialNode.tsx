@@ -6,6 +6,7 @@ import "../styles/nodeStyles.css";
 import { useCanvas } from "../../../hooks/useCanvas";
 import type { DataProps } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useReconcileHandlesOnHistory } from "../../../hooks/useNodeHistory";
 
 
 
@@ -18,12 +19,15 @@ export default function InitialNode({ data }: DataProps) {
     const [showHandles, setShowHandles] = useState(false);
     const nodeRef = useRef<HTMLDivElement>(null);
     const handleRef = useRef<HTMLDivElement>(null);
-    const { handles, magneticHandle } = useHandle({
+    const { handles, setHandles, magneticHandle } = useHandle({
         handleRef,
         nodeRef,
         maxHandles: 1,
         initialHandles: data?.handles as HandleData[] | undefined
     });
+
+    // Historial: reconciliar handles tras undo/redo
+    useReconcileHandlesOnHistory(setHandles, data?.handles as HandleData[] | undefined);
 
     // Callback ref para actualizar handleRef cuando cambie el último handle
     const setHandleRef = useCallback((node: HTMLDivElement | null) => {

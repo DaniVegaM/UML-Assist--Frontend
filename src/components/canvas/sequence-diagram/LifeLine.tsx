@@ -13,6 +13,7 @@ import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
 import { selectLifeLineHeaderIcon, type LifeLineHeaderIcon } from "../../../utils/sweetAlert";
+import { useUndoableText } from "../../../hooks/useUndoableText";
 
 // UML spec (UML@Classroom §6.1): lifeline head format is roleName:Class
 // Rules: roleName alone (no colon), :Class (colon required), roleName:Class,
@@ -109,6 +110,10 @@ export default function LifeLine({ data }: DataProps) {
     const isSyncingValue = useRef(false);
     const { handles, setHandles, magneticHandle } = useHandle({ handleRef, nodeRef, disableMagneticPoints: true, disableBottom: true, disableTop: true, disableLeft: true, allowSelfConnection: true, initialHandles: data?.handles as HandleData[] | undefined});
     const handlesRef = useRef(handles);
+
+    // Historial: snapshot del texto de la cabecera para undo/redo
+    // (la reconciliación desde data ya la hacen los effects propios de LifeLine).
+    const { onEditStart, onEditCommit } = useUndoableText(value);
 
     // Estados para el menú contextual y destrucción
     const [contextMenuEvent, setContextMenuEvent] = useState<MouseEvent | null>(null);
@@ -246,6 +251,7 @@ export default function LifeLine({ data }: DataProps) {
 
     const handleDoubleClick = useCallback(() => {
         if (!isEditing) {
+            onEditStart();
             setIsEditing(true);
             setIsZoomOnScrollEnabled(false);
             setTimeout(() => {
@@ -255,12 +261,13 @@ export default function LifeLine({ data }: DataProps) {
                 }
             }, 0);
         }
-    }, [isEditing, setIsZoomOnScrollEnabled]);
+    }, [isEditing, setIsZoomOnScrollEnabled, onEditStart]);
 
     const handleBlur = useCallback(() => {
         setIsEditing(false);
         setIsZoomOnScrollEnabled(true);
-    }, [setIsZoomOnScrollEnabled]);
+        onEditCommit();
+    }, [setIsZoomOnScrollEnabled, onEditCommit]);
 
     useEffect(() => {
         if (nodeId) {

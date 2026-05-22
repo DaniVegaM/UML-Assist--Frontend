@@ -7,6 +7,7 @@ import { useNodeId, useReactFlow } from "@xyflow/react";
 import "../styles/nodeStyles.css";
 import type { DataProps } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoableNodeLabel, useReconcileHandlesOnHistory } from "../../../hooks/useNodeHistory";
 
 export default function ExceptionHandling({ data }: DataProps) {
   const nodeId = useNodeId();
@@ -29,12 +30,16 @@ export default function ExceptionHandling({ data }: DataProps) {
   const [showHandles, setShowHandles] = useState(false);
   const nodeRef = useRef<HTMLDivElement>(null);
   const handleRef = useRef<HTMLDivElement>(null);
-  const { handles, magneticHandle } = useHandle({ 
-    handleRef, 
-    nodeRef, 
+  const { handles, setHandles, magneticHandle } = useHandle({
+    handleRef,
+    nodeRef,
     maxHandles: 1,
     initialHandles: data?.handles as HandleData[] | undefined
   });
+
+  // Historial: snapshot/reconciliación de texto y handles para undo/redo
+  const { onEditStart, onEditCommit } = useUndoableNodeLabel(value, setValue, data.label, isEditing);
+  useReconcileHandlesOnHistory(setHandles, data?.handles as HandleData[] | undefined);
 
   // Callback ref para actualizar handleRef cuando cambie el último handle
   const setHandleRef = useCallback((node: HTMLDivElement | null) => {
@@ -68,6 +73,7 @@ export default function ExceptionHandling({ data }: DataProps) {
 
   const handleDoubleClick = useCallback(() => {
     if (!isEditing) {
+      onEditStart();
       setIsEditing(true);
       setIsZoomOnScrollEnabled(false);
       setTimeout(() => {
@@ -77,12 +83,13 @@ export default function ExceptionHandling({ data }: DataProps) {
         }
       }, 0);
     }
-  }, [isEditing, setIsZoomOnScrollEnabled]);
+  }, [isEditing, setIsZoomOnScrollEnabled, onEditStart]);
 
   const handleBlur = useCallback(() => {
     setIsEditing(false);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+    onEditCommit();
+  }, [setIsZoomOnScrollEnabled, onEditCommit]);
 
   const handleContextMenu = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     e.preventDefault();

@@ -6,6 +6,8 @@ import ContextMenuPortal from "./contextMenus/ContextMenuPortal";
 import DeleteIcon from "./contextMenus/DeleteIcon";
 import type { ParFragmentData } from "../../../types/canvas";
 import NodeSuggestionTooltip from "../NodeSuggestionTooltip";
+import { useUndoRedoContext } from "../../../contexts/UndoRedoContext";
+import type { Snapshot } from "../../../hooks/useUndoRedo";
 
 const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) => {
   const nodeId = useNodeId();
@@ -20,6 +22,20 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
   const { setIsZoomOnScrollEnabled } = useCanvas();
   const { setNodes, setEdges } = useSequenceDiagram();
   const { getZoom, getNodesBounds, getInternalNode } = useReactFlow();
+
+  // ── Historial undo/redo ──
+  const { takeSnapshot, captureSnapshot, commitSnapshot, historyVersion } = useUndoRedoContext();
+  const pendingDragSnapshot = useRef<Snapshot | null>(null);
+  const pendingDragStart = useRef<number[] | null>(null);
+
+  // Reconciliar separadores desde data tras un undo/redo
+  useEffect(() => {
+    if (historyVersion === 0) return;
+    const sp = data?.separatorPositions ?? [];
+    setSeparatorPositions(sp);
+    setSeparators(sp.map((_, i) => i + 1));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [historyVersion]);
 
   const clearSuggestion = useCallback(() => {
     if (!nodeId) return;
@@ -102,6 +118,7 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
 
   // Handler para agregar separador
   const addSeparator = useCallback(() => {
+    takeSnapshot();
     setSeparators(prev => [...prev, prev.length + 1]);
     setSeparatorPositions(prev => {
       const containerHeight = containerRef.current?.clientHeight || 0;
@@ -109,10 +126,11 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
       return [...prev, newPosition];
     });
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, takeSnapshot]);
 
   // Handler para eliminar separador (mínimo 1 separador = 2 operandos)
   const removeSeparator = useCallback(() => {
+    takeSnapshot();
     setSeparators(prev => {
       if (prev.length > 1) return prev.slice(0, -1);
       return prev;
@@ -122,29 +140,32 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
       return prev;
     });
     closeContextMenu();
-  }, [closeContextMenu]);
+  }, [closeContextMenu, takeSnapshot]);
 
   // Handler para eliminar el nodo
   const deleteNode = useCallback(() => {
     if (!nodeId) return;
-    
+    takeSnapshot();
+
     // Eliminar el nodo
     setNodes(prev => prev.filter(node => node.id !== nodeId));
-    
+
     // Eliminar todas las conexiones (edges) asociadas al nodo
-    setEdges(prev => prev.filter(edge => 
+    setEdges(prev => prev.filter(edge =>
       edge.source !== nodeId && edge.target !== nodeId
     ));
-    
+
     closeContextMenu();
-  }, [nodeId, setNodes, setEdges, closeContextMenu]);
+  }, [nodeId, setNodes, setEdges, closeContextMenu, takeSnapshot]);
 
   const handleMouseDown = useCallback((index: number) => (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     e.stopPropagation();
+    pendingDragSnapshot.current = captureSnapshot();
+    pendingDragStart.current = [...separatorPositions];
     setDraggingIndex(index);
     setIsZoomOnScrollEnabled(false);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, captureSnapshot, separatorPositions]);
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (draggingIndex !== null && containerRef.current) {
@@ -165,9 +186,15 @@ const ParFragmentNode = ({ selected, data }: NodeProps<Node<ParFragmentData>>) =
   }, [draggingIndex, getZoom]);
 
   const handleMouseUp = useCallback(() => {
+    if (pendingDragSnapshot.current && pendingDragStart.current) {
+      const changed = separatorPositions.some((p, i) => p !== pendingDragStart.current![i]);
+      if (changed) commitSnapshot(pendingDragSnapshot.current);
+    }
+    pendingDragSnapshot.current = null;
+    pendingDragStart.current = null;
     setDraggingIndex(null);
     setIsZoomOnScrollEnabled(true);
-  }, [setIsZoomOnScrollEnabled]);
+  }, [setIsZoomOnScrollEnabled, separatorPositions, commitSnapshot]);
 
   // Sincronizar datos con node.data
   useEffect(() => {

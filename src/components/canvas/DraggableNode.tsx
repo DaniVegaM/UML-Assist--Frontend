@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import type { DraggableNodeProps } from "../../types/canvas";
 import type { Node } from "@xyflow/react";
 import { createPrefixedNodeId, type NodeTypeIdKey } from "../../utils/idGenerator";
+import { useUndoRedoContext } from "../../contexts/UndoRedoContext";
 
 
 export function DraggableNode({ className, children, nodeType, setExtendedBar, title, onMouseEnter, onMouseLeave }: DraggableNodeProps) {
@@ -12,6 +13,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
     const [isDragging, setIsDragging] = useState(false);
     const [startRect, setStartRect] = useState({ top: 0, left: 0, width: 0, height: 0 });
     const { getNodes, setNodes, screenToFlowPosition, getIntersectingNodes } = useReactFlow();
+    const { takeSnapshot } = useUndoRedoContext();
 
    const getId = () => createPrefixedNodeId(nodeType as NodeTypeIdKey);
 
@@ -57,6 +59,7 @@ export function DraggableNode({ className, children, nodeType, setExtendedBar, t
 
             //Si sí está dentro entonces se agrega el nodo
             if (isInFlow && isOutsideBar) {
+                takeSnapshot();
                 const flowPosition = screenToFlowPosition(screenPosition);
 
                 // Define el tipo de edge según el tipo de nodo
