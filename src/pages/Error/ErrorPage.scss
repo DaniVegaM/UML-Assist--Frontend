@@ -1,0 +1,162 @@
+/* Vuelo errático de la luciérnaga (movimiento) */
+@keyframes error-firefly-wander {
+  0% { transform: translate(0, 0); }
+  15% { transform: translate(16px, -14px); }
+  30% { transform: translate(-12px, -26px); }
+  45% { transform: translate(22px, -38px); }
+  60% { transform: translate(4px, -22px); }
+  75% { transform: translate(-18px, -10px); }
+  100% { transform: translate(0, 0); }
+}
+
+/* Parpadeo del resplandor (luz bioluminiscente) */
+@keyframes error-firefly-glow {
+  0%, 100% {
+    opacity: 0.3;
+    box-shadow: 0 0 5px 2px rgba(190, 242, 100, 0.45), 0 0 9px 4px rgba(163, 230, 53, 0.25);
+  }
+  45% {
+    opacity: 1;
+    box-shadow: 0 0 12px 4px rgba(217, 249, 157, 0.95), 0 0 22px 9px rgba(163, 230, 53, 0.55);
+  }
+}
+
+.error-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+}
+
+.error-code {
+  font-size: clamp(3.5rem, 12vw, 6rem);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: #0284c7;
+}
+
+.dark .error-code {
+  color: #38bdf8;
+}
+
+.error-title {
+  margin-top: 4px;
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.dark .error-title {
+  color: #f4f4f5;
+}
+
+.error-subtitle {
+  margin-top: 10px;
+  font-size: 1rem;
+  color: #4b5563;
+  max-width: 42ch;
+}
+
+.dark .error-subtitle {
+  color: #a1a1aa;
+}
+
+.error-scene {
+  position: relative;
+  margin: 28px 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Luciérnaga: trigger oculto del easter egg. Deambula con vuelo errático
+   cerca del campamento y parpadea como luz bioluminiscente. */
+.error-firefly {
+  position: absolute;
+  left: 34%;
+  bottom: 30%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, #f7fee7 0%, #d9f99d 45%, #a3e635 100%);
+  cursor: pointer;
+  animation:
+    error-firefly-wander 7.5s ease-in-out infinite,
+    error-firefly-glow 1.7s ease-in-out infinite;
+}
+
+.error-firefly:hover {
+  animation-play-state: paused;
+  opacity: 1;
+  box-shadow: 0 0 14px 5px rgba(217, 249, 157, 1), 0 0 26px 11px rgba(163, 230, 53, 0.6);
+}
+
+.error-firefly:focus-visible {
+  outline: 2px solid #a3e635;
+  outline-offset: 4px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.error-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.error-btn-primary {
+  background: #0284c7;
+  color: #fff;
+}
+
+.error-btn-primary:hover {
+  background: #0369a1;
+}
+
+.error-btn-ghost {
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+}
+
+.error-btn-ghost:hover {
+  background: #f1f5f9;
+}
+
+.dark .error-btn-ghost {
+  border-color: #3f3f46;
+  color: #e4e4e7;
+}
+
+.dark .error-btn-ghost:hover {
+  background: #27272a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .error-firefly {
+    animation: none;
+    opacity: 0.75;
+    box-shadow: 0 0 10px 3px rgba(163, 230, 53, 0.6);
+  }
+}

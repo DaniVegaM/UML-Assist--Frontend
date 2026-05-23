@@ -12,6 +12,7 @@ import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
 import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
 import Dashboard from "../pages/Dashboard";
 import HomePage from "../pages/HomePage";
+import ErrorPage from "../pages/Error/ErrorPage";
 import { getLoggedUser } from "../helpers/auth";
 
 const createAuthCallbackLoader = (provider: "google" | "github") => {
@@ -43,54 +44,59 @@ export const requireEmailProvider = () => {
 
 const router = createBrowserRouter([
   {
-    element: <MainLayout />,
+    errorElement: <ErrorPage />,
     children: [
       {
-        path: "/",
-        element: <HomePage />,
+        element: <MainLayout />,
+        children: [
+          {
+            path: "/",
+            element: <HomePage />,
+          },
+        ],
+      },
+      {
+        path: "/iniciar-sesion",
+        element: <LoginPage />,
+      },
+      {
+        path: "/crear-cuenta",
+        element: <SignupPage />,
+      },
+      {
+        path: "/auth/google/callback",
+        loader: createAuthCallbackLoader("google"),
+      },
+      {
+        path: "/auth/github/callback",
+        loader: createAuthCallbackLoader("github"),
+      },
+      {
+        path: "/recuperar-contrasena",
+        element: <ForgotPasswordPage />,
+      },
+      {
+        path: "/restablecer-contrasena",
+        element: <ResetPasswordPage />,
+      },
+      {
+        path: "/cambiar-contrasena",
+        element: <ChangePasswordPage />,
+        loader: requireEmailProvider
+      },
+      {
+        path: "/crear-diagrama-de-actividades/:id?",
+        element: <CreateActivitiesDiagram />,
+      },
+      {
+        path: "/crear-diagrama-de-secuencia/:id?",
+        element: <CreateSequenceDiagram />,
+      },
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
       },
     ],
-  },
-  {
-    path: "/iniciar-sesion",
-    element: <LoginPage />,
-  },
-  {
-    path: "/crear-cuenta",
-    element: <SignupPage />,
-  },
-  {
-    path: "/auth/google/callback",
-    loader: createAuthCallbackLoader("google"),
-  },
-  {
-    path: "/auth/github/callback",
-    loader: createAuthCallbackLoader("github"),
-  },
-  {
-    path: "/recuperar-contrasena",
-    element: <ForgotPasswordPage />,
-  },
-  {
-    path: "/restablecer-contrasena",
-    element: <ResetPasswordPage />,
-  },
-  {
-    path: "/cambiar-contrasena",
-    element: <ChangePasswordPage />,
-    loader: requireEmailProvider
-  },
-  {
-    path: "/crear-diagrama-de-actividades/:id?",
-    element: <CreateActivitiesDiagram />,
-  },
-  {
-    path: "/crear-diagrama-de-secuencia/:id?",
-    element: <CreateSequenceDiagram />,
-  },
-  {
-    path: "/dashboard",
-    element: <Dashboard />,
   },
 ]);
 
