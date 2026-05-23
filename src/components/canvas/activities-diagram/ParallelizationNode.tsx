@@ -33,7 +33,7 @@ export default function ParallelizationNode({ data }: DataProps) {
     const sourceConnectionsLength = connections.filter(conn => conn.source === nodeId).length;
 
     useEffect(() => {
-        console.log('connections', connections.length);
+        // console.log('connections', connections.length);
         setSourceHandlesIds(prev => (sourceConnectionsLength >= prev.length ? [...prev, prev.length] : prev));
         updateNodeInternals(nodeId ? nodeId : '');
         setTargetHandlesIds(prev => (targetConnectionsLength >= prev.length ? [...prev, prev.length] : prev));

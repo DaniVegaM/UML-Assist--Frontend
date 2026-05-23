@@ -104,7 +104,7 @@ function DiagramContent() {
                 setEdges(draft.content?.canvas?.edges || []);
 
                 restoredFromDraftRef.current = true;
-                console.log('Autoguardado recuperado');
+                // console.log('Autoguardado recuperado');
             } catch {
                 console.error('No se pudo recuperar el autoguardado');
             }

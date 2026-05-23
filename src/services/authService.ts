@@ -35,12 +35,12 @@ export const getAuthUrl = async (
 
 export const handleCallback = async (provider: string, code: string) => {
   try {
-    console.log(
-      "Handling callback for provider:",
-      provider,
-      "with code:",
-      code
-    );
+    // console.log(
+    //   "Handling callback for provider:",
+    //   provider,
+    //   "with code:",
+    //   code
+    // );
     const response = await api.post<AuthResponse>(
       `api/user/auth/${provider}/callback/`,
       {
@@ -93,7 +93,7 @@ export const loginWithCredentials = async (email: string, password: string) => {
     });
 
     const { access_token, user } = response.data;
-    console.log("Login successful for user:", user);
+    // console.log("Login successful for user:", user);
 
     // Guardamos tokens y datos del usuario
     setTokens(access_token);
@@ -117,7 +117,7 @@ export const registerWithCredentials = async (
     });
 
     const { access_token, user } = response.data;
-    console.log("Registration successful for user:", user);
+    // console.log("Registration successful for user:", user);
 
     // Guardamos tokens y datos del usuario
     setTokens(access_token);

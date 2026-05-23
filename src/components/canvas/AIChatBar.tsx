@@ -88,7 +88,7 @@ ${edges
     }).join('\n')}`}
         `;
 
-        console.log("Lenguaje intermedio enviado a la IA:", intermediateLanguage);
+        // console.log("Lenguaje intermedio enviado a la IA:", intermediateLanguage);
 
         const reviewDiagramData = {
             userPrompt: initialContext,
@@ -104,7 +104,7 @@ ${edges
             setAvailableRequests(reviewDiagramWithAIResponse.data.remaining_requests);
         }
         
-        console.log("Respuesta de la IA:", reviewDiagramResultsJson);
+        // console.log("Respuesta de la IA:", reviewDiagramResultsJson);
         
         setGeneralDescription(reviewDiagramResultsJson.generalDescription);
 

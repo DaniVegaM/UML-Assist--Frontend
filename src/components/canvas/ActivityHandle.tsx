@@ -9,7 +9,7 @@ export default function ActivityHandle({ id, position, setSourceHandle, setTarge
 
 
     const deleteThisHandle = () => {
-        console.log("Deleting handle with id:", id);
+        // console.log("Deleting handle with id:", id);
 
         if (setSourceHandle) {
             setSourceHandle(prev => {
