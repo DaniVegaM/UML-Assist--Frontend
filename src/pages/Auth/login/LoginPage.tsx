@@ -218,7 +218,7 @@ export default function LoginPage() {
                         </>
                     }
 
-                    {error && <p className="text-red-500">Error de autenticación. Por favor, intenta de nuevo.</p>}
+                    {error && <p className="text-red-500">{error}</p>}
                 </div>
             </section>
     )

@@ -59,9 +59,9 @@ export const handleCallback = async (provider: string, code: string) => {
     });
 
     return { user, success };
-  } catch (error) {
-    console.error("Error en callback:", error);
-    throw error;
+  } catch (error: any) {
+    const message = error?.response?.data?.error || "Error en autenticación con el proveedor";
+    throw new Error(message);
   }
 };
 
