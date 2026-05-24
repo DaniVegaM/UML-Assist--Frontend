@@ -26,10 +26,10 @@ const createAuthCallbackLoader = (provider: "google" | "github") => {
 
     try {
       await handleCallback(provider, code);
-      return redirect("/");
+      return redirect("/dashboard");
     } catch (error) {
-      console.error(`Error en callback de ${provider}:`, error);
-      return redirect("/iniciar-sesion?error=callback_failed");
+      const message = error instanceof Error ? error.message : "Error en autenticación";
+      return redirect(`/iniciar-sesion?error=${encodeURIComponent(message)}`);
     }
   };
 };

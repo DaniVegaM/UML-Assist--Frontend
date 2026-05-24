@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { getLoggedUser } from "../helpers/auth";
 
 const SEQUENCE_DIAGRAM_FEATURES = [
   { icon: "✓", text: "Notación estándar UML 2.x" },
@@ -127,6 +128,7 @@ function Block({ title, children }: BlockProps) {
 }
 
 export default function HomePage() {
+  const logedInUser = getLoggedUser();
 
   return (
     <main className="mx-auto max-w-7xl px-4 md:px-6 lg:px-8 my-8 space-y-12">
@@ -165,23 +167,25 @@ export default function HomePage() {
               <span className="italic">Construye mientras aprendes.</span>
             </p>
 
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <Link
-                to="/crear-cuenta"
-                className="group relative inline-flex items-center gap-2 bg-sky-600 text-white px-8 py-4 rounded-full text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
-              >
-                <span>Comenzar ahora</span>
-                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </Link>
-              <Link
-                to="/iniciar-sesion"
-                className="inline-flex items-center gap-2 border-2 border-sky-600 text-sky-600 dark:text-sky-400 dark:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 px-8 py-4 rounded-full text-base font-bold transition-all duration-300"
-              >
-                Iniciar sesión
-              </Link>
-            </div>
+            { !logedInUser &&
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                <Link
+                  to="/crear-cuenta"
+                  className="group relative inline-flex items-center gap-2 bg-sky-600 text-white px-8 py-4 rounded-full text-base font-bold transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105"
+                >
+                  <span>Comenzar ahora</span>
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
+                <Link
+                  to="/iniciar-sesion"
+                  className="inline-flex items-center gap-2 border-2 border-sky-600 text-sky-600 dark:text-sky-400 dark:border-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/20 px-8 py-4 rounded-full text-base font-bold transition-all duration-300"
+                >
+                  Iniciar sesión
+                </Link>
+              </div>
+            }
           </div>
 
           <div>
