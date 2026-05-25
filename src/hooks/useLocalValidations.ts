@@ -94,6 +94,9 @@ const hasAnyHandleUsed = useCallback(
         const targetNodeId = targetNode.id;
         const sourceNodeType = sourceNode.type;
         const targetNodeType = targetNode.type;
+        const isDecisionSource = sourceNodeType === "decisionControl";
+        const isSimpleActionSource = sourceNodeType === "simpleAction";
+        const isObjectTarget = targetNodeType === "objectNode";
 
         //IGNORAR COMPLETAMENTE NOTAS
         if (sourceNodeType === "note" || targetNodeType === "note") {
@@ -155,6 +158,15 @@ const hasAnyHandleUsed = useCallback(
         const isFinalTarget =
             targetNodeType === "finalNode" || targetNodeType === "finalFlowNode";
 
+        const outgoingNonNoteEdges = edges.filter(
+            (e) => e.source === sourceNodeId && !e.data?.isNoteEdge
+        );
+        const outgoingTargetsAreObjectOnly =
+            outgoingNonNoteEdges.length > 0 &&
+            outgoingNonNoteEdges.every(
+                (e) => findNode(e.target)?.type === "objectNode"
+            );
+
         // ¿El source YA tiene alguna salida hacia algún final?
         const sourceAlreadyEndsInFinal = edges.some((e) => {
             if (e.data?.isNoteEdge) return false;
@@ -163,8 +175,19 @@ const hasAnyHandleUsed = useCallback(
             return t === "finalNode" || t === "finalFlowNode";
         });
 
+        if (isDecisionSource && isFinalTarget && sourceAlreadyEndsInFinal) {
+            return {
+            ok: false,
+            severity: "info",
+            reason: "El nodo de decisión ya tiene un camino hacia un nodo final.",
+            };
+        }
+
         // Si intento conectar a un final, el source NO debe tener salidas previas
-        if (isFinalTarget && outgoingCount(sourceNodeId) > 0) {
+        const allowFinalDespiteOutgoing =
+            isDecisionSource || (isSimpleActionSource && outgoingTargetsAreObjectOnly);
+
+        if (isFinalTarget && outgoingCount(sourceNodeId) > 0 && !allowFinalDespiteOutgoing) {
             return {
             ok: false,
             severity: "info",
@@ -174,7 +197,10 @@ const hasAnyHandleUsed = useCallback(
         }
 
         // Si el source ya termina en final, no puede crear más salidas
-        if (sourceAlreadyEndsInFinal) {
+        const allowExtraOutgoingAfterFinal =
+            isDecisionSource || (isSimpleActionSource && isObjectTarget);
+
+        if (sourceAlreadyEndsInFinal && !allowExtraOutgoingAfterFinal) {
             return {
             ok: false,
             severity: "info",
