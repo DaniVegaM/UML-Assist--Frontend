@@ -14,6 +14,7 @@ import Dashboard from "../pages/Dashboard";
 import HomePage from "../pages/HomePage";
 import ErrorPage from "../pages/Error/ErrorPage";
 import { getLoggedUser } from "../helpers/auth";
+import { requireAuth } from "./ProtectedRoute";
 
 const createAuthCallbackLoader = (provider: "google" | "github") => {
   return async ({ request }: LoaderFunctionArgs) => {
@@ -87,14 +88,17 @@ const router = createBrowserRouter([
       {
         path: "/crear-diagrama-de-actividades/:id?",
         element: <CreateActivitiesDiagram />,
+        loader: requireAuth,
       },
       {
         path: "/crear-diagrama-de-secuencia/:id?",
         element: <CreateSequenceDiagram />,
+        loader: requireAuth,
       },
       {
         path: "/dashboard",
         element: <Dashboard />,
+        loader: requireAuth,
       },
     ],
   },
