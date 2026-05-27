@@ -357,6 +357,10 @@ const handleRenameModal = async () => {
                                                     //src={diagram.preview_image}
                                                     alt="Preview"
                                                     className="w-full h-full object-cover"
+                                                    width={640}
+                                                    height={360}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                 />
                                             ) : (
                                                 <span className="text-sm text-zinc-400">

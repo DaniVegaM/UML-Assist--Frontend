@@ -189,7 +189,15 @@ export default function HomePage() {
           </div>
 
           <div>
-            <img src="./diagram-example.png" alt="Ejemplo de diagrama" />
+            <img
+              src="/diagram-example.png"
+              alt="Ejemplo de diagrama"
+              width={1200}
+              height={800}
+              decoding="async"
+              loading="eager"
+              fetchPriority="high"
+            />
           </div>
         </div>
       </section>
@@ -210,7 +218,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div>
-                <h4 className="font-bold text-red-700 dark:text-red-300">Reducir errores</h4>
+                <h3 className="font-bold text-red-700 dark:text-red-300">Reducir errores</h3>
                 <p className="text-sm text-red-600 dark:text-red-400">Minimiza errores frecuentes en el modelado UML</p>
               </div>
             </div>
@@ -222,7 +230,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div>
-                <h4 className="font-bold text-green-700 dark:text-green-300">Elevar calidad</h4>
+                <h3 className="font-bold text-green-700 dark:text-green-300">Elevar calidad</h3>
                 <p className="text-sm text-green-600 dark:text-green-400">Mejora la calidad del modelado con buenas prácticas</p>
               </div>
             </div>
@@ -234,7 +242,7 @@ export default function HomePage() {
                 </svg>
               </div>
               <div>
-                <h4 className="font-bold text-blue-700 dark:text-blue-300">Aprendizaje guiado</h4>
+                <h3 className="font-bold text-blue-700 dark:text-blue-300">Aprendizaje guiado</h3>
                 <p className="text-sm text-blue-600 dark:text-blue-400">Aprende sin perder tu autonomía creativa</p>
               </div>
             </div>
@@ -313,9 +321,9 @@ export default function HomePage() {
                 <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900/30 text-sky-600 dark:text-sky-400 text-sm font-black">
                   {i + 1}
                 </span>
-                <h4 className="font-black text-lg dark:text-white">
+                <h3 className="font-black text-lg dark:text-white">
                   {s.t}
-                </h4>
+                </h3>
               </div>
 
               <p className="text-sm text-zinc-600 dark:text-zinc-300 leading-relaxed">{s.d}</p>

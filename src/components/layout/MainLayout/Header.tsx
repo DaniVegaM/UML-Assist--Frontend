@@ -22,7 +22,19 @@ export default function Header() {
               <div className="flex h-16 justify-between items-center">
                 <div className="flex items-center">
                   <Link to="/" className="flex items-center space-x-2">
-                    <svg fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" className="h-8 w-8 text-sky-600" viewBox="0 0 24 24"><path d="M3 3h7v7H3zm11 0h7v7h-7zm0 11h7v7h-7zM3 14h7v7H3zm7-7.5h4m-4 11h4M6.5 10v4m11-4v4"/></svg>
+                    <svg
+                      fill="none"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      className="h-8 w-8 text-sky-600"
+                      viewBox="0 0 24 24"
+                      width="32"
+                      height="32"
+                    >
+                      <path d="M3 3h7v7H3zm11 0h7v7h-7zm0 11h7v7h-7zM3 14h7v7H3zm7-7.5h4m-4 11h4M6.5 10v4m11-4v4" />
+                    </svg>
                     <span className="text-xl font-bold text-gray-900 dark:text-white">
                       UML Assist
                     </span>

@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://uml-assist.danivegam.com/sitemap.xml
