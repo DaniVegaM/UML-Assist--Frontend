@@ -1,18 +1,19 @@
+import { Suspense, lazy } from "react";
 import { createBrowserRouter, RouterProvider, redirect } from "react-router";
-import LoginPage from "../pages/Auth/login/LoginPage";
 import { handleCallback } from "../services/authService";
 
 import type { LoaderFunctionArgs } from "react-router";
-import SignupPage from "../pages/Auth/signup/SignupPage";
-import MainLayout from "../components/layout/MainLayout/MainLayout";
-import ResetPasswordPage from "../pages/Auth/forgottenpassword/ResetPasswordPage";
-import ForgotPasswordPage from "../pages/Auth/forgottenpassword/ForgotPasswordPage";
-import ChangePasswordPage from "../pages/Auth/changepassword/ChangePasswordPage";
-import CreateActivitiesDiagram from "../pages/Canvas/CreateActivitiesDiagram";
-import CreateSequenceDiagram from "../pages/Canvas/CreateSequenceDiagram";
-import Dashboard from "../pages/Dashboard";
-import HomePage from "../pages/HomePage";
-import ErrorPage from "../pages/Error/ErrorPage";
+const LoginPage = lazy(() => import("../pages/Auth/login/LoginPage"));
+const SignupPage = lazy(() => import("../pages/Auth/signup/SignupPage"));
+const MainLayout = lazy(() => import("../components/layout/MainLayout/MainLayout"));
+const ResetPasswordPage = lazy(() => import("../pages/Auth/forgottenpassword/ResetPasswordPage"));
+const ForgotPasswordPage = lazy(() => import("../pages/Auth/forgottenpassword/ForgotPasswordPage"));
+const ChangePasswordPage = lazy(() => import("../pages/Auth/changepassword/ChangePasswordPage"));
+const CreateActivitiesDiagram = lazy(() => import("../pages/Canvas/CreateActivitiesDiagram"));
+const CreateSequenceDiagram = lazy(() => import("../pages/Canvas/CreateSequenceDiagram"));
+const Dashboard = lazy(() => import("../pages/Dashboard"));
+const HomePage = lazy(() => import("../pages/HomePage"));
+const ErrorPage = lazy(() => import("../pages/Error/ErrorPage"));
 import { getLoggedUser } from "../helpers/auth";
 import { requireAuth } from "./ProtectedRoute";
 
@@ -105,5 +106,9 @@ const router = createBrowserRouter([
 ]);
 
 export const AppRouter = () => {
-  return <RouterProvider router={router} />;
+  return (
+    <Suspense fallback={<div className="min-h-screen w-full" aria-busy="true" aria-live="polite" />}>
+      <RouterProvider router={router} />
+    </Suspense>
+  );
 };
