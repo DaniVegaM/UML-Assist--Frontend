@@ -18,6 +18,7 @@ export default function DataIncomingEdge ({
     targetY,
     sourcePosition,
     targetPosition,
+    selected,
     data
 }: DataIncomingEdgeProps) {
   const { setEdges } = useReactFlow();
@@ -106,7 +107,7 @@ export default function DataIncomingEdge ({
         style={
           {
             strokeWidth: 2,
-            stroke: `${isDarkMode ? '#A1A1AA' : '#52525B'}`,
+            stroke: selected ? '#0084D1' : isDarkMode ? '#A1A1AA' : '#52525B',
           }
         }
       />

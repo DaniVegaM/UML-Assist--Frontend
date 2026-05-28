@@ -213,6 +213,16 @@
       transparent 0%);
 }
 
+/* ReactFlow adds .selected to the outer .react-flow__node wrapper when the node is selected.
+   We target the inner class from that wrapper to highlight the node's visible border. */
+.react-flow__node.selected .node-rounded,
+.react-flow__node.selected .node-rect,
+.react-flow__node.selected .node-lifeline,
+.react-flow__node.selected .node-circle-outline,
+.react-flow__node.selected .node-container {
+  border-color: #0084D1;
+}
+
 .interruptible-region {
   border: 2px dashed #52525b;
   background: transparent;

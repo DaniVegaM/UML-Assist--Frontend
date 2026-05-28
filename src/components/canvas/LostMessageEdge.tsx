@@ -22,6 +22,7 @@ export function LostMessageEdge({
     sourceX,
     sourceY,
     style,
+    selected,
     markerEnd,
     label,
     data
@@ -96,7 +97,7 @@ export function LostMessageEdge({
             <BaseEdge
                 id={id}
                 path={edgePath}
-                style={style}
+                style={{ ...style, ...(selected ? { stroke: '#0084D1' } : {}) }}
                 markerEnd={markerEnd}
             />
             <path

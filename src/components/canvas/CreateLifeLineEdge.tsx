@@ -19,6 +19,7 @@ export function CreateLifeLineEdge({
     sourceY,
     targetX,
     style,
+    selected,
     markerEnd,
     data
 }: CreateLifeLineEdgeProps) {
@@ -57,6 +58,7 @@ export function CreateLifeLineEdge({
                 style={{
                     ...style,
                     strokeDasharray: '5,5',
+                    ...(selected ? { stroke: '#0084D1' } : {}),
                 }}
                 markerEnd={markerEnd}
             />

@@ -15,6 +15,7 @@ export default function ExceptionHandlingEdge ({
     sourceY,
     targetX,
     targetY,
+    selected,
     data
 }: ExceptionHandlingEdgeProps) {
   const { setEdges } = useReactFlow();
@@ -64,7 +65,7 @@ export default function ExceptionHandlingEdge ({
         path={edgePath} 
         style={{
               strokeWidth: 2,
-              stroke: isDarkMode ? '#A1A1AA' : '#52525B',
+              stroke: selected ? '#0084D1' : isDarkMode ? '#A1A1AA' : '#52525B',
         }}
         markerEnd={arrowMarker}
       />

@@ -70,6 +70,7 @@ export function SelfMessageEdge({
     targetY,
     markerEnd,
     style,
+    selected,
     label,
     labelStyle,
     labelBgStyle,
@@ -195,7 +196,7 @@ export function SelfMessageEdge({
 
     return (
         <>
-            <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
+            <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={{ ...style, ...(selected ? { stroke: '#0084D1' } : {}) }} />
             <path
                 d={edgePath}
                 fill="none"

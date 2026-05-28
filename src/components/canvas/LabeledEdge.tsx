@@ -25,6 +25,7 @@ export function LabeledEdge({
     targetPosition,
     markerEnd,
     style,
+    selected,
     label,
     labelStyle,
     labelBgStyle,
@@ -154,7 +155,7 @@ export function LabeledEdge({
 
     return (
         <>
-            <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={style} />
+            <BaseEdge id={id} path={edgePath} markerEnd={markerEnd} style={{ ...style, ...(selected ? { stroke: '#0084D1' } : {}) }} />
             <path
                 d={edgePath}
                 fill="none"

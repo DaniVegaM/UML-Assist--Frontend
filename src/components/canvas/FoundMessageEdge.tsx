@@ -22,6 +22,7 @@ export function FoundMessageEdge({
     targetX,
     targetY,
     style,
+    selected,
     markerEnd,
     label,
     data
@@ -103,7 +104,7 @@ export function FoundMessageEdge({
             <BaseEdge
                 id={id}
                 path={edgePath}
-                style={style}
+                style={{ ...style, ...(selected ? { stroke: '#0084D1' } : {}) }}
                 markerEnd={markerEnd}
             />
             <path

@@ -17,6 +17,7 @@ export default function DataOutgoingEdge ({
     targetY,
     sourcePosition,
     targetPosition,
+    selected,
     data
 }: DataOutgoingEdgeProps) {
   const { setEdges } = useReactFlow();
@@ -128,13 +129,13 @@ export default function DataOutgoingEdge ({
       </defs>
 
       {/* Edge completo con rectángulo al final (se dibuja encima) */}
-      <BaseEdge 
-        id={id} 
-        path={pathFull} 
+      <BaseEdge
+        id={id}
+        path={pathFull}
         markerEnd={`url(#${markerRectId})`}
         style={{
           strokeWidth: 2,
-          stroke: isDarkMode ? '#A1A1AA' : '#52525B',
+          stroke: selected ? '#0084D1' : isDarkMode ? '#A1A1AA' : '#52525B',
         }}
       />
 

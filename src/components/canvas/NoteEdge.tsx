@@ -17,6 +17,7 @@ export function NoteEdge({
     sourcePosition,
     targetPosition,
     style,
+    selected,
     data,
 }: NoteEdgeProps) {
     const { setEdges } = useReactFlow();
@@ -65,7 +66,7 @@ export function NoteEdge({
                 id={id}
                 path={edgePath}
                 style={{
-                    stroke: "#555",
+                    stroke: selected ? '#0084D1' : "#555",
                     strokeWidth: 1.5,
                     strokeDasharray: "6 4",
                     ...style,
