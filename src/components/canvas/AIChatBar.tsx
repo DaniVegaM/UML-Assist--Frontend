@@ -3,6 +3,7 @@ import { useCallback, useState, useEffect } from "react";
 import { reviewDiagramWithAI, getAvailableRequests } from "../../services/diagramSerivce";
 import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 import type { ReviewDiagramResponse } from "../../types/diagramsModel";
+import { customModal } from "../../utils/sweetAlert";
 
 export default function AIChatBar({type}: {type: 'actividades' | 'secuencia'}) {
     const [isVisible, setIsVisible] = useState(false);
@@ -96,43 +97,61 @@ ${edges
             intermediateLanguage,
         }
 
-        const reviewDiagramWithAIResponse = await reviewDiagramWithAI(reviewDiagramData);
-        const reviewDiagramResultsJson = JSON.parse(reviewDiagramWithAIResponse.data.feedback) as ReviewDiagramResponse;
-        
-        // Actualizar el número de peticiones disponibles
-        if (reviewDiagramWithAIResponse.data.remaining_requests !== undefined) {
-            setAvailableRequests(reviewDiagramWithAIResponse.data.remaining_requests);
+        try {
+            const reviewDiagramWithAIResponse = await reviewDiagramWithAI(reviewDiagramData);
+            const reviewDiagramResultsJson = JSON.parse(reviewDiagramWithAIResponse.data.feedback) as ReviewDiagramResponse;
+            
+            // Actualizar el número de peticiones disponibles
+            if (reviewDiagramWithAIResponse.data.remaining_requests !== undefined) {
+                setAvailableRequests(reviewDiagramWithAIResponse.data.remaining_requests);
+            }
+            
+            // console.log("Respuesta de la IA:", reviewDiagramResultsJson);
+            
+            setGeneralDescription(reviewDiagramResultsJson.generalDescription);
+    
+            // Aplanar el array de objetos unitarios a un mapa completo
+            const suggestionsMap: Record<string, string> = {};
+            for (const entry of reviewDiagramResultsJson.suggestions) {
+                const [id, text] = Object.entries(entry)[0];
+                suggestionsMap[id] = text;
+            }
+    
+            if (Object.keys(suggestionsMap).length > 0) {
+                setNodes(prevNodes =>
+                    prevNodes.map(n =>
+                        suggestionsMap[n.id]
+                            ? { ...n, data: { ...n.data, suggestion: suggestionsMap[n.id] } }
+                            : n
+                    )
+                );
+                setEdges(prevEdges =>
+                    prevEdges.map(e =>
+                        suggestionsMap[e.id]
+                            ? { ...e, data: { ...e.data, suggestion: suggestionsMap[e.id] } }
+                            : e
+                    )
+                );
+            }
+        } catch (error: any) {
+            if (error.response && error.response.status === 403) {
+                customModal({
+                    title: 'Créditos agotados',
+                    text: 'Se te han acabado los créditos para usar el asistente de IA. ¡Pronto habilitaremos la compra de más!',
+                    icon: 'error',
+                    isDanger: true,
+                });
+            } else {
+                customModal({
+                    title: 'Error',
+                    text: 'Ha ocurrido un error al revisar el diagrama. Por favor, inténtalo de nuevo más tarde.',
+                    icon: 'error',
+                    isDanger: true,
+                });
+            }
+        } finally {
+            setIsThinking(false);
         }
-        
-        // console.log("Respuesta de la IA:", reviewDiagramResultsJson);
-        
-        setGeneralDescription(reviewDiagramResultsJson.generalDescription);
-
-        // Aplanar el array de objetos unitarios a un mapa completo
-        const suggestionsMap: Record<string, string> = {};
-        for (const entry of reviewDiagramResultsJson.suggestions) {
-            const [id, text] = Object.entries(entry)[0];
-            suggestionsMap[id] = text;
-        }
-
-        if (Object.keys(suggestionsMap).length > 0) {
-            setNodes(prevNodes =>
-                prevNodes.map(n =>
-                    suggestionsMap[n.id]
-                        ? { ...n, data: { ...n.data, suggestion: suggestionsMap[n.id] } }
-                        : n
-                )
-            );
-            setEdges(prevEdges =>
-                prevEdges.map(e =>
-                    suggestionsMap[e.id]
-                        ? { ...e, data: { ...e.data, suggestion: suggestionsMap[e.id] } }
-                        : e
-                )
-            );
-        }
-        
-        setIsThinking(false);
     }
 
     return (
