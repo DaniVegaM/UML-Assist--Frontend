@@ -57,7 +57,7 @@ export default function ChangePasswordPage() {
     const token = getAccessToken();
     if (!token) {
       setGeneralError("No estás autenticado");
-      navigate("/login");
+      navigate("/iniciar-sesion");
       return;
     }
 
@@ -82,7 +82,7 @@ export default function ChangePasswordPage() {
       // Esperar a que el toast se renderice antes de redirigir
       setTimeout(() => {
         clearStorage();
-        navigate("/login", { replace: true });
+        navigate("/iniciar-sesion", { replace: true });
       }, 1500);
     } catch (error: any) {
       console.error(error);
